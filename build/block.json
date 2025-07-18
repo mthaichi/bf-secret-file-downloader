@@ -1,0 +1,162 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "bf-basic-guard/downloader",
+  "title": "BF Basic Guard Downloader",
+  "description": "パスワード保護付きファイルダウンロードブロック",
+  "category": "widgets",
+  "icon": "download",
+  "keywords": [
+    "download",
+    "file",
+    "password",
+    "protection"
+  ],
+  "version": "1.0.0",
+  "textdomain": "bf-basic-guard",
+  "supports": {
+    "html": false,
+    "color": {
+      "background": true,
+      "text": true,
+      "link": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontWeight": true,
+      "fontStyle": true,
+      "textDecoration": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true,
+      "blockGap": true
+    },
+    "__experimentalBorder": {
+      "radius": true,
+      "color": true,
+      "style": true,
+      "width": true,
+      "__experimentalDefaultControls": {
+        "radius": true,
+        "color": true,
+        "style": true,
+        "width": true
+      }
+    },
+    "dimensions": {
+      "minHeight": true
+    },
+    "buttonAlign": {
+      "type": "string",
+      "default": "left",
+      "enum": [
+        "left",
+        "center",
+        "right"
+      ]
+    }
+  },
+  "variations": [
+    {
+      "name": "button",
+      "title": "ダウンロードボタン",
+      "description": "ボタンスタイルのダウンロードリンク",
+      "isDefault": true,
+      "attributes": {
+        "text": "ダウンロード",
+        "style": {
+          "color": {
+            "background": "#007cba",
+            "text": "#ffffff"
+          },
+          "border": {
+            "radius": "4px",
+            "width": "1px",
+            "style": "solid",
+            "color": "#007cba"
+          },
+          "spacing": {
+            "padding": {
+              "top": "12px",
+              "right": "24px",
+              "bottom": "12px",
+              "left": "24px"
+            }
+          },
+          "typography": {
+            "fontWeight": "600",
+            "textDecoration": "none"
+          }
+        }
+      },
+      "scope": [
+        "inserter"
+      ]
+    },
+    {
+      "name": "link",
+      "title": "ダウンロードリンク",
+      "description": "テキストリンクスタイルのダウンロードリンク",
+      "attributes": {
+        "text": "ファイルをダウンロード",
+        "className": "is-style-link"
+      },
+      "scope": [
+        "inserter"
+      ]
+    }
+  ],
+  "attributes": {
+    "file": {
+      "type": "string",
+      "default": ""
+    },
+    "text": {
+      "type": "string",
+      "default": "ダウンロード"
+    },
+    "displayMode": {
+      "type": "string",
+      "default": "download",
+      "enum": [
+        "download",
+        "display"
+      ]
+    },
+    "buttonWidthMode": {
+      "type": "string",
+      "default": "auto",
+      "enum": [
+        "full",
+        "auto",
+        "custom"
+      ]
+    },
+    "buttonWidthCustom": {
+      "type": "string",
+      "default": ""
+    },
+    "buttonAlign": {
+      "type": "string",
+      "default": "left",
+      "enum": [
+        "left",
+        "center",
+        "right"
+      ]
+    }
+  },
+  "example": {
+    "attributes": {
+      "file": "example.pdf",
+      "text": "サンプルファイルをダウンロード",
+      "displayMode": "download"
+    }
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./index.css",
+  "render": "file:./render.php"
+}

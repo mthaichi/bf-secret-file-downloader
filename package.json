@@ -1,0 +1,30 @@
+{
+  "name": "bf-basic-guard",
+  "version": "1.0.0",
+  "description": "BASIC認証もしくは非公開エリアに置かれたディレクトリに配置されたファイルを管理するWordPressプラグイン",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "wp-env": "wp-env",
+    "env:start": "wp-env start",
+    "env:stop": "wp-env stop",
+    "env:destroy": "wp-env destroy",
+    "phpunit": "wp-env run tests-cli --env-cwd=wp-content/plugins/bf-basic-guard ./vendor/bin/phpunit",
+    "phpunit:watch": "wp-env run tests-cli --env-cwd=wp-content/plugins/bf-basic-guard ./vendor/bin/phpunit --watch",
+    "release": "npm run build && npm run create-release",
+    "create-release": "node ./scripts/create-release.js"
+  },
+  "devDependencies": {
+    "@wordpress/env": "^10.0.0",
+    "@wordpress/scripts": "^26.0.0",
+    "archiver": "^6.0.1"
+  },
+  "keywords": [
+    "wordpress",
+    "plugin",
+    "basic-auth",
+    "file-management"
+  ],
+  "author": "Breadfish",
+  "license": "GPL-2.0-or-later"
+}

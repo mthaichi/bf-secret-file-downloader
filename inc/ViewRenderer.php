@@ -1,0 +1,69 @@
+<?php
+/**
+ * ビューレンダラークラス
+ *
+ * @package BfBasicGuard
+ */
+
+namespace Breadfish\BasicGuard;
+
+// セキュリティチェック：直接アクセスを防ぐ
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * ViewRenderer クラス
+ * ビューファイルのレンダリングと変数スコープを管理します
+ */
+class ViewRenderer {
+
+    /**
+     * ビューファイルをレンダリングします
+     *
+     * @param string $view_file ビューファイルのパス（相対パス）
+     * @param array  $import    ビューに渡す変数の配列
+     * @param string $view_type ビューの種類（Admin, Frontend, Blocks等）
+     */
+    public static function render( $view_file, $import = array(), $view_type = 'Admin' ) {
+        // ビューファイルの完全パスを構築
+        $view_path = BF_BASIC_GUARD_PLUGIN_DIR . 'inc/views/' . $view_type . '/' . $view_file;
+
+        // ファイルが存在するかチェック
+        if ( ! file_exists( $view_path ) ) {
+            wp_die(
+                sprintf(
+                    /* translators: %s: ビューファイルのパス */
+                    esc_html__( 'ビューファイルが見つかりません: %s', 'bf-basic-guard' ),
+                    esc_html( $view_type . '/' . $view_file )
+                )
+            );
+        }
+
+        // インポートされた変数を展開
+        extract( $import, EXTR_SKIP );
+
+        // ビューファイルを安全にインクルード
+        include $view_path;
+    }
+
+    /**
+     * 管理画面用ビューをレンダリングします（ショートカット）
+     *
+     * @param string $view_file ビューファイルのパス（相対パス）
+     * @param array  $import    ビューに渡す変数の配列
+     */
+    public static function admin( $view_file, $import = array() ) {
+        self::render( $view_file, $import, 'Admin' );
+    }
+
+    /**
+     * フロントエンド用ビューをレンダリングします（ショートカット）
+     *
+     * @param string $view_file ビューファイルのパス（相対パス）
+     * @param array  $import    ビューに渡す変数の配列
+     */
+    public static function frontend( $view_file, $import = array() ) {
+        self::render( $view_file, $import, 'Frontend' );
+    }
+}
