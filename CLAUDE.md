@@ -1,4 +1,4 @@
-# BF Basic Guard WordPress Plugin
+# BF Secret File Downloader WordPress Plugin
 
 ## Project Overview
 BASIC認証もしくは非公開エリアに置かれたディレクトリに配置されたファイルを管理するWordPressプラグイン。ファイル管理、ディレクトリ管理、ダウンロード機能、ダウンロード用ボタンブロック機能を提供します。
@@ -66,7 +66,7 @@ phpstan analyse     # Run PHPStan static analysis
 
 ## Development Notes
 
-- Uses PSR-4 autoloading with namespace `Breadfish\BasicGuard`
+- Uses PSR-4 autoloading with namespace `Breadfish\SecretFileDownloader`
 - Follows WordPress coding standards
 - Includes comprehensive PHPUnit test suite
 - Uses webpack for frontend asset building

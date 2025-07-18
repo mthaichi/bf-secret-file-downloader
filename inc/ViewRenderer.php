@@ -5,7 +5,7 @@
  * @package BfBasicGuard
  */
 
-namespace Breadfish\BasicGuard;
+namespace Breadfish\SecretFileDownloader;
 
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,7 +27,7 @@ class ViewRenderer {
      */
     public static function render( $view_file, $import = array(), $view_type = 'Admin' ) {
         // ビューファイルの完全パスを構築
-        $view_path = BF_BASIC_GUARD_PLUGIN_DIR . 'inc/views/' . $view_type . '/' . $view_file;
+        $view_path = BF_SECRET_FILE_DOWNLOADER_PLUGIN_DIR . 'inc/views/' . $view_type . '/' . $view_file;
 
         // ファイルが存在するかチェック
         if ( ! file_exists( $view_path ) ) {

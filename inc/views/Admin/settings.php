@@ -34,53 +34,53 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     <div class="bf-basic-guard-settings">
         <div class="bf-basic-guard-header">
-            <p><?php esc_html_e( 'BF Basic Guardの設定を管理します。', 'bf-basic-guard' ); ?></p>
+                            <p><?php esc_html_e( 'BF Secret File Downloaderの設定を管理します。', 'bf-secret-file-downloader' ); ?></p>
         </div>
 
         <div class="bf-basic-guard-content">
-            <h2><?php esc_html_e( '基本設定', 'bf-basic-guard' ); ?></h2>
+                            <h2><?php esc_html_e( '基本設定', 'bf-secret-file-downloader' ); ?></h2>
 
             <?php if ( isset( $enable_auth ) || isset( $max_file_size ) ) : ?>
                 <div class="bf-basic-guard-current-settings">
-                    <h3><?php esc_html_e( '現在の設定', 'bf-basic-guard' ); ?></h3>
+                    <h3><?php esc_html_e( '現在の設定', 'bf-secret-file-downloader' ); ?></h3>
                     <ul>
                         <?php if ( isset( $enable_auth ) ) : ?>
                             <li>
-                                <?php esc_html_e( 'BASIC認証', 'bf-basic-guard' ); ?>:
-                                <strong><?php echo $enable_auth ? __( '有効', 'bf-basic-guard' ) : __( '無効', 'bf-basic-guard' ); ?></strong>
+                                                            <?php esc_html_e( 'BASIC認証', 'bf-secret-file-downloader' ); ?>:
+                            <strong><?php echo $enable_auth ? __( '有効', 'bf-secret-file-downloader' ) : __( '無効', 'bf-secret-file-downloader' ); ?></strong>
                             </li>
                         <?php endif; ?>
                         <?php if ( isset( $max_file_size ) ) : ?>
                             <li>
-                                <?php esc_html_e( '最大ファイルサイズ', 'bf-basic-guard' ); ?>:
+                                <?php esc_html_e( '最大ファイルサイズ', 'bf-secret-file-downloader' ); ?>:
                                 <strong><?php echo esc_html( $max_file_size . 'MB' ); ?></strong>
                             </li>
                         <?php endif; ?>
                     </ul>
                 </div>
             <?php else : ?>
-                <p><?php esc_html_e( '設定機能は今後実装予定です。', 'bf-basic-guard' ); ?></p>
+                <p><?php esc_html_e( '設定機能は今後実装予定です。', 'bf-secret-file-downloader' ); ?></p>
             <?php endif; ?>
 
             <!-- 今後実装予定の設定項目 -->
             <div class="bf-basic-guard-placeholder">
-                <h3><?php esc_html_e( '実装予定の設定項目', 'bf-basic-guard' ); ?></h3>
+                                    <h3><?php esc_html_e( '実装予定の設定項目', 'bf-secret-file-downloader' ); ?></h3>
                 <ul class="bf-basic-guard-settings-list">
                     <li>
                         <span class="dashicons dashicons-lock"></span>
-                        <?php esc_html_e( 'BASIC認証設定', 'bf-basic-guard' ); ?>
+                                                  <?php esc_html_e( 'BASIC認証設定', 'bf-secret-file-downloader' ); ?>
                     </li>
                     <li>
                         <span class="dashicons dashicons-upload"></span>
-                        <?php esc_html_e( 'ファイルアップロード制限', 'bf-basic-guard' ); ?>
+                                                  <?php esc_html_e( 'ファイルアップロード制限', 'bf-secret-file-downloader' ); ?>
                     </li>
                     <li>
                         <span class="dashicons dashicons-chart-line"></span>
-                        <?php esc_html_e( 'ダウンロードログ設定', 'bf-basic-guard' ); ?>
+                                                  <?php esc_html_e( 'ダウンロードログ設定', 'bf-secret-file-downloader' ); ?>
                     </li>
                     <li>
                         <span class="dashicons dashicons-shield"></span>
-                        <?php esc_html_e( 'セキュリティ設定', 'bf-basic-guard' ); ?>
+                                                  <?php esc_html_e( 'セキュリティ設定', 'bf-secret-file-downloader' ); ?>
                     </li>
                 </ul>
             </div>
@@ -92,18 +92,18 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <?php do_settings_sections( 'bf_basic_guard_settings' ); ?>
 
                     <!-- 対象ディレクトリ設定 -->
-                    <h2><?php esc_html_e( '対象ディレクトリ設定', 'bf-basic-guard' ); ?></h2>
+                    <h2><?php esc_html_e( '対象ディレクトリ設定', 'bf-secret-file-downloader' ); ?></h2>
                     <table class="form-table">
                         <tr>
-                            <th scope="row"><?php esc_html_e( '対象ディレクトリ', 'bf-basic-guard' ); ?></th>
+                            <th scope="row"><?php esc_html_e( '対象ディレクトリ', 'bf-secret-file-downloader' ); ?></th>
                             <td>
                                 <div class="bf-directory-item">
                                     <input type="text" name="bf_basic_guard_target_directory"
                                            value="<?php echo esc_attr( $target_directory ?? '' ); ?>"
                                            class="regular-text bf-directory-path" readonly />
-                                    <button type="button" class="button bf-browse-directory"><?php esc_html_e( '参照', 'bf-basic-guard' ); ?></button>
+                                    <button type="button" class="button bf-browse-directory"><?php esc_html_e( '参照', 'bf-secret-file-downloader' ); ?></button>
                                 </div>
-                                <p class="description"><?php esc_html_e( 'プラグインで管理するディレクトリを指定してください。', 'bf-basic-guard' ); ?></p>
+                                                                  <p class="description"><?php esc_html_e( 'プラグインで管理するディレクトリを指定してください。', 'bf-secret-file-downloader' ); ?></p>
                             </td>
                         </tr>
                     </table>
@@ -111,25 +111,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
                     <!-- その他の設定 -->
-                    <h2><?php esc_html_e( 'その他の設定', 'bf-basic-guard' ); ?></h2>
+                    <h2><?php esc_html_e( 'その他の設定', 'bf-secret-file-downloader' ); ?></h2>
                     <table class="form-table">
                         <tr>
-                            <th scope="row"><?php esc_html_e( 'BASIC認証', 'bf-basic-guard' ); ?></th>
+                            <th scope="row"><?php esc_html_e( 'BASIC認証', 'bf-secret-file-downloader' ); ?></th>
                             <td>
                                 <label>
                                     <input type="checkbox" name="bf_basic_guard_enable_auth" value="1"
                                            <?php echo isset( $enable_auth ) && $enable_auth ? 'checked' : ''; ?> />
-                                    <?php esc_html_e( 'BASIC認証を有効にする', 'bf-basic-guard' ); ?>
+                                                                          <?php esc_html_e( 'BASIC認証を有効にする', 'bf-secret-file-downloader' ); ?>
                                 </label>
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><?php esc_html_e( 'アップロード制限', 'bf-basic-guard' ); ?></th>
+                            <th scope="row"><?php esc_html_e( 'アップロード制限', 'bf-secret-file-downloader' ); ?></th>
                             <td>
                                 <input type="number" name="bf_basic_guard_max_file_size"
                                        value="<?php echo isset( $max_file_size ) ? esc_html( $max_file_size ) : '10'; ?>"
                                        min="1" max="100" />
-                                <span><?php esc_html_e( 'MB', 'bf-basic-guard' ); ?></span>
+                                                                  <span><?php esc_html_e( 'MB', 'bf-secret-file-downloader' ); ?></span>
                             </td>
                         </tr>
                     </table>
@@ -145,23 +145,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div id="bf-directory-browser-modal" class="bf-modal" style="display: none;">
     <div class="bf-modal-content">
         <div class="bf-modal-header">
-            <h3><?php esc_html_e( 'ディレクトリを選択', 'bf-basic-guard' ); ?></h3>
+                                <h3><?php esc_html_e( 'ディレクトリを選択', 'bf-secret-file-downloader' ); ?></h3>
             <span class="bf-modal-close">&times;</span>
         </div>
         <div class="bf-modal-body">
             <div class="bf-directory-navigation">
-                <button type="button" id="bf-nav-up" class="button" disabled><?php esc_html_e( '上へ', 'bf-basic-guard' ); ?></button>
-                <button type="button" id="bf-create-directory" class="button"><?php esc_html_e( '新しいフォルダ', 'bf-basic-guard' ); ?></button>
+                                            <button type="button" id="bf-nav-up" class="button" disabled><?php esc_html_e( '上へ', 'bf-secret-file-downloader' ); ?></button>
+                                  <button type="button" id="bf-create-directory" class="button"><?php esc_html_e( '新しいフォルダ', 'bf-secret-file-downloader' ); ?></button>
                 <span id="bf-current-path"></span>
             </div>
             <div class="bf-directory-list">
-                <div class="bf-loading" style="display: none;"><?php esc_html_e( '読み込み中...', 'bf-basic-guard' ); ?></div>
+                <div class="bf-loading" style="display: none;"><?php esc_html_e( '読み込み中...', 'bf-secret-file-downloader' ); ?></div>
                 <ul id="bf-directory-items"></ul>
             </div>
         </div>
         <div class="bf-modal-footer">
-            <button type="button" id="bf-select-directory" class="button button-primary"><?php esc_html_e( '選択', 'bf-basic-guard' ); ?></button>
-            <button type="button" id="bf-cancel-directory" class="button"><?php esc_html_e( 'キャンセル', 'bf-basic-guard' ); ?></button>
+                              <button type="button" id="bf-select-directory" class="button button-primary"><?php esc_html_e( '選択', 'bf-secret-file-downloader' ); ?></button>
+                  <button type="button" id="bf-cancel-directory" class="button"><?php esc_html_e( 'キャンセル', 'bf-secret-file-downloader' ); ?></button>
         </div>
     </div>
 </div>
@@ -324,7 +324,7 @@ jQuery(document).ready(function($) {
         if (selectedPath && currentTargetInput) {
             // 選択禁止ディレクトリのチェック
             if (isRestrictedDirectory(selectedPath)) {
-                alert('<?php esc_html_e( "このディレクトリは選択できません。", "bf-basic-guard" ); ?>');
+                alert('<?php esc_html_e( "このディレクトリは選択できません。", "bf-secret-file-downloader" ); ?>');
                 return;
             }
             currentTargetInput.val(selectedPath);
@@ -347,7 +347,7 @@ jQuery(document).ready(function($) {
     // 新しいディレクトリ作成
     $('#bf-create-directory').on('click', function() {
         if (currentPath) {
-            var directoryName = prompt('<?php esc_html_e( "新しいフォルダ名を入力してください：", "bf-basic-guard" ); ?>');
+            var directoryName = prompt('<?php esc_html_e( "新しいフォルダ名を入力してください：", "bf-secret-file-downloader" ); ?>');
             if (directoryName && directoryName.trim()) {
                 createDirectory(currentPath, directoryName.trim());
             }
@@ -430,7 +430,7 @@ jQuery(document).ready(function($) {
                     });
                 } else {
                     console.log('Directory load error:', response);
-                    alert('<?php esc_html_e( "ディレクトリの読み込みに失敗しました。", "bf-basic-guard" ); ?>' + (response.data ? ': ' + response.data : ''));
+                    alert('<?php esc_html_e( "ディレクトリの読み込みに失敗しました。", "bf-secret-file-downloader" ); ?>' + (response.data ? ': ' + response.data : ''));
 
                     // エラー時でも現在のディレクトリ内容を維持（再読み込みしない）
                     // フォールバックが指定されている場合は、フォールバック先を再読み込み
@@ -442,7 +442,7 @@ jQuery(document).ready(function($) {
             error: function(xhr, status, error) {
                 $('.bf-loading').hide();
                 console.log('AJAX error:', xhr, status, error);
-                alert('<?php esc_html_e( "エラーが発生しました。", "bf-basic-guard" ); ?>' + ': ' + error);
+                alert('<?php esc_html_e( "エラーが発生しました。", "bf-secret-file-downloader" ); ?>' + ': ' + error);
 
                 // AJAX エラー時でも現在のディレクトリ内容を維持
                 // フォールバックが指定されている場合は、フォールバック先を再読み込み
@@ -475,13 +475,13 @@ jQuery(document).ready(function($) {
                     loadDirectory(parentPath);
                 } else {
                     console.log('Directory creation error:', response);
-                    alert('<?php esc_html_e( "フォルダの作成に失敗しました。", "bf-basic-guard" ); ?>' + (response.data ? ': ' + response.data : ''));
+                    alert('<?php esc_html_e( "フォルダの作成に失敗しました。", "bf-secret-file-downloader" ); ?>' + (response.data ? ': ' + response.data : ''));
                 }
             },
             error: function(xhr, status, error) {
                 $('.bf-loading').hide();
                 console.log('Directory creation AJAX error:', xhr, status, error);
-                alert('<?php esc_html_e( "エラーが発生しました。", "bf-basic-guard" ); ?>' + ': ' + error);
+                alert('<?php esc_html_e( "エラーが発生しました。", "bf-secret-file-downloader" ); ?>' + ': ' + error);
             }
         });
     }

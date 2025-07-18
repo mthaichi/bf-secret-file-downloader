@@ -35,17 +35,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     <div class="bf-basic-guard-file-list">
         <div class="bf-basic-guard-header">
-            <p><?php esc_html_e( 'BASIC認証で保護されたファイルを管理します。', 'bf-basic-guard' ); ?></p>
+                            <p><?php esc_html_e( 'BASIC認証で保護されたファイルを管理します。', 'bf-secret-file-downloader' ); ?></p>
         </div>
 
         <?php if ( ! $target_directory_set ) : ?>
             <div class="notice notice-warning">
                 <p>
-                    <?php esc_html_e( '対象ディレクトリが設定されていません。', 'bf-basic-guard' ); ?>
+                    <?php esc_html_e( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ); ?>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=bf-basic-guard-settings' ) ); ?>">
-                        <?php esc_html_e( '設定ページ', 'bf-basic-guard' ); ?>
+                                                  <?php esc_html_e( '設定ページ', 'bf-secret-file-downloader' ); ?>
                     </a>
-                    <?php esc_html_e( 'でディレクトリを指定してください。', 'bf-basic-guard' ); ?>
+                                          <?php esc_html_e( 'でディレクトリを指定してください。', 'bf-secret-file-downloader' ); ?>
                 </p>
             </div>
         <?php else : ?>
@@ -53,13 +53,13 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <!-- 現在のパス表示 -->
                 <div class="bf-basic-guard-path">
                     <div class="bf-path-info">
-                        <strong><?php esc_html_e( '現在のディレクトリ:', 'bf-basic-guard' ); ?></strong>
+                        <strong><?php esc_html_e( '現在のディレクトリ:', 'bf-secret-file-downloader' ); ?></strong>
                         <code id="current-path-display"><?php echo esc_html( $current_path_display ); ?></code>
                         <input type="hidden" id="current-path" value="<?php echo esc_attr( $current_path ); ?>">
                         <?php if ( isset( $current_directory_has_password ) && $current_directory_has_password ) : ?>
                             <span class="bf-password-indicator">
                                 <span class="dashicons dashicons-lock"></span>
-                                <span class="bf-password-status-text"><?php esc_html_e( 'パスワード保護中', 'bf-basic-guard' ); ?></span>
+                                <span class="bf-password-status-text"><?php esc_html_e( 'パスワード保護中', 'bf-secret-file-downloader' ); ?></span>
                             </span>
                         <?php endif; ?>
                     </div>
@@ -67,15 +67,15 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <?php if ( ! empty( $current_path ) ) : ?>
                             <button type="button" id="go-up-btn" class="button button-small">
                                 <span class="dashicons dashicons-arrow-up-alt2"></span>
-                                <?php esc_html_e( '上の階層へ', 'bf-basic-guard' ); ?>
+                                <?php esc_html_e( '上の階層へ', 'bf-secret-file-downloader' ); ?>
                             </button>
                         <?php endif; ?>
                         <?php if ( current_user_can( 'manage_options' ) ) : ?>
                                                         <button type="button" id="directory-password-btn" class="button button-small">
                                 <span class="dashicons dashicons-admin-network"></span>
                                 <?php echo ( isset( $current_directory_has_password ) && $current_directory_has_password )
-                                    ? esc_html__( 'パスワード管理', 'bf-basic-guard' )
-                                    : esc_html__( 'パスワード設定', 'bf-basic-guard' ); ?>
+                                                                ? esc_html__( 'パスワード管理', 'bf-secret-file-downloader' )
+                            : esc_html__( 'パスワード設定', 'bf-secret-file-downloader' ); ?>
                             </button>
                         <?php endif; ?>
                     </div>
@@ -86,7 +86,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <!-- ディレクトリ作成とファイルアップロード -->
                     <div class="bf-basic-guard-actions">
                         <div class="bf-actions-header">
-                            <h3><?php esc_html_e( 'ファイル操作', 'bf-basic-guard' ); ?></h3>
+                            <h3><?php esc_html_e( 'ファイル操作', 'bf-secret-file-downloader' ); ?></h3>
                             <div class="bf-action-buttons">
                                 <button type="button" id="create-directory-btn" class="button">
                                     <span class="dashicons dashicons-plus-alt2"></span>

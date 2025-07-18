@@ -5,7 +5,7 @@
  * @package BfBasicGuard
  */
 
-namespace Breadfish\BasicGuard;
+namespace Breadfish\SecretFileDownloader;
 
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
@@ -54,7 +54,7 @@ class FrontEnd {
         // ベースディレクトリを取得
         $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
         if ( empty( $base_directory ) ) {
-            wp_die( __( '対象ディレクトリが設定されていません。', 'bf-basic-guard' ), 500 );
+            wp_die( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ), 500 );
         }
 
         // フルパスを構築
@@ -62,17 +62,17 @@ class FrontEnd {
 
         // セキュリティチェック：許可されたディレクトリのみ
         if ( ! $this->is_allowed_directory( dirname( $full_path ) ) ) {
-            wp_die( __( 'このファイルへのアクセスは許可されていません。', 'bf-basic-guard' ), 403 );
+            wp_die( __( 'このファイルへのアクセスは許可されていません。', 'bf-secret-file-downloader' ), 403 );
         }
 
         // ファイル存在チェック
         if ( ! file_exists( $full_path ) || ! is_file( $full_path ) ) {
-            wp_die( __( '指定されたファイルが見つかりません。', 'bf-basic-guard' ), 404 );
+            wp_die( __( '指定されたファイルが見つかりません。', 'bf-secret-file-downloader' ), 404 );
         }
 
         // 読み込み権限チェック
         if ( ! is_readable( $full_path ) ) {
-            wp_die( __( 'このファイルを読み取る権限がありません。', 'bf-basic-guard' ), 403 );
+            wp_die( __( 'このファイルを読み取る権限がありません。', 'bf-secret-file-downloader' ), 403 );
         }
 
         // 認証が必要な場合のチェック
@@ -318,7 +318,7 @@ class FrontEnd {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title><?php echo esc_html( __( '認証が必要です', 'bf-basic-guard' ) ); ?></title>
+            <title><?php echo esc_html( __( '認証が必要です', 'bf-secret-file-downloader' ) ); ?></title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
                 .auth-container { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -333,17 +333,17 @@ class FrontEnd {
         </head>
         <body>
             <div class="auth-container">
-                <h2 class="auth-title"><?php echo esc_html( __( '認証が必要です', 'bf-basic-guard' ) ); ?></h2>
+                <h2 class="auth-title"><?php echo esc_html( __( '認証が必要です', 'bf-secret-file-downloader' ) ); ?></h2>
                 <form method="post" action="<?php echo esc_url( $current_url ); ?>">
                     <input type="hidden" name="directory_path" value="<?php echo esc_attr( $relative_path ); ?>">
                     <div class="form-group">
-                        <label for="password"><?php echo esc_html( __( 'パスワードを入力してください', 'bf-basic-guard' ) ); ?></label>
+                        <label for="password"><?php echo esc_html( __( 'パスワードを入力してください', 'bf-secret-file-downloader' ) ); ?></label>
                         <input type="password" id="password" name="password" required>
                     </div>
-                    <button type="submit" class="submit-btn"><?php echo esc_html( __( '認証', 'bf-basic-guard' ) ); ?></button>
+                                            <button type="submit" class="submit-btn"><?php echo esc_html( __( '認証', 'bf-secret-file-downloader' ) ); ?></button>
                 </form>
                 <?php if ( isset( $_POST['password'] ) ): ?>
-                    <div class="error-message"><?php echo esc_html( __( 'パスワードが正しくありません。', 'bf-basic-guard' ) ); ?></div>
+                    <div class="error-message"><?php echo esc_html( __( 'パスワードが正しくありません。', 'bf-secret-file-downloader' ) ); ?></div>
                 <?php endif; ?>
             </div>
         </body>

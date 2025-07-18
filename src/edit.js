@@ -35,7 +35,7 @@ export default function Edit({ attributes, setAttributes }) {
 	useEffect(() => {
 		if (file) {
 			if (file.includes('..')) {
-				setFileError(__('無効なファイルパス: ".." は使用できません', 'bf-basic-guard'));
+				setFileError(__('無効なファイルパス: ".." は使用できません', 'bf-secret-file-downloader'));
 			} else {
 				setFileError('');
 			}
@@ -163,16 +163,16 @@ export default function Edit({ attributes, setAttributes }) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={__('ダウンロード設定', 'bf-basic-guard')}>
+				<PanelBody title={__('ダウンロード設定', 'bf-secret-file-downloader')}>
 					<div style={{ marginBottom: '12px' }}>
 						<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-							{__('ファイルパス', 'bf-basic-guard')}
+							{__('ファイルパス', 'bf-secret-file-downloader')}
 						</label>
 						<div style={{ display: 'flex', gap: '8px' }}>
 							<TextControl
 								value={file}
 								onChange={onChangeFile}
-								placeholder={__('例: /path/to/file.pdf', 'bf-basic-guard')}
+								placeholder={__('例: /path/to/file.pdf', 'bf-secret-file-downloader')}
 								style={{ flex: 1 }}
 							/>
 							<Button
@@ -180,7 +180,7 @@ export default function Edit({ attributes, setAttributes }) {
 								onClick={openFileBrowser}
 								style={{ flexShrink: 0 }}
 							>
-								{__('選択', 'bf-basic-guard')}
+								{__('選択', 'bf-secret-file-downloader')}
 							</Button>
 						</div>
 					</div>
@@ -190,12 +190,12 @@ export default function Edit({ attributes, setAttributes }) {
 						</Notice>
 					)}
 					<TextControl
-						label={__('表示テキスト', 'bf-basic-guard')}
+						label={__('表示テキスト', 'bf-secret-file-downloader')}
 						value={text}
 						onChange={onChangeText}
 					/>
 					<SelectControl
-						label={__('表示モード', 'bf-basic-guard')}
+						label={__('表示モード', 'bf-secret-file-downloader')}
 						value={displayMode}
 						options={[
 							{ label: 'ダウンロード', value: 'download' },
@@ -204,18 +204,18 @@ export default function Edit({ attributes, setAttributes }) {
 						onChange={onChangeDisplayMode}
 					/>
 					<SelectControl
-						label={__('ボタン幅', 'bf-basic-guard')}
+						label={__('ボタン幅', 'bf-secret-file-downloader')}
 						value={buttonWidthMode}
 						onChange={onChangeButtonWidthMode}
 						options={[
-							{ label: __('全幅', 'bf-basic-guard'), value: 'full' },
-							{ label: __('ラベルに応じる', 'bf-basic-guard'), value: 'auto' },
-							{ label: __('カスタム', 'bf-basic-guard'), value: 'custom' },
+							{ label: __('全幅', 'bf-secret-file-downloader'), value: 'full' },
+							{ label: __('ラベルに応じる', 'bf-secret-file-downloader'), value: 'auto' },
+							{ label: __('カスタム', 'bf-secret-file-downloader'), value: 'custom' },
 						]}
 					/>
 					{buttonWidthMode === 'custom' && (
 						<TextControl
-							label={__('カスタム幅（例: 200px, 50% など）', 'bf-basic-guard')}
+							label={__('カスタム幅（例: 200px, 50% など）', 'bf-secret-file-downloader')}
 							value={buttonWidthCustom}
 							onChange={onChangeButtonWidthCustom}
 							placeholder="200px"
@@ -228,9 +228,9 @@ export default function Edit({ attributes, setAttributes }) {
 					value={buttonAlign}
 					onChange={(value) => setAttributes({ buttonAlign: value || 'left' })}
 					alignmentControls={[
-						{ icon: 'editor-alignleft', title: __('左', 'bf-basic-guard'), align: 'left' },
-						{ icon: 'editor-aligncenter', title: __('中央', 'bf-basic-guard'), align: 'center' },
-						{ icon: 'editor-alignright', title: __('右', 'bf-basic-guard'), align: 'right' },
+						{ icon: 'editor-alignleft', title: __('左', 'bf-secret-file-downloader'), align: 'left' },
+						{ icon: 'editor-aligncenter', title: __('中央', 'bf-secret-file-downloader'), align: 'center' },
+						{ icon: 'editor-alignright', title: __('右', 'bf-secret-file-downloader'), align: 'right' },
 					]}
 				/>
 			</BlockControls>
@@ -239,13 +239,13 @@ export default function Edit({ attributes, setAttributes }) {
 					className="bf-download-container"
 					style={{ ...style, ...buttonWidthStyle }}
 				>
-					{text || __('ダウンロード', 'bf-basic-guard')}
+					{text || __('ダウンロード', 'bf-secret-file-downloader')}
 				</div>
 			</div>
 
 			{isFileBrowserOpen && (
 				<Modal
-					title={__('ファイルを選択', 'bf-basic-guard')}
+					title={__('ファイルを選択', 'bf-secret-file-downloader')}
 					onRequestClose={() => setIsFileBrowserOpen(false)}
 					style={{ maxWidth: '800px', width: '90vw' }}
 				>
@@ -253,23 +253,23 @@ export default function Edit({ attributes, setAttributes }) {
 						{/* パス表示と上の階層ボタン */}
 						<div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#f1f1f1', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 							<div>
-								<strong>{__('現在のディレクトリ:', 'bf-basic-guard')}</strong>
+								<strong>{__('現在のディレクトリ:', 'bf-secret-file-downloader')}</strong>
 								<code style={{ marginLeft: '8px' }}>
-									{currentPath || __('ルートディレクトリ', 'bf-basic-guard')}
+									{currentPath || __('ルートディレクトリ', 'bf-secret-file-downloader')}
 								</code>
 							</div>
 							{currentPath && (
 								<Button variant="secondary" onClick={goUpDirectory}>
-									{__('上の階層へ', 'bf-basic-guard')}
+									{__('上の階層へ', 'bf-secret-file-downloader')}
 								</Button>
 							)}
 						</div>
 
 						{/* ローディング表示 */}
 						{isLoading && (
-							<div style={{ textAlign: 'center', padding: '20px' }}>
-								{__('読み込み中...', 'bf-basic-guard')}
-							</div>
+															<div style={{ textAlign: 'center', padding: '20px' }}>
+									{__('読み込み中...', 'bf-secret-file-downloader')}
+								</div>
 						)}
 
 						{/* ファイル一覧 */}
@@ -277,20 +277,20 @@ export default function Edit({ attributes, setAttributes }) {
 							<div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px' }}>
 								{browserFiles.length === 0 ? (
 									<div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-										{__('ファイルまたはディレクトリが見つかりませんでした。', 'bf-basic-guard')}
+										{__('ファイルまたはディレクトリが見つかりませんでした。', 'bf-secret-file-downloader')}
 									</div>
 								) : (
 									<table style={{ width: '100%', borderCollapse: 'collapse' }}>
 										<thead>
 											<tr style={{ backgroundColor: '#f9f9f9' }}>
 												<th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>
-													{__('ファイル名', 'bf-basic-guard')}
+													{__('ファイル名', 'bf-secret-file-downloader')}
 												</th>
 												<th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd', width: '100px' }}>
-													{__('タイプ', 'bf-basic-guard')}
+													{__('タイプ', 'bf-secret-file-downloader')}
 												</th>
 												<th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #ddd', width: '80px' }}>
-													{__('操作', 'bf-basic-guard')}
+													{__('操作', 'bf-secret-file-downloader')}
 												</th>
 											</tr>
 										</thead>
@@ -309,8 +309,8 @@ export default function Edit({ attributes, setAttributes }) {
 													</td>
 													<td style={{ padding: '12px', color: '#666' }}>
 														{item.type === 'directory'
-															? __('ディレクトリ', 'bf-basic-guard')
-															: __('ファイル', 'bf-basic-guard')
+															? __('ディレクトリ', 'bf-secret-file-downloader')
+															: __('ファイル', 'bf-secret-file-downloader')
 														}
 													</td>
 													<td style={{ padding: '12px', textAlign: 'center' }}>
@@ -320,7 +320,7 @@ export default function Edit({ attributes, setAttributes }) {
 																size="small"
 																onClick={() => openDirectory(item.path)}
 															>
-																{__('開く', 'bf-basic-guard')}
+																{__('開く', 'bf-secret-file-downloader')}
 															</Button>
 														) : (
 															<Button
@@ -328,7 +328,7 @@ export default function Edit({ attributes, setAttributes }) {
 																size="small"
 																onClick={() => selectFile(item.path)}
 															>
-																{__('選択', 'bf-basic-guard')}
+																{__('選択', 'bf-secret-file-downloader')}
 															</Button>
 														)}
 													</td>
@@ -343,7 +343,7 @@ export default function Edit({ attributes, setAttributes }) {
 						{/* フッターボタン */}
 						<div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
 							<Button variant="secondary" onClick={() => setIsFileBrowserOpen(false)}>
-								{__('キャンセル', 'bf-basic-guard')}
+								{__('キャンセル', 'bf-secret-file-downloader')}
 							</Button>
 						</div>
 					</div>

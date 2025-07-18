@@ -5,7 +5,7 @@
  * @package BfBasicGuard
  */
 
-namespace Breadfish\BasicGuard\Admin;
+namespace Breadfish\SecretFileDownloader\Admin;
 
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
@@ -93,12 +93,13 @@ class SettingsPage {
         // 危険なシステムディレクトリを明示的に禁止
         $forbidden_paths = array(
             '/etc',
-            '/var',
-            '/usr',
+            '/var/log',
+            '/var/cache',
+            '/usr/bin',
+            '/usr/sbin',
             '/bin',
             '/sbin',
             '/root',
-            '/home',
             '/tmp',
             '/proc',
             '/sys',
@@ -463,7 +464,7 @@ class SettingsPage {
         $import = $this->prepare_data();
 
         // ViewRendererを使用してビューをレンダリング
-        \Breadfish\BasicGuard\ViewRenderer::admin( 'settings.php', $import );
+        \Breadfish\SecretFileDownloader\ViewRenderer::admin( 'settings.php', $import );
     }
 
 
@@ -612,7 +613,7 @@ class SettingsPage {
         ?>
         <script type="text/javascript">
         jQuery(document).ready(function($) {
-            alert('<?php esc_html_e( '対象ディレクトリが変更されました。既存のディレクトリパスワードはすべてクリアされました。', 'bf-basic-guard' ); ?>');
+            alert('<?php esc_html_e( '対象ディレクトリが変更されました。既存のディレクトリパスワードはすべてクリアされました。', 'bf-secret-file-downloader' ); ?>');
         });
         </script>
         <?php
@@ -624,7 +625,7 @@ class SettingsPage {
      * @return string ページタイトル
      */
     public function get_page_title() {
-        return __( '設定', 'bf-basic-guard' );
+        return __( '設定', 'bf-secret-file-downloader' );
     }
 
     /**
@@ -633,6 +634,6 @@ class SettingsPage {
      * @return string メニュータイトル
      */
     public function get_menu_title() {
-        return __( '設定', 'bf-basic-guard' );
+        return __( '設定', 'bf-secret-file-downloader' );
     }
 }

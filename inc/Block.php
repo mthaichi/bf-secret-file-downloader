@@ -1,6 +1,6 @@
 <?php
 
-namespace Breadfish\BasicGuard;
+namespace Breadfish\SecretFileDownloader;
 
 /**
  * Gutenbergブロック機能を管理するクラス
@@ -126,11 +126,11 @@ class Block {
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
                 'nonce' => wp_create_nonce( 'bf_basic_guard_nonce' ),
                 'strings' => array(
-                    'password_required' => __( 'パスワードが必要です', 'bf-basic-guard' ),
-                    'enter_password' => __( 'パスワードを入力してください:', 'bf-basic-guard' ),
-                    'incorrect_password' => __( 'パスワードが正しくありません', 'bf-basic-guard' ),
-                    'download_error' => __( 'ダウンロードエラーが発生しました', 'bf-basic-guard' ),
-                    'processing' => __( '処理中...', 'bf-basic-guard' ),
+                                'password_required' => __( 'パスワードが必要です', 'bf-secret-file-downloader' ),
+            'enter_password' => __( 'パスワードを入力してください:', 'bf-secret-file-downloader' ),
+            'incorrect_password' => __( 'パスワードが正しくありません', 'bf-secret-file-downloader' ),
+            'download_error' => __( 'ダウンロードエラーが発生しました', 'bf-secret-file-downloader' ),
+            'processing' => __( '処理中...', 'bf-secret-file-downloader' ),
                 )
             ));
 

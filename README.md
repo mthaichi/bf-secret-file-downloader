@@ -1,4 +1,4 @@
-# BF Basic Guard - テスト環境
+# BF Secret File Downloader - テスト環境
 
 このプラグインは、`@wordpress/env`を使用したDockerベースのPHPUnitテスト環境が設定されています。
 
@@ -37,7 +37,7 @@ npm run env:start
 npm run phpunit
 
 # 特定のテストファイルを実行
-npm run wp-env run tests-cli --env-cwd=wp-content/plugins/bf-basic-guard ./vendor/bin/phpunit tests/test-admin.php
+npm run wp-env run tests-cli --env-cwd=wp-content/plugins/bf-secret-file-downloader ./vendor/bin/phpunit tests/test-admin.php
 ```
 
 ## 利用可能なコマンド
@@ -78,7 +78,7 @@ npm run phpunit:watch
 ## ディレクトリ構造
 
 ```
-bf-basic-guard/
+bf-secret-file-downloader/
 ├── .wp-env.json          # wp-env設定ファイル
 ├── package.json          # npm設定とスクリプト
 ├── composer.json         # Composer設定

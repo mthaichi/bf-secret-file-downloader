@@ -9,24 +9,24 @@ class ComposerStaticInitadaf65c464a695615322c67cd71439ed
     public static $prefixLengthsPsr4 = array (
         'B' => 
         array (
-            'Breadfish\\BasicGuard\\' => 21,
+            'Breadfish\\SecretFileDownloader\\' => 31,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Breadfish\\BasicGuard\\' => 
+        'Breadfish\\SecretFileDownloader\\' => 
         array (
             0 => __DIR__ . '/../..' . '/inc',
         ),
     );
 
     public static $classMap = array (
-        'Breadfish\\BasicGuard\\Admin' => __DIR__ . '/../..' . '/inc/Admin.php',
-        'Breadfish\\BasicGuard\\Admin\\FileListPage' => __DIR__ . '/../..' . '/inc/Admin/FileListPage.php',
-        'Breadfish\\BasicGuard\\Admin\\SettingsPage' => __DIR__ . '/../..' . '/inc/Admin/SettingsPage.php',
-        'Breadfish\\BasicGuard\\Block' => __DIR__ . '/../..' . '/inc/Block.php',
-        'Breadfish\\BasicGuard\\FrontEnd' => __DIR__ . '/../..' . '/inc/FrontEnd.php',
-        'Breadfish\\BasicGuard\\ViewRenderer' => __DIR__ . '/../..' . '/inc/ViewRenderer.php',
+        'Breadfish\\SecretFileDownloader\\Admin' => __DIR__ . '/../..' . '/inc/Admin.php',
+        'Breadfish\\SecretFileDownloader\\Admin\\FileListPage' => __DIR__ . '/../..' . '/inc/Admin/FileListPage.php',
+        'Breadfish\\SecretFileDownloader\\Admin\\SettingsPage' => __DIR__ . '/../..' . '/inc/Admin/SettingsPage.php',
+        'Breadfish\\SecretFileDownloader\\Block' => __DIR__ . '/../..' . '/inc/Block.php',
+        'Breadfish\\SecretFileDownloader\\FrontEnd' => __DIR__ . '/../..' . '/inc/FrontEnd.php',
+        'Breadfish\\SecretFileDownloader\\ViewRenderer' => __DIR__ . '/../..' . '/inc/ViewRenderer.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
     );
 

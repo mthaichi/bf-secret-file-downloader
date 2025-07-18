@@ -2,7 +2,7 @@ parameters:
     level: 3
     paths:
         - inc/
-        - bf-basic-guard.php
+        - bf-secret-file-downloader.php
     parallel:
         maximumNumberOfProcesses: 1
     memory_limit: 512M

@@ -6,5 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Breadfish\\BasicGuard\\' => array($baseDir . '/inc'),
+    'Breadfish\\SecretFileDownloader\\' => array($baseDir . '/inc'),
 );

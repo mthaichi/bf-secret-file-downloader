@@ -5,7 +5,7 @@
  * @package BfBasicGuard
  */
 
-namespace Breadfish\BasicGuard;
+namespace Breadfish\SecretFileDownloader;
 
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,8 +37,8 @@ class Admin {
      */
     public function __construct() {
         // コンストラクタではフックを登録しない
-        $this->file_list_page = new \Breadfish\BasicGuard\Admin\FileListPage();
-        $this->settings_page = new \Breadfish\BasicGuard\Admin\SettingsPage();
+        $this->file_list_page = new \Breadfish\SecretFileDownloader\Admin\FileListPage();
+        $this->settings_page = new \Breadfish\SecretFileDownloader\Admin\SettingsPage();
     }
 
     /**
@@ -58,8 +58,8 @@ class Admin {
     public function add_admin_menu() {
         // メインメニューページを追加
         add_menu_page(
-            __( 'BF Basic Guard', 'bf-basic-guard' ), // ページタイトル
-            __( 'BF Basic Guard', 'bf-basic-guard' ), // メニュータイトル
+                    __( 'BF Secret File Downloader', 'bf-secret-file-downloader' ), // ページタイトル
+        __( 'BF Secret File Downloader', 'bf-secret-file-downloader' ), // メニュータイトル
             'manage_options', // 権限
             $this->file_list_page::PAGE_SLUG, // メニュースラッグ
             array( $this->file_list_page, 'render' ), // コールバック関数

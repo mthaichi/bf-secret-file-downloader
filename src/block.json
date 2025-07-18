@@ -1,9 +1,9 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "bf-basic-guard/downloader",
-	"title": "BF Basic Guard Downloader",
-	"description": "パスワード保護付きファイルダウンロードブロック",
+	"name": "bf-secret-file-downloader/downloader",
+	"title": "Secret File Downloader",
+	"description": "BASIC認証で保護されたファイルのダウンロードボタンを表示します。",
 	"category": "widgets",
 	"icon": "download",
 	"keywords": [
@@ -13,7 +13,7 @@
 		"protection"
 	],
 	"version": "1.0.0",
-	"textdomain": "bf-basic-guard",
+	"textdomain": "bf-secret-file-downloader",
 	"supports": {
 		"html": false,
 		"color": {
@@ -52,7 +52,8 @@
 			"type": "string",
 			"default": "left",
 			"enum": ["left", "center", "right"]
-		}
+		},
+		"align": ["left", "center", "right"]
 	},
 	"variations": [
 		{
@@ -107,17 +108,15 @@
 		},
 		"text": {
 			"type": "string",
-			"default": "ダウンロード"
+			"default": ""
 		},
 		"displayMode": {
 			"type": "string",
-			"default": "download",
-			"enum": ["download", "display"]
+			"default": "button"
 		},
 		"buttonWidthMode": {
 			"type": "string",
-			"default": "auto",
-			"enum": ["full", "auto", "custom"]
+			"default": "auto"
 		},
 		"buttonWidthCustom": {
 			"type": "string",
@@ -125,8 +124,7 @@
 		},
 		"buttonAlign": {
 			"type": "string",
-			"default": "left",
-			"enum": ["left", "center", "right"]
+			"default": "left"
 		}
 	},
 	"example": {
@@ -137,7 +135,7 @@
 		}
 	},
 	"editorScript": "file:./index.js",
-	"editorStyle": "file:./index.css",
-	"style": "file:./index.css",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style.css",
 	"render": "file:./render.php"
 }

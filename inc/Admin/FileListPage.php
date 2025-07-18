@@ -5,7 +5,7 @@
  * @package BfBasicGuard
  */
 
-namespace Breadfish\BasicGuard\Admin;
+namespace Breadfish\SecretFileDownloader\Admin;
 
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
@@ -652,7 +652,7 @@ class FileListPage {
         $import = $this->prepare_data();
 
         // ViewRendererを使用してビューをレンダリング
-        \Breadfish\BasicGuard\ViewRenderer::admin( 'file-list.php', $import );
+        \Breadfish\SecretFileDownloader\ViewRenderer::admin( 'file-list.php', $import );
     }
 
     /**
@@ -904,6 +904,11 @@ class FileListPage {
                 continue;
             }
 
+            // 隠しファイル（ドットから始まるファイル）を除外
+            if ( strpos( $item, '.' ) === 0 ) {
+                continue;
+            }
+
             $full_item_path = $full_path . DIRECTORY_SEPARATOR . $item;
 
             // 相対パスを構築
@@ -991,7 +996,7 @@ class FileListPage {
      * @return string ページタイトル
      */
     public function get_page_title() {
-        return __( 'ファイルリスト', 'bf-basic-guard' );
+        return __( 'ファイルリスト', 'bf-secret-file-downloader' );
     }
 
     /**
@@ -1082,7 +1087,7 @@ class FileListPage {
      * @return string メニュータイトル
      */
     public function get_menu_title() {
-        return __( 'ファイルリスト', 'bf-basic-guard' );
+        return __( 'ファイルリスト', 'bf-secret-file-downloader' );
     }
 
     /**
@@ -1105,6 +1110,10 @@ class FileListPage {
             $count = 0;
             foreach ( $items as $item ) {
                 if ( $item !== '.' && $item !== '..' ) {
+                    // 隠しファイル（ドットから始まるファイル）を除外
+                    if ( strpos( $item, '.' ) === 0 ) {
+                        continue;
+                    }
                     $count++;
                 }
             }

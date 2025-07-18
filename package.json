@@ -1,30 +1,33 @@
 {
-  "name": "bf-basic-guard",
+  "name": "bf-secret-file-downloader",
   "version": "1.0.0",
   "description": "BASIC認証もしくは非公開エリアに置かれたディレクトリに配置されたファイルを管理するWordPressプラグイン",
+  "main": "src/index.js",
   "scripts": {
     "build": "wp-scripts build",
     "start": "wp-scripts start",
-    "wp-env": "wp-env",
-    "env:start": "wp-env start",
-    "env:stop": "wp-env stop",
-    "env:destroy": "wp-env destroy",
-    "phpunit": "wp-env run tests-cli --env-cwd=wp-content/plugins/bf-basic-guard ./vendor/bin/phpunit",
-    "phpunit:watch": "wp-env run tests-cli --env-cwd=wp-content/plugins/bf-basic-guard ./vendor/bin/phpunit --watch",
-    "release": "npm run build && npm run create-release",
-    "create-release": "node ./scripts/create-release.js"
+    "format": "wp-scripts format",
+    "lint:css": "wp-scripts lint-style",
+    "lint:js": "wp-scripts lint-js",
+    "lint:md:docs": "wp-scripts lint-md-docs",
+    "lint:pkg-json": "wp-scripts lint-pkg-json",
+    "packages-update": "wp-scripts packages-update",
+    "plugin-zip": "wp-scripts plugin-zip",
+    "test:e2e": "wp-scripts test-e2e",
+    "test:unit": "wp-scripts test-unit-js",
+    "phpunit": "wp-env run tests-cli --env-cwd=wp-content/plugins/bf-secret-file-downloader ./vendor/bin/phpunit",
+    "phpunit:watch": "wp-env run tests-cli --env-cwd=wp-content/plugins/bf-secret-file-downloader ./vendor/bin/phpunit --watch",
+    "release": "node scripts/create-release.js"
   },
   "devDependencies": {
-    "@wordpress/env": "^10.0.0",
-    "@wordpress/scripts": "^26.0.0",
-    "archiver": "^6.0.1"
+    "@wordpress/scripts": "^26.0.0"
   },
-  "keywords": [
-    "wordpress",
-    "plugin",
-    "basic-auth",
-    "file-management"
-  ],
-  "author": "Breadfish",
-  "license": "GPL-2.0-or-later"
+  "dependencies": {
+    "@wordpress/block-editor": "^12.0.0",
+    "@wordpress/blocks": "^12.0.0",
+    "@wordpress/components": "^25.0.0",
+    "@wordpress/data": "^9.0.0",
+    "@wordpress/element": "^5.0.0",
+    "@wordpress/i18n": "^4.0.0"
+  }
 }

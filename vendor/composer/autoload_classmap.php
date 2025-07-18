@@ -6,11 +6,11 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Breadfish\\BasicGuard\\Admin' => $baseDir . '/inc/Admin.php',
-    'Breadfish\\BasicGuard\\Admin\\FileListPage' => $baseDir . '/inc/Admin/FileListPage.php',
-    'Breadfish\\BasicGuard\\Admin\\SettingsPage' => $baseDir . '/inc/Admin/SettingsPage.php',
-    'Breadfish\\BasicGuard\\Block' => $baseDir . '/inc/Block.php',
-    'Breadfish\\BasicGuard\\FrontEnd' => $baseDir . '/inc/FrontEnd.php',
-    'Breadfish\\BasicGuard\\ViewRenderer' => $baseDir . '/inc/ViewRenderer.php',
+    'Breadfish\\SecretFileDownloader\\Admin' => $baseDir . '/inc/Admin.php',
+    'Breadfish\\SecretFileDownloader\\Admin\\FileListPage' => $baseDir . '/inc/Admin/FileListPage.php',
+    'Breadfish\\SecretFileDownloader\\Admin\\SettingsPage' => $baseDir . '/inc/Admin/SettingsPage.php',
+    'Breadfish\\SecretFileDownloader\\Block' => $baseDir . '/inc/Block.php',
+    'Breadfish\\SecretFileDownloader\\FrontEnd' => $baseDir . '/inc/FrontEnd.php',
+    'Breadfish\\SecretFileDownloader\\ViewRenderer' => $baseDir . '/inc/ViewRenderer.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
 );

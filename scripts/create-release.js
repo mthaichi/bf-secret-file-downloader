@@ -5,11 +5,10 @@ const { execSync } = require('child_process');
 
 // リリースに含めるファイルとディレクトリ
 const includeFiles = [
-  'bf-basic-guard.php',
+  'bf-secret-file-downloader.php',
   'composer.json',
   'README.md',
   'inc/',
-  'src/',
   'vendor/'
 ];
 
@@ -56,9 +55,9 @@ function createRelease() {
     const filePath = path.resolve(file);
     if (fs.existsSync(filePath)) {
       if (fs.statSync(filePath).isDirectory()) {
-        archive.directory(file, `bf-basic-guard/${file}`);
+        archive.directory(file, `bf-secret-file-downloader/${file}`);
       } else {
-        archive.file(file, { name: `bf-basic-guard/${file}` });
+        archive.file(file, { name: `bf-secret-file-downloader/${file}` });
       }
     }
   });
