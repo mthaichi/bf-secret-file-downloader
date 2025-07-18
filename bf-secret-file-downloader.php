@@ -129,8 +129,3 @@ function bf_secret_file_downloader_init() {
 }
 
 add_action( 'init', 'bf_secret_file_downloader_init' );
-
-// テキストドメインを読み込み（プラグイン初期化と同じタイミング）
-//add_action( 'plugins_loaded', 'bf_secret_file_downloader_load_textdomain' );
-
-// プラグインを初期化
