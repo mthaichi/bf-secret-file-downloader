@@ -34,16 +34,18 @@ class ViewRenderer {
             wp_die(
                 sprintf(
                     /* translators: %s: ビューファイルのパス */
-                    esc_html__( 'ビューファイルが見つかりません: %s', 'bf-basic-guard' ),
+                    esc_html__( 'ビューファイルが見つかりません: %s', 'bf-secret-file-downloader' ),
                     esc_html( $view_type . '/' . $view_file )
                 )
             );
         }
 
-        // インポートされた変数を展開
-        extract( $import, EXTR_SKIP );
-
         // ビューファイルを安全にインクルード
+        // 変数を明示的に渡す（extractを使用しない）
+        // グローバルスコープで変数を利用可能にする
+        foreach ( $import as $key => $value ) {
+            $$key = $value;
+        }
         include $view_path;
     }
 

@@ -65,7 +65,7 @@ class Block {
             $asset_data = include $asset_file;
 
             wp_enqueue_script(
-                'bf-basic-guard-editor',
+                'bf-secret-file-downloader-editor',
                 $build_dir_url . 'index.js',
                 $asset_data['dependencies'],
                 $asset_data['version']
@@ -73,7 +73,7 @@ class Block {
 
             // エディタ用のデータを渡す
             wp_localize_script(
-                'bf-basic-guard-editor',
+                'bf-secret-file-downloader-editor',
                 'bfBasicGuardEditor',
                 array(
                     'ajaxUrl' => admin_url( 'admin-ajax.php' ),
@@ -89,7 +89,7 @@ class Block {
         $css_file = $build_dir_path . 'index.css';
         if ( file_exists( $css_file ) ) {
             wp_enqueue_style(
-                'bf-basic-guard-editor',
+                'bf-secret-file-downloader-editor',
                 $build_dir_url . 'index.css',
                 array(),
                 filemtime( $css_file )
@@ -104,14 +104,14 @@ class Block {
      */
     public function enqueue_frontend_styles() {
         // ブロックが使用されている場合のみスタイルとスクリプトを読み込み
-        if ( has_block( 'bf-basic-guard/downloader' ) ) {
+        if ( has_block( 'bf-secret-file-downloader/downloader' ) ) {
             $build_dir_path = plugin_dir_path( dirname( __FILE__ ) ) . 'build/';
             $build_dir_url = plugin_dir_url( dirname( __FILE__ ) ) . 'build/';
             $css_file = $build_dir_path . 'index.css';
 
             if ( file_exists( $css_file ) ) {
                 wp_enqueue_style(
-                    'bf-basic-guard-frontend',
+                    'bf-secret-file-downloader-frontend',
                     $build_dir_url . 'index.css',
                     array(),
                     filemtime( $css_file )
@@ -137,13 +137,13 @@ class Block {
             // カスタムスタイル用CSS - エディタスタイルと統一
             $custom_css = '
                 /* デフォルトスタイル（ボタン）の追加調整 */
-                .wp-block-bf-basic-guard-downloader .bf-download-btn {
+                .wp-block-bf-secret-file-downloader-downloader .bf-download-btn {
                     font-family: inherit;
                     line-height: 1.4;
                 }
 
                 /* リンクスタイルの調整 */
-                .wp-block-bf-basic-guard-downloader.is-style-link .bf-download-btn {
+                .wp-block-bf-secret-file-downloader-downloader.is-style-link .bf-download-btn {
                     background: none !important;
                     color: #0073aa !important;
                     text-decoration: underline !important;
@@ -156,7 +156,7 @@ class Block {
                     transform: none !important;
                     transition: color 0.2s ease !important;
                 }
-                .wp-block-bf-basic-guard-downloader.is-style-link .bf-download-btn:hover {
+                .wp-block-bf-secret-file-downloader-downloader.is-style-link .bf-download-btn:hover {
                     background: none !important;
                     color: #005177 !important;
                     text-decoration: underline !important;
@@ -164,7 +164,7 @@ class Block {
                     box-shadow: none !important;
                 }
             ';
-            wp_add_inline_style( 'bf-basic-guard-frontend', $custom_css );
+            wp_add_inline_style( 'bf-secret-file-downloader-frontend', $custom_css );
         }
     }
 }

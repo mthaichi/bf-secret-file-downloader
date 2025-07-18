@@ -32,67 +32,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap">
     <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 
-    <div class="bf-basic-guard-settings">
-        <div class="bf-basic-guard-header">
+    <div class="bf-secret-file-downloader-settings">
+        <div class="bf-secret-file-downloader-header">
                             <p><?php esc_html_e( 'BF Secret File Downloaderの設定を管理します。', 'bf-secret-file-downloader' ); ?></p>
         </div>
 
-        <div class="bf-basic-guard-content">
-                            <h2><?php esc_html_e( '基本設定', 'bf-secret-file-downloader' ); ?></h2>
+        <div class="bf-secret-file-downloader-content">
+            <h2><?php esc_html_e( '基本設定', 'bf-secret-file-downloader' ); ?></h2>
 
-            <?php if ( isset( $enable_auth ) || isset( $max_file_size ) ) : ?>
-                <div class="bf-basic-guard-current-settings">
-                    <h3><?php esc_html_e( '現在の設定', 'bf-secret-file-downloader' ); ?></h3>
-                    <ul>
-                        <?php if ( isset( $enable_auth ) ) : ?>
-                            <li>
-                                                            <?php esc_html_e( 'BASIC認証', 'bf-secret-file-downloader' ); ?>:
-                            <strong><?php echo $enable_auth ? __( '有効', 'bf-secret-file-downloader' ) : __( '無効', 'bf-secret-file-downloader' ); ?></strong>
-                            </li>
-                        <?php endif; ?>
-                        <?php if ( isset( $max_file_size ) ) : ?>
-                            <li>
-                                <?php esc_html_e( '最大ファイルサイズ', 'bf-secret-file-downloader' ); ?>:
-                                <strong><?php echo esc_html( $max_file_size . 'MB' ); ?></strong>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-            <?php else : ?>
-                <p><?php esc_html_e( '設定機能は今後実装予定です。', 'bf-secret-file-downloader' ); ?></p>
-            <?php endif; ?>
 
-            <!-- 今後実装予定の設定項目 -->
-            <div class="bf-basic-guard-placeholder">
-                                    <h3><?php esc_html_e( '実装予定の設定項目', 'bf-secret-file-downloader' ); ?></h3>
-                <ul class="bf-basic-guard-settings-list">
-                    <li>
-                        <span class="dashicons dashicons-lock"></span>
-                                                  <?php esc_html_e( 'BASIC認証設定', 'bf-secret-file-downloader' ); ?>
-                    </li>
-                    <li>
-                        <span class="dashicons dashicons-upload"></span>
-                                                  <?php esc_html_e( 'ファイルアップロード制限', 'bf-secret-file-downloader' ); ?>
-                    </li>
-                    <li>
-                        <span class="dashicons dashicons-chart-line"></span>
-                                                  <?php esc_html_e( 'ダウンロードログ設定', 'bf-secret-file-downloader' ); ?>
-                    </li>
-                    <li>
-                        <span class="dashicons dashicons-shield"></span>
-                                                  <?php esc_html_e( 'セキュリティ設定', 'bf-secret-file-downloader' ); ?>
-                    </li>
-                </ul>
-            </div>
 
             <!-- 設定フォーム -->
-            <div class="bf-basic-guard-settings-form">
+            <div class="bf-secret-file-downloader-settings-form">
                 <form method="post" action="options.php">
                     <?php settings_fields( 'bf_basic_guard_settings' ); ?>
                     <?php do_settings_sections( 'bf_basic_guard_settings' ); ?>
 
                     <!-- 対象ディレクトリ設定 -->
-                    <h2><?php esc_html_e( '対象ディレクトリ設定', 'bf-secret-file-downloader' ); ?></h2>
                     <table class="form-table">
                         <tr>
                             <th scope="row"><?php esc_html_e( '対象ディレクトリ', 'bf-secret-file-downloader' ); ?></th>
@@ -111,8 +67,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
                     <!-- その他の設定 -->
-                    <h2><?php esc_html_e( 'その他の設定', 'bf-secret-file-downloader' ); ?></h2>
-                    <table class="form-table">
+                      <table class="form-table">
                         <tr>
                             <th scope="row"><?php esc_html_e( 'BASIC認証', 'bf-secret-file-downloader' ); ?></th>
                             <td>

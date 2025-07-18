@@ -21,7 +21,7 @@ class SettingsPage {
     /**
      * ページスラッグ
      */
-    const PAGE_SLUG = 'bf-basic-guard-settings';
+    const PAGE_SLUG = 'bf-secret-file-downloader-settings';
 
     /**
      * コンストラクタ
@@ -383,18 +383,18 @@ class SettingsPage {
 
         // 入力値チェック
         if ( empty( $parent_path ) || empty( $directory_name ) ) {
-            wp_send_json_error( __( 'パスまたはディレクトリ名が指定されていません。', 'bf-basic-guard' ) );
+            wp_send_json_error( __( 'パスまたはディレクトリ名が指定されていません。', 'bf-secret-file-downloader' ) );
         }
 
         // ディレクトリ名のバリデーション
         if ( ! preg_match( '/^[a-zA-Z0-9_\-\.]+$/', $directory_name ) ) {
-            wp_send_json_error( __( 'ディレクトリ名に使用できない文字が含まれています。', 'bf-basic-guard' ) );
+            wp_send_json_error( __( 'ディレクトリ名に使用できない文字が含まれています。', 'bf-secret-file-downloader' ) );
         }
 
         // 親ディレクトリの存在チェック
         $real_parent_path = realpath( $parent_path );
         if ( $real_parent_path === false || ! is_dir( $real_parent_path ) ) {
-            wp_send_json_error( __( '親ディレクトリが存在しません。', 'bf-basic-guard' ) );
+            wp_send_json_error( __( '親ディレクトリが存在しません。', 'bf-secret-file-downloader' ) );
         }
 
         // セキュリティ：WordPress内のディレクトリのみ許可
@@ -419,7 +419,7 @@ class SettingsPage {
         foreach ( $wp_system_paths as $wp_system_path ) {
             $real_wp_system_path = realpath( $wp_system_path );
             if ( $real_wp_system_path !== false && ( $real_parent_path === $real_wp_system_path || strpos( $real_parent_path, $real_wp_system_path . DIRECTORY_SEPARATOR ) === 0 ) ) {
-                wp_send_json_error( __( 'WordPressシステムディレクトリまたはそのサブディレクトリ内にはディレクトリを作成できません。', 'bf-basic-guard' ) );
+                wp_send_json_error( __( 'WordPressシステムディレクトリまたはそのサブディレクトリ内にはディレクトリを作成できません。', 'bf-secret-file-downloader' ) );
             }
         }
 

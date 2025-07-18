@@ -59,11 +59,59 @@ function bf_secret_file_downloader_autoloader( $class_name ) {
 spl_autoload_register( 'bf_secret_file_downloader_autoloader' );
 
 /**
+ * テキストドメインを読み込みます
+ */
+function bf_secret_file_downloader_load_textdomain() {
+    // サイトのロケールを取得
+    $locale = determine_locale();
+    // 翻訳ファイルのパスを指定
+    $path = plugin_dir_path( __FILE__ ) . 'languages';
+
+    // デバッグ用ログ
+    error_log( 'BF Secret File Downloader: Current locale: ' . $locale );
+    error_log( 'BF Secret File Downloader: Translation path: ' . $path );
+    error_log( 'BF Secret File Downloader: WPLANG option: ' . get_option( 'WPLANG', 'not set' ) );
+    error_log( 'BF Secret File Downloader: get_locale(): ' . get_locale() );
+
+    // 英語の設定のみ翻訳ファイルを読み込み
+    if ( strpos( $locale, 'en' ) === 0 ) {
+        error_log( 'BF Secret File Downloader: Loading English translation file' );
+        // PHPファイルの翻訳読み込み
+        $mo_file = $path . '/bf-secret-file-downloader-en_US.mo';
+        error_log( 'BF Secret File Downloader: MO file path: ' . $mo_file );
+        error_log( 'BF Secret File Downloader: MO file exists: ' . ( file_exists( $mo_file ) ? 'yes' : 'no' ) );
+
+        $result = load_textdomain( 'bf-secret-file-downloader', $mo_file );
+        error_log( 'BF Secret File Downloader: Translation load result: ' . ( $result ? 'success' : 'failed' ) );
+
+    } else {
+        error_log( 'BF Secret File Downloader: Not loading translation file (non-English locale)' );
+    }
+
+    // 翻訳テスト
+    $test_string = __( 'BF Secret File Downloader', 'bf-secret-file-downloader' );
+    error_log( 'BF Secret File Downloader: Test translation: ' . $test_string );
+
+    // より詳細な翻訳テスト
+    $test_string2 = __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' );
+    error_log( 'BF Secret File Downloader: Test translation 2: ' . $test_string2 );
+
+    // 管理画面用の翻訳テスト
+    $test_string3 = __( 'BASIC認証で保護されたファイルを管理します。', 'bf-secret-file-downloader' );
+    error_log( 'BF Secret File Downloader: Test translation 3: ' . $test_string3 );
+
+    // メニュー用の翻訳テスト
+    $test_string4 = __( 'BF Secret File Downloader', 'bf-secret-file-downloader' );
+    error_log( 'BF Secret File Downloader: Test translation 4: ' . $test_string4 );
+}
+
+/**
  * プラグインを初期化します
  */
 function bf_secret_file_downloader_init() {
+
     // テキストドメインを読み込み
-    load_plugin_textdomain( 'bf-secret-file-downloader', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+    bf_secret_file_downloader_load_textdomain();
 
     // 管理画面でのみ実行
     if ( is_admin() ) {
@@ -80,5 +128,9 @@ function bf_secret_file_downloader_init() {
     $block->init();
 }
 
-// プラグインを初期化
 add_action( 'init', 'bf_secret_file_downloader_init' );
+
+// テキストドメインを読み込み（プラグイン初期化と同じタイミング）
+//add_action( 'plugins_loaded', 'bf_secret_file_downloader_load_textdomain' );
+
+// プラグインを初期化
