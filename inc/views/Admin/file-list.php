@@ -383,6 +383,77 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 </div>
 
+<!-- URLコピーモーダル -->
+<div id="bf-url-copy-modal" class="bf-modal" style="display: none;">
+    <div class="bf-modal-content" style="width: 70%; max-width: 700px;">
+        <div class="bf-modal-header">
+            <h3><?php esc_html_e( 'ファイルアクセスURL', 'bf-secret-file-downloader' ); ?></h3>
+            <span class="bf-modal-close">&times;</span>
+        </div>
+        <div class="bf-modal-body">
+            <div class="bf-url-info">
+                <h4 id="bf-url-file-name"><?php esc_html_e( 'ファイル名', 'bf-secret-file-downloader' ); ?></h4>
+                <p class="description"><?php esc_html_e( '以下のURLを使用してファイルにアクセスできます。', 'bf-secret-file-downloader' ); ?></p>
+            </div>
+
+            <div class="bf-url-options">
+                <h4><?php esc_html_e( 'アクセス方法を選択', 'bf-secret-file-downloader' ); ?></h4>
+                <div class="bf-url-option-group">
+                    <label class="bf-url-option">
+                        <input type="radio" name="url_type" value="download" checked>
+                        <span class="bf-option-content">
+                            <span class="bf-option-icon dashicons dashicons-download"></span>
+                            <div class="bf-option-text">
+                                <strong><?php esc_html_e( 'ダウンロード', 'bf-secret-file-downloader' ); ?></strong>
+                                <span><?php esc_html_e( 'ファイルを直接ダウンロードします', 'bf-secret-file-downloader' ); ?></span>
+                            </div>
+                        </span>
+                    </label>
+                    <label class="bf-url-option">
+                        <input type="radio" name="url_type" value="display">
+                        <span class="bf-option-content">
+                            <span class="bf-option-icon dashicons dashicons-visibility"></span>
+                            <div class="bf-option-text">
+                                <strong><?php esc_html_e( 'その場で表示', 'bf-secret-file-downloader' ); ?></strong>
+                                <span><?php esc_html_e( 'ブラウザでファイルを表示します', 'bf-secret-file-downloader' ); ?></span>
+                            </div>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="bf-url-display">
+                <label for="bf-url-input"><?php esc_html_e( 'URL:', 'bf-secret-file-downloader' ); ?></label>
+                <div class="bf-url-input-group">
+                    <input type="text" id="bf-url-input" class="regular-text" readonly>
+                    <button type="button" id="bf-copy-url-btn" class="button">
+                        <span class="dashicons dashicons-clipboard"></span>
+                        <?php esc_html_e( 'コピー', 'bf-secret-file-downloader' ); ?>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bf-url-preview">
+                <h4><?php esc_html_e( 'プレビュー', 'bf-secret-file-downloader' ); ?></h4>
+                <div class="bf-preview-frame">
+                    <iframe id="bf-url-preview-frame" style="width: 100%; height: 300px; border: 1px solid #ddd; border-radius: 4px;"></iframe>
+                </div>
+            </div>
+        </div>
+        <div class="bf-modal-footer">
+            <div class="bf-action-buttons-right">
+                <button type="button" id="bf-open-url-btn" class="button button-primary">
+                    <span class="dashicons dashicons-external"></span>
+                    <?php esc_html_e( '新しいタブで開く', 'bf-secret-file-downloader' ); ?>
+                </button>
+                <button type="button" id="bf-close-url-modal" class="button">
+                    <?php esc_html_e( '閉じる', 'bf-secret-file-downloader' ); ?>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .bf-secret-file-downloader-path {
     background: #f1f1f1;
@@ -941,6 +1012,154 @@ if ( ! defined( 'ABSPATH' ) ) {
     background-color: #0073aa;
     color: #fff;
 }
+
+/* URLコピーモーダルのスタイル */
+.bf-url-info {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+}
+
+.bf-url-info h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.bf-url-options {
+    margin-bottom: 20px;
+}
+
+.bf-url-options h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.bf-url-option-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.bf-url-option {
+    flex: 1;
+    min-width: 200px;
+    cursor: pointer;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.3s ease;
+    background-color: #fff;
+}
+
+.bf-url-option:hover {
+    border-color: #0073aa;
+    background-color: #f0f8ff;
+}
+
+.bf-url-option input[type="radio"] {
+    display: none;
+}
+
+.bf-url-option input[type="radio"]:checked + .bf-option-content {
+    color: #0073aa;
+}
+
+.bf-url-option input[type="radio"]:checked + .bf-option-content .bf-option-icon {
+    color: #0073aa;
+}
+
+.bf-option-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bf-option-icon {
+    font-size: 24px;
+    color: #666;
+    flex-shrink: 0;
+}
+
+.bf-option-text {
+    flex: 1;
+}
+
+.bf-option-text strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 16px;
+}
+
+.bf-option-text span {
+    font-size: 14px;
+    color: #666;
+}
+
+.bf-url-display {
+    margin-bottom: 20px;
+}
+
+.bf-url-display label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.bf-url-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.bf-url-input-group input {
+    flex: 1;
+    font-family: monospace;
+    font-size: 14px;
+    background-color: #f9f9f9;
+}
+
+.bf-url-input-group button {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.bf-url-preview {
+    margin-top: 20px;
+}
+
+.bf-url-preview h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.bf-preview-frame {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .bf-url-option-group {
+        flex-direction: column;
+    }
+
+    .bf-url-option {
+        min-width: auto;
+    }
+
+    .bf-url-input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .bf-url-input-group button {
+        margin-top: 10px;
+    }
+}
 </style>
 
 <script type="text/javascript">
@@ -975,6 +1194,18 @@ jQuery(document).ready(function($) {
     $('#bf-directory-password-modal').on('click', function(e) {
         if (e.target === this) {
             closeDirectoryPasswordModal();
+        }
+    });
+
+    // URLコピーモーダル関連イベント
+    $('.bf-modal-close, #bf-close-url-modal').on('click', function() {
+        closeUrlCopyModal();
+    });
+
+    // URLコピーモーダル外クリックで閉じる
+    $('#bf-url-copy-modal').on('click', function(e) {
+        if (e.target === this) {
+            closeUrlCopyModal();
         }
     });
 
@@ -1013,6 +1244,21 @@ jQuery(document).ready(function($) {
             e.preventDefault();
             saveDirectoryPassword();
         }
+    });
+
+    // URLコピーモーダル内のイベント
+    $(document).on('change', 'input[name="url_type"]', function() {
+        updateUrlDisplay();
+    });
+
+    // URLコピーボタン
+    $('#bf-copy-url-btn').on('click', function() {
+        copyUrlToClipboard();
+    });
+
+    // 新しいタブで開くボタン
+    $('#bf-open-url-btn').on('click', function() {
+        openUrlInNewTab();
     });
 
     // 上の階層へボタンのクリック処理
@@ -1107,7 +1353,7 @@ jQuery(document).ready(function($) {
         var filePath = $link.data('file-path');
         var fileName = $link.data('file-name');
 
-        copyUrlToClipboard(filePath, fileName);
+        openUrlCopyModal(filePath, fileName);
     });
 
         // ディレクトリを開くリンクのイベント
@@ -2213,23 +2459,83 @@ jQuery(document).ready(function($) {
         });
     }
 
+        // URLコピーモーダルを開く
+    function openUrlCopyModal(filePath, fileName) {
+        // モーダル内の要素を更新
+        $('#bf-url-file-name').text(fileName);
+
+        // ファイルパスをモーダルに保存
+        $('#bf-url-copy-modal').data('file-path', filePath);
+
+        // デフォルトでダウンロードを選択
+        $('input[name="url_type"][value="download"]').prop('checked', true);
+
+        // URLを更新
+        updateUrlDisplay();
+
+        // モーダルを表示
+        $('#bf-url-copy-modal').fadeIn(300);
+    }
+
+    // URLコピーモーダルを閉じる
+    function closeUrlCopyModal() {
+        $('#bf-url-copy-modal').fadeOut(300);
+    }
+
+    // URL表示を更新
+    function updateUrlDisplay() {
+        var filePath = $('#bf-url-copy-modal').data('file-path');
+        var urlType = $('input[name="url_type"]:checked').val();
+        var baseUrl = '<?php echo esc_url( home_url() ); ?>/?path=' + encodeURIComponent(filePath);
+
+        var url = baseUrl + '&dflag=' + urlType;
+        $('#bf-url-input').val(url);
+
+        // プレビューフレームを更新（画像ファイルの場合のみ）
+        updatePreviewFrame(url);
+    }
+
+    // プレビューフレームを更新
+    function updatePreviewFrame(url) {
+        var fileName = $('#bf-url-file-name').text();
+        var urlType = $('input[name="url_type"]:checked').val();
+        var previewFrame = $('#bf-url-preview-frame');
+
+        // 画像ファイルの場合のみプレビューを表示
+        var imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'];
+        var fileExtension = fileName.split('.').pop().toLowerCase();
+
+        if (urlType === 'display' && imageExtensions.includes(fileExtension)) {
+            previewFrame.attr('src', url);
+            $('.bf-url-preview').show();
+        } else {
+            previewFrame.attr('src', '');
+            $('.bf-url-preview').hide();
+        }
+    }
+
     // URLをクリップボードにコピー
-    function copyUrlToClipboard(filePath, fileName) {
-        // URLを生成
-        var downloadUrl = '<?php echo esc_url( home_url() ); ?>/?path=' + encodeURIComponent(filePath) + '&dflag=download';
+    function copyUrlToClipboard() {
+        var url = $('#bf-url-input').val();
 
         // モダンブラウザのClipboard APIを使用
         if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(downloadUrl).then(function() {
-                showSuccessMessage('<?php esc_html_e( 'ダウンロードURLをクリップボードにコピーしました:', 'bf-secret-file-downloader' ); ?> ' + downloadUrl);
+            navigator.clipboard.writeText(url).then(function() {
+                showSuccessMessage('<?php esc_html_e( 'URLをクリップボードにコピーしました:', 'bf-secret-file-downloader' ); ?> ' + url);
             }).catch(function(err) {
                 console.error('<?php esc_html_e( 'クリップボードへのコピーに失敗しました:', 'bf-secret-file-downloader' ); ?>', err);
-                copyUrlFallback(downloadUrl);
+                copyUrlFallback(url);
             });
         } else {
             // フォールバック（古いブラウザ用）
-            copyUrlFallback(downloadUrl);
+            copyUrlFallback(url);
         }
+    }
+
+    // 新しいタブでURLを開く
+    function openUrlInNewTab() {
+        var url = $('#bf-url-input').val();
+        window.open(url, '_blank');
     }
 
     // URLコピーのフォールバック（古いブラウザ用）
@@ -2267,7 +2573,7 @@ jQuery(document).ready(function($) {
 
     // URLを手動コピー用のプロンプトで表示
     function showUrlPrompt(url) {
-        prompt('<?php esc_html_e( '以下のダウンロードURLをコピーしてください:', 'bf-secret-file-downloader' ); ?>', url);
+        prompt('<?php esc_html_e( '以下のURLをコピーしてください:', 'bf-secret-file-downloader' ); ?>', url);
     }
 });
 </script>
