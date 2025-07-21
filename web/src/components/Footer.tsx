@@ -46,7 +46,7 @@ const Footer: React.FC = () => {
             <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
               <Box component="li" sx={{ mb: 1 }}>
                 <MuiLink component={Link} to="/features" color="inherit" sx={{ textDecoration: 'none' }}>
-                  機能一覧
+                  クイックスタート
                 </MuiLink>
               </Box>
               <Box component="li" sx={{ mb: 1 }}>

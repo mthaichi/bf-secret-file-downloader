@@ -49,11 +49,6 @@ class SettingsPage {
             'sanitize_callback' => array( $this, 'sanitize_directory' )
         ) );
 
-        register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_enable_auth', array(
-            'type' => 'boolean',
-            'default' => false,
-            'sanitize_callback' => array( $this, 'sanitize_boolean' )
-        ) );
         register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_max_file_size', array(
             'type' => 'integer',
             'default' => 10,
@@ -565,6 +560,17 @@ class SettingsPage {
     }
 
     /**
+     * パスを正規化します
+     *
+     * @param string $path パス
+     * @return string 正規化されたパス
+     */
+    private function normalize_path( $path ) {
+        // 連続するスラッシュを単一スラッシュに変換し、末尾のスラッシュを削除
+        return rtrim( preg_replace( '#/+#', '/', $path ), '/' );
+    }
+
+    /**
      * サニタイズ: ディレクトリパス
      *
      * @param string $value ディレクトリパス
@@ -572,6 +578,9 @@ class SettingsPage {
      */
     public function sanitize_directory( $value ) {
         $value = sanitize_text_field( $value );
+
+        // パスを正規化
+        $value = $this->normalize_path( $value );
 
         // 現在の対象ディレクトリを取得
         $current_directory = get_option( 'bf_basic_guard_target_directory', '' );

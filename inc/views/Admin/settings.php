@@ -59,7 +59,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                                            class="regular-text bf-directory-path" readonly />
                                     <button type="button" class="button bf-browse-directory"><?php esc_html_e( '参照', 'bf-secret-file-downloader' ); ?></button>
                                 </div>
-                                                                  <p class="description"><?php esc_html_e( 'プラグインで管理するディレクトリを指定してください。', 'bf-secret-file-downloader' ); ?></p>
+                                <p class="description"><?php esc_html_e( 'プラグインで管理するディレクトリを指定してください。', 'bf-secret-file-downloader' ); ?></p>
+
                             </td>
                         </tr>
                     </table>
@@ -68,16 +69,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                     <!-- その他の設定 -->
                       <table class="form-table">
-                        <tr>
-                            <th scope="row"><?php esc_html_e( 'BASIC認証', 'bf-secret-file-downloader' ); ?></th>
-                            <td>
-                                <label>
-                                    <input type="checkbox" name="bf_basic_guard_enable_auth" value="1"
-                                           <?php echo isset( $enable_auth ) && $enable_auth ? 'checked' : ''; ?> />
-                                                                          <?php esc_html_e( 'BASIC認証を有効にする', 'bf-secret-file-downloader' ); ?>
-                                </label>
-                            </td>
-                        </tr>
                         <tr>
                             <th scope="row"><?php esc_html_e( 'アップロード制限', 'bf-secret-file-downloader' ); ?></th>
                             <td>
@@ -251,6 +242,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     font-style: italic;
     color: #666;
 }
+
+
 </style>
 
 <script>
@@ -274,15 +267,18 @@ jQuery(document).ready(function($) {
         $('#bf-directory-browser-modal').hide();
     });
 
-    // ディレクトリ選択
+        // ディレクトリ選択
     $('#bf-select-directory').on('click', function() {
         if (selectedPath && currentTargetInput) {
+            // パスを正規化
+            var normalizedPath = normalizePath(selectedPath);
+
             // 選択禁止ディレクトリのチェック
-            if (isRestrictedDirectory(selectedPath)) {
+            if (isRestrictedDirectory(normalizedPath)) {
                 alert('<?php esc_html_e( "このディレクトリは選択できません。", "bf-secret-file-downloader" ); ?>');
                 return;
             }
-            currentTargetInput.val(selectedPath);
+            currentTargetInput.val(normalizedPath);
         }
         $('#bf-directory-browser-modal').hide();
     });
@@ -441,10 +437,16 @@ jQuery(document).ready(function($) {
         });
     }
 
+    // パス正規化関数
+    function normalizePath(path) {
+        // 連続するスラッシュを単一スラッシュに変換
+        return path.replace(/\/+/g, '/').replace(/\/+$/, '');
+    }
+
     // 選択禁止ディレクトリのチェック関数
     function isRestrictedDirectory(path) {
         // パスの正規化
-        var normalizedPath = path.replace(/\/+$/, ''); // 末尾のスラッシュを削除
+        var normalizedPath = normalizePath(path);
 
         // WordPressシステムディレクトリの厳密なチェック（完全一致またはサブディレクトリ）
         var wpSystemPaths = [
@@ -458,7 +460,7 @@ jQuery(document).ready(function($) {
 
         // WordPressシステムディレクトリのチェック
         for (var i = 0; i < wpSystemPaths.length; i++) {
-            var systemPath = wpSystemPaths[i].replace(/\/+$/, '');
+            var systemPath = normalizePath(wpSystemPaths[i]);
             // 完全一致またはそのサブディレクトリかチェック
             if (normalizedPath === systemPath || normalizedPath.indexOf(systemPath + '/') === 0) {
                 return true;
@@ -467,7 +469,7 @@ jQuery(document).ready(function($) {
 
         // ドキュメントルート自体のチェック（サブディレクトリは許可）
         <?php if ( isset( $_SERVER['DOCUMENT_ROOT'] ) && ! empty( $_SERVER['DOCUMENT_ROOT'] ) ): ?>
-        var documentRoot = '<?php echo esc_js( $_SERVER['DOCUMENT_ROOT'] ); ?>'.replace(/\/+$/, '');
+        var documentRoot = normalizePath('<?php echo esc_js( $_SERVER['DOCUMENT_ROOT'] ); ?>');
         if (normalizedPath === documentRoot) {
             return true; // ドキュメントルート自体は選択禁止
         }
@@ -475,6 +477,8 @@ jQuery(document).ready(function($) {
 
         return false;
     }
+
+
 
     // モーダル外クリックで閉じる
     $(document).on('click', '#bf-directory-browser-modal', function(e) {

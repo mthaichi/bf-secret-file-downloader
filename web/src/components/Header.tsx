@@ -28,7 +28,7 @@ const Header: React.FC = () => {
 
   const menuItems = [
     { text: 'ホーム', path: '/' },
-    { text: '機能', path: '/features' },
+    { text: 'クイックスタート', path: '/features' },
     { text: 'ドキュメント', path: '/docs' },
     { text: 'お問い合わせ', path: '/contact' },
   ];
@@ -91,12 +91,23 @@ const Header: React.FC = () => {
                   sx={{
                     textTransform: 'none',
                     fontWeight: location.pathname === item.path ? 600 : 400,
-                    borderBottom: location.pathname === item.path ? '2px solid' : 'none',
-                    borderColor: 'white',
                     color: 'white',
+                    position: 'relative',
                     '&:hover': {
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    }
+                    },
+                    ...(location.pathname === item.path && {
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: '2px',
+                        backgroundColor: 'white',
+                        borderRadius: 0,
+                      }
+                    })
                   }}
                 >
                   {item.text}

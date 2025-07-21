@@ -6,7 +6,7 @@ import theme from './assets/theme/index';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './components/Home';
-import Features from './components/Features';
+import QuickStart from './components/QuickStart';
 import Documentation from './components/Documentation';
 import Contact from './components/Contact';
 
@@ -20,7 +20,7 @@ function App() {
           <main style={{ flex: 1 }}>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/features" element={<Features />} />
+              <Route path="/features" element={<QuickStart />} />
               <Route path="/docs" element={<Documentation />} />
               <Route path="/contact" element={<Contact />} />
             </Routes>

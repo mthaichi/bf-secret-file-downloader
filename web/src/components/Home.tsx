@@ -17,6 +17,7 @@ import {
   Support as SupportIcon,
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
+import filelistImage from '../assets/images/pages/filelist.png';
 
 const Home: React.FC = () => {
   const features = [
@@ -38,7 +39,7 @@ const Home: React.FC = () => {
     {
       icon: <SecurityIcon sx={{ fontSize: 40, color: 'warning.main' }} />,
       title: 'セキュリティ重視',
-      description: 'IP制限やアクセスログなど、セキュリティを最優先に設計',
+      description: 'プラグインの性質上、セキュリティを最優先に設計',
     },
   ];
 
@@ -63,10 +64,10 @@ const Home: React.FC = () => {
         }}
       >
         <Container maxWidth="lg">
-          <Typography variant="h2" component="h1" gutterBottom fontWeight={600}>
+          <Typography variant="h2" component="h1" gutterBottom fontWeight={600} sx={{ color: 'white' }}>
             BF Secret File Downloader
           </Typography>
-          <Typography variant="h5" paragraph sx={{ mb: 4, opacity: 0.9 }}>
+          <Typography variant="h5" sx={{ mb: 4, opacity: 0.9, color: 'white' }}>
             WordPressの管理画面外にある機密ファイルを安全に管理・配信するセキュアなプラグイン
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -86,8 +87,46 @@ const Home: React.FC = () => {
               size="large"
               sx={{ color: 'white', borderColor: 'white', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}
             >
-              機能一覧
+              クイックスタート
             </Button>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* 概要セクション */}
+      <Box sx={{ bgcolor: 'white', py: 8 }}>
+        <Container maxWidth="lg">
+          <Typography variant="h3" component="h2" textAlign="center" gutterBottom>
+            プラグイン概要
+          </Typography>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 4, mt:5 }}>
+            <Box>
+              <Typography variant="body1" paragraph>
+                BF Secret File Downloaderは、WordPressの管理画面外にある機密ファイルを安全に管理・配信するためのプラグインです。
+                従来のWordPressメディアライブラリでは管理できない、サーバーの非公開領域にあるファイルを、
+                適切な認証とセキュリティ制御のもとでダウンロードできるようになります。
+              </Typography>
+              <Typography variant="body1" paragraph>
+                特に、機密性の高いドキュメント、内部資料、顧客専用コンテンツなど、
+                公開してはいけないが、特定のユーザーには配信したいファイルの管理に最適です。
+              </Typography>
+            </Box>
+            <Box>
+              <Box
+                component="img"
+                src={filelistImage}
+                alt="ファイル管理画面"
+                sx={{
+                  width: '100%',
+                  height: 'auto',
+                  borderRadius: 2,
+                  boxShadow: 3,
+                  maxHeight: 400,
+                  objectFit: 'cover'
+                }}
+              />
+            </Box>
           </Box>
         </Container>
       </Box>
@@ -120,37 +159,14 @@ const Home: React.FC = () => {
         </Box>
       </Container>
 
-      {/* メリットセクション */}
-      <Box sx={{ bgcolor: 'grey.50', py: 8 }}>
-        <Container maxWidth="lg">
-          <Typography variant="h3" component="h2" textAlign="center" gutterBottom>
-            なぜBF Secret File Downloaderを選ぶのか
-          </Typography>
-          <Typography variant="h6" textAlign="center" color="text.secondary" paragraph sx={{ mb: 6 }}>
-            他のプラグインにはない独自のセキュリティ機能
-          </Typography>
-
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
-            {benefits.map((benefit, index) => (
-              <Box key={index} display="flex" alignItems="center" sx={{ mb: 2 }}>
-                <CheckCircleIcon sx={{ color: 'success.main', mr: 2 }} />
-                <Typography variant="body1">
-                  {benefit}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        </Container>
-      </Box>
-
       {/* CTAセクション */}
       <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
         <Paper sx={{ p: 6, bgcolor: 'primary.main', color: 'white' }}>
-          <Typography variant="h4" component="h2" gutterBottom fontWeight={600}>
-            今すぐ始めましょう
+          <Typography variant="h4" component="h2" gutterBottom fontWeight={600} sx={{ color: 'white' }}>
+            詳細をご確認ください
           </Typography>
-          <Typography variant="h6" paragraph sx={{ mb: 4, opacity: 0.9 }}>
-            無料でダウンロードして、セキュアなファイル管理を体験してください
+          <Typography variant="h6" paragraph sx={{ mb: 4, opacity: 0.9, color: 'white' }}>
+            プラグインの詳細な使用方法や機能について、ドキュメントでご確認いただけます
           </Typography>
           <Button
             component={Link}
@@ -159,7 +175,7 @@ const Home: React.FC = () => {
             size="large"
             sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
           >
-            無料ダウンロード
+            ドキュメントを見る
           </Button>
         </Paper>
       </Container>
