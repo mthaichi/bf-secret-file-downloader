@@ -34,8 +34,8 @@ const Footer: React.FC = () => {
               </Typography>
             </Box>
             <Typography variant="body2" color="text.secondary" paragraph>
-              WordPressプラグインで最も安全なファイル管理を実現します。
-              BASIC認証とセキュリティ機能で、大切なファイルを保護します。
+              WordPress管理外の非公開領域のファイルダウンロードを可能にするWordPressプラグインです。
+              セキュリティに十分な配慮をしています。
             </Typography>
           </Box>
 

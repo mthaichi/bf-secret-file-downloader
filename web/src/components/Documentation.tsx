@@ -27,6 +27,7 @@ import {
 // 画像のインポート
 import fileListScreen from '../assets/images/pages/filelist.png';
 import menuScreen from '../assets/images/pages/menu.png';
+import uploadScreen from '../assets/images/pages/upload.png';
 
 const Documentation: React.FC = () => {
   const [openImageDialog, setOpenImageDialog] = useState(false);
@@ -235,31 +236,59 @@ const Documentation: React.FC = () => {
             <Typography variant="body2" paragraph>
               ドラッグ&ドロップまたはファイル選択でファイルをアップロードできます。
             </Typography>
-            <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-              <Typography variant="body2" color="text.secondary">
-                ファイルアップロード画面のスクリーンショット
-              </Typography>
+            <Box sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              gap: 3,
+              alignItems: { xs: 'flex-start', md: 'flex-start' },
+              mb: 2
+            }}>
+              <Box sx={{
+                flex: { xs: 'none', md: '0 0 50%' },
+                order: { xs: 1, md: 1 }
+              }}>
+                <Box sx={{
+                  borderRadius: 1,
+                  overflow: 'hidden',
+                  border: '1px solid #e0e0e0',
+                  cursor: 'pointer'
+                }}>
+                  <img
+                    src={uploadScreen}
+                    alt="ファイルアップロード画面"
+                    onClick={handleImageClick}
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      display: 'block'
+                    }}
+                  />
+                </Box>
+              </Box>
+              <Box sx={{
+                flex: { xs: 'none', md: '1' },
+                order: { xs: 2, md: 2 }
+              }}>
+                <Typography variant="body2" paragraph>
+                  ドラッグ&ドロップまたはファイル選択でファイルをアップロードできます。
+                  複数のファイルを選択して一括アップロードできます。
+                </Typography>
+                  <List dense>
+                    <ListItem>
+                      <ListItemText
+                        primary="ディレクトリ作成"
+                        secondary="現在のディレクトリに新しいサブディレクトリを作成できます"
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText
+                        primary="ファイル選択"
+                        secondary="ファイル選択ボタンをクリックしてダイアログからファイルを選択することもできます。"
+                      />
+                    </ListItem>
+                </List>
+              </Box>
             </Box>
-            <List dense>
-              <ListItem>
-                <ListItemText
-                  primary="ドラッグ&ドロップ"
-                  secondary="ファイルをアップロードエリアにドラッグ&ドロップ"
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemText
-                  primary="ファイル選択ボタン"
-                  secondary="「ファイルを選択」ボタンをクリックしてファイルを選択"
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemText
-                  primary="サイズ制限"
-                  secondary="最大100MBまでのファイルをアップロード可能"
-                />
-              </ListItem>
-            </List>
           </Box>
 
           {/* パスワード保護設定 */}
