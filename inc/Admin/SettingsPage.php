@@ -54,6 +54,25 @@ class SettingsPage {
             'default' => 10,
             'sanitize_callback' => array( $this, 'sanitize_file_size' )
         ) );
+
+        // 認証設定を追加
+        register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_auth_methods', array(
+            'type' => 'array',
+            'default' => array( 'logged_in' ),
+            'sanitize_callback' => array( $this, 'sanitize_auth_methods' )
+        ) );
+
+        register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_allowed_roles', array(
+            'type' => 'array',
+            'default' => array( 'administrator' ),
+            'sanitize_callback' => array( $this, 'sanitize_roles' )
+        ) );
+
+        register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_simple_auth_password', array(
+            'type' => 'string',
+            'default' => '',
+            'sanitize_callback' => array( $this, 'sanitize_password' )
+        ) );
     }
 
     /**
@@ -476,6 +495,9 @@ class SettingsPage {
             'log_downloads' => $this->get_log_downloads(),
             'security_level' => $this->get_security_level(),
             'target_directory' => $this->get_target_directory(),
+            'auth_methods' => $this->get_auth_methods(),
+            'allowed_roles' => $this->get_allowed_roles(),
+            'simple_auth_password' => $this->get_simple_auth_password(),
 
             'nonce' => wp_create_nonce( 'bf_basic_guard_browse_nonce' ),
         );
@@ -526,6 +548,33 @@ class SettingsPage {
         return get_option( 'bf_basic_guard_target_directory', '' );
     }
 
+    /**
+     * 認証方法設定を取得します
+     *
+     * @return array 認証方法の配列
+     */
+    private function get_auth_methods() {
+        return get_option( 'bf_basic_guard_auth_methods', array( 'logged_in' ) );
+    }
+
+    /**
+     * 許可するユーザーロール設定を取得します
+     *
+     * @return array 許可するユーザーロールの配列
+     */
+    private function get_allowed_roles() {
+        return get_option( 'bf_basic_guard_allowed_roles', array( 'administrator' ) );
+    }
+
+    /**
+     * 簡易認証パスワード設定を取得します
+     *
+     * @return string 簡易認証パスワード
+     */
+    private function get_simple_auth_password() {
+        return get_option( 'bf_basic_guard_simple_auth_password', '' );
+    }
+
 
 
     /**
@@ -557,6 +606,40 @@ class SettingsPage {
     public function sanitize_file_size( $value ) {
         $size = (int) $value;
         return max( 1, min( 100, $size ) ); // 1-100MBの範囲に制限
+    }
+
+    /**
+     * 認証方法をサニタイズします
+     *
+     * @param array $value 認証方法の配列
+     * @return array サニタイズされた認証方法の配列
+     */
+    public function sanitize_auth_methods( $value ) {
+        $allowed_methods = array( 'logged_in', 'simple_auth' );
+
+        // $valueがnullまたは配列でない場合は空配列を返す
+        if ( ! is_array( $value ) ) {
+            return array();
+        }
+
+        return array_intersect( $allowed_methods, $value );
+    }
+
+    /**
+     * 許可するユーザーロールをサニタイズします
+     *
+     * @param array $value ユーザーロールの配列
+     * @return array サニタイズされたユーザーロールの配列
+     */
+    public function sanitize_roles( $value ) {
+        $allowed_roles = array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' );
+
+        // $valueがnullまたは配列でない場合は空配列を返す
+        if ( ! is_array( $value ) ) {
+            return array();
+        }
+
+        return array_intersect( $allowed_roles, $value );
     }
 
     /**

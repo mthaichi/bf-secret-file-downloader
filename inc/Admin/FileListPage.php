@@ -45,8 +45,10 @@ class FileListPage {
         add_action( 'wp_ajax_bf_basic_guard_delete_file', array( $this, 'ajax_delete_file' ) );
         add_action( 'wp_ajax_bf_basic_guard_bulk_delete', array( $this, 'ajax_bulk_delete' ) );
         add_action( 'wp_ajax_bf_basic_guard_download_file', array( $this, 'ajax_download_file' ) );
-        add_action( 'wp_ajax_bf_basic_guard_set_directory_password', array( $this, 'ajax_set_directory_password' ) );
-        add_action( 'wp_ajax_bf_basic_guard_get_directory_password', array( $this, 'ajax_get_directory_password' ) );
+        add_action( 'wp_ajax_bf_basic_guard_set_directory_auth', array( $this, 'ajax_set_directory_auth' ) );
+        add_action( 'wp_ajax_bf_basic_guard_get_directory_auth', array( $this, 'ajax_get_directory_auth' ) );
+        add_action( 'wp_ajax_bf_basic_guard_get_global_auth', array( $this, 'ajax_get_global_auth' ) );
+
         add_action( 'admin_post_nopriv_bf_basic_guard_file_download', array( $this, 'handle_file_download' ) );
         add_action( 'admin_post_bf_basic_guard_file_download', array( $this, 'handle_file_download' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
@@ -958,7 +960,7 @@ class FileListPage {
             'total_pages' => ceil( $total_items / self::FILES_PER_PAGE ),
             'current_page' => $page,
             'has_parent' => $this->can_navigate_to_parent( $relative_path ),
-            'current_directory_has_password' => $this->has_directory_password( $relative_path ),
+            'current_directory_has_auth' => $this->has_directory_auth( $relative_path ),
         );
     }
 
@@ -1238,9 +1240,9 @@ class FileListPage {
     }
 
     /**
-     * ディレクトリパスワード設定のAJAXハンドラ
+     * ディレクトリ認証設定のAJAXハンドラ
      */
-    public function ajax_set_directory_password() {
+    public function ajax_set_directory_auth() {
         // セキュリティチェック
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_die( 'Unauthorized' );
@@ -1249,7 +1251,9 @@ class FileListPage {
         check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
 
         $relative_path = sanitize_text_field( $_POST['path'] ?? '' );
-        $password = sanitize_text_field( $_POST['password'] ?? '' );
+        $auth_methods = $_POST['auth_methods'] ?? array();
+        $allowed_roles = $_POST['allowed_roles'] ?? array();
+        $simple_auth_password = sanitize_text_field( $_POST['simple_auth_password'] ?? '' );
         $action_type = sanitize_text_field( $_POST['action_type'] ?? 'set' ); // set, remove
 
         // ベースディレクトリを取得
@@ -1272,30 +1276,35 @@ class FileListPage {
         }
 
         if ( $action_type === 'remove' ) {
-            // パスワードを削除
-            $this->remove_directory_password( $relative_path );
+            // 認証設定を削除
+            $this->remove_directory_auth( $relative_path );
             wp_send_json_success( array(
-                'message' => __( 'ディレクトリのパスワード保護を解除しました。', 'bf-secret-file-downloader' ),
-                'has_password' => false
+                'message' => __( 'ディレクトリの認証設定を削除しました。', 'bf-secret-file-downloader' ),
+                'has_auth' => false
             ));
         } else {
-            // パスワードを設定
-            if ( empty( $password ) ) {
-                wp_send_json_error( __( 'パスワードを入力してください。', 'bf-secret-file-downloader' ) );
+            // 認証設定を保存
+            if ( empty( $auth_methods ) || ! is_array( $auth_methods ) ) {
+                wp_send_json_error( __( '認証方法を選択してください。', 'bf-secret-file-downloader' ) );
             }
 
-            $this->set_directory_password( $relative_path, $password );
+            // 簡易認証が選択されている場合、パスワードが必要
+            if ( in_array( 'simple_auth', $auth_methods ) && empty( $simple_auth_password ) ) {
+                wp_send_json_error( __( '簡易認証を選択した場合は、パスワードを設定してください。', 'bf-secret-file-downloader' ) );
+            }
+
+            $this->set_directory_auth( $relative_path, $auth_methods, $allowed_roles, $simple_auth_password );
             wp_send_json_success( array(
-                'message' => __( 'ディレクトリにパスワード保護を設定しました。', 'bf-secret-file-downloader' ),
-                'has_password' => true
+                'message' => __( 'ディレクトリの認証設定を保存しました。', 'bf-secret-file-downloader' ),
+                'has_auth' => true
             ));
         }
     }
 
     /**
-     * ディレクトリパスワード取得のAJAXハンドラ
+     * ディレクトリ認証設定取得のAJAXハンドラ
      */
-    public function ajax_get_directory_password() {
+    public function ajax_get_directory_auth() {
         // セキュリティチェック
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_die( 'Unauthorized' );
@@ -1319,16 +1328,40 @@ class FileListPage {
             wp_send_json_error( __( 'このディレクトリへのアクセスは許可されていません。', 'bf-secret-file-downloader' ) );
         }
 
-        // パスワードを取得
-        $password = $this->get_directory_password( $relative_path );
+        // 認証設定を取得
+        $auth_settings = $this->get_directory_auth( $relative_path );
 
-        if ( $password !== false ) {
-            wp_send_json_success( array(
-                'password' => $password
-            ));
+        if ( $auth_settings !== false ) {
+            wp_send_json_success( $auth_settings );
         } else {
-            wp_send_json_error( __( 'パスワードを取得できませんでした。', 'bf-secret-file-downloader' ) );
+            wp_send_json_error( __( '認証設定を取得できませんでした。', 'bf-secret-file-downloader' ) );
         }
+    }
+
+    /**
+     * ディレクトリに認証設定を保存します
+     *
+     * @param string $relative_path 相対パス
+     * @param array $auth_methods 認証方法の配列
+     * @param array $allowed_roles 許可するユーザーロールの配列
+     * @param string $simple_auth_password 簡易認証パスワード
+     */
+    private function set_directory_auth( $relative_path, $auth_methods, $allowed_roles, $simple_auth_password ) {
+        $directory_auths = get_option( 'bf_basic_guard_directory_auths', array() );
+
+        $auth_data = array(
+            'auth_methods' => $auth_methods,
+            'allowed_roles' => $allowed_roles,
+        );
+
+        // 簡易認証パスワードが設定されている場合
+        if ( ! empty( $simple_auth_password ) ) {
+            $auth_data['simple_auth_hash'] = wp_hash_password( $simple_auth_password );
+            $auth_data['simple_auth_encrypted'] = $this->encrypt_password( $simple_auth_password );
+        }
+
+        $directory_auths[ $relative_path ] = $auth_data;
+        update_option( 'bf_basic_guard_directory_auths', $directory_auths );
     }
 
     /**
@@ -1352,6 +1385,20 @@ class FileListPage {
     }
 
     /**
+     * ディレクトリの認証設定を削除します
+     *
+     * @param string $relative_path 相対パス
+     */
+    private function remove_directory_auth( $relative_path ) {
+        $directory_auths = get_option( 'bf_basic_guard_directory_auths', array() );
+
+        if ( isset( $directory_auths[ $relative_path ] ) ) {
+            unset( $directory_auths[ $relative_path ] );
+            update_option( 'bf_basic_guard_directory_auths', $directory_auths );
+        }
+    }
+
+    /**
      * ディレクトリのパスワードを削除します
      *
      * @param string $relative_path 相対パス
@@ -1363,6 +1410,23 @@ class FileListPage {
             unset( $directory_passwords[ $relative_path ] );
             update_option( 'bf_basic_guard_directory_passwords', $directory_passwords );
         }
+    }
+
+    /**
+     * ディレクトリに認証設定があるかチェックします
+     *
+     * @param string $relative_path 相対パス
+     * @return bool 認証設定フラグ
+     */
+    private function has_directory_auth( $relative_path ) {
+        $directory_auths = get_option( 'bf_basic_guard_directory_auths', array() );
+
+        if ( ! isset( $directory_auths[ $relative_path ] ) ) {
+            return false;
+        }
+
+        $auth_data = $directory_auths[ $relative_path ];
+        return is_array( $auth_data ) && ! empty( $auth_data['auth_methods'] );
     }
 
     /**
@@ -1385,6 +1449,37 @@ class FileListPage {
 
         // 古い文字列形式（後方互換性）
         return ! empty( $directory_passwords[ $relative_path ] );
+    }
+
+    /**
+     * ディレクトリの認証設定を取得します
+     *
+     * @param string $relative_path 相対パス
+     * @return array|false 認証設定、または失敗時はfalse
+     */
+    private function get_directory_auth( $relative_path ) {
+        $directory_auths = get_option( 'bf_basic_guard_directory_auths', array() );
+
+        if ( ! isset( $directory_auths[ $relative_path ] ) ) {
+            return false;
+        }
+
+        $auth_data = $directory_auths[ $relative_path ];
+        if ( ! is_array( $auth_data ) ) {
+            return false;
+        }
+
+        $result = array(
+            'auth_methods' => $auth_data['auth_methods'] ?? array(),
+            'allowed_roles' => $auth_data['allowed_roles'] ?? array(),
+        );
+
+        // 簡易認証パスワードを復号化
+        if ( isset( $auth_data['simple_auth_encrypted'] ) ) {
+            $result['simple_auth_password'] = $this->decrypt_password( $auth_data['simple_auth_encrypted'] );
+        }
+
+        return $result;
     }
 
     /**
@@ -1490,4 +1585,31 @@ class FileListPage {
         $salt_keys = array( AUTH_KEY, SECURE_AUTH_KEY, LOGGED_IN_KEY, NONCE_KEY );
         return hash( 'sha256', implode( '', $salt_keys ) );
     }
+
+    /**
+     * 共通認証設定を取得するAJAXハンドラ
+     */
+    public function ajax_get_global_auth() {
+        // セキュリティチェック
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( 'Unauthorized' );
+        }
+
+        check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
+
+        // 共通設定を取得
+        $auth_methods = get_option( 'bf_basic_guard_auth_methods', array( 'logged_in' ) );
+        $allowed_roles = get_option( 'bf_basic_guard_allowed_roles', array( 'administrator' ) );
+        $simple_auth_password = get_option( 'bf_basic_guard_simple_auth_password', '' );
+
+        $global_auth = array(
+            'auth_methods' => $auth_methods,
+            'allowed_roles' => $allowed_roles,
+            'simple_auth_password' => $simple_auth_password
+        );
+
+        wp_send_json_success( $global_auth );
+    }
+
+
 }

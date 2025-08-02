@@ -10,6 +10,9 @@
  * @var bool   $log_downloads      ダウンロードログ有効フラグ
  * @var string $security_level     セキュリティレベル
  * @var string $target_directory    対象ディレクトリ
+ * @var array  $auth_methods       認証方法の配列
+ * @var array  $allowed_roles      許可するユーザーロールの配列
+ * @var string $simple_auth_password 簡易認証パスワード
 
  * @var string $nonce              AJAXノンス
  *
@@ -34,7 +37,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     <div class="bf-secret-file-downloader-settings">
         <div class="bf-secret-file-downloader-header">
-                            <p><?php esc_html_e( 'BF Secret File Downloaderの設定を管理します。', 'bf-secret-file-downloader' ); ?></p>
+            <p><?php esc_html_e( 'BF Secret File Downloaderの設定を管理します。ファイルアクセスには認証が必要で、ログインユーザーまたは簡易認証パスワードでの認証が可能です。', 'bf-secret-file-downloader' ); ?></p>
         </div>
 
         <div class="bf-secret-file-downloader-content">
@@ -67,15 +70,81 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 
+                    <!-- 認証設定 -->
+                    <h3><?php esc_html_e( '認証設定', 'bf-secret-file-downloader' ); ?></h3>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php esc_html_e( '認証方法', 'bf-secret-file-downloader' ); ?></th>
+                            <td>
+                                <fieldset>
+                                    <legend class="screen-reader-text"><?php esc_html_e( '認証方法', 'bf-secret-file-downloader' ); ?></legend>
+                                    <label>
+                                        <input type="checkbox" name="bf_basic_guard_auth_methods[]" value="logged_in"
+                                               <?php echo in_array( 'logged_in', $auth_methods ?? array() ) ? 'checked' : ''; ?> />
+                                        <?php esc_html_e( 'ログインしているユーザー', 'bf-secret-file-downloader' ); ?>
+                                    </label>
+                                    <br>
+                                    <label>
+                                        <input type="checkbox" name="bf_basic_guard_auth_methods[]" value="simple_auth" id="simple_auth_checkbox"
+                                               <?php echo in_array( 'simple_auth', $auth_methods ?? array() ) ? 'checked' : ''; ?> />
+                                        <?php esc_html_e( '簡易認証を通過したユーザー', 'bf-secret-file-downloader' ); ?>
+                                    </label>
+                                    <div id="simple_auth_password_section" style="margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #0073aa; <?php echo in_array( 'simple_auth', $auth_methods ?? array() ) ? '' : 'display: none;'; ?>">
+                                        <label for="bf_basic_guard_simple_auth_password">
+                                            <strong><?php esc_html_e( '簡易認証パスワード', 'bf-secret-file-downloader' ); ?></strong>
+                                        </label>
+                                        <br>
+                                        <input type="password" name="bf_basic_guard_simple_auth_password" id="bf_basic_guard_simple_auth_password"
+                                               value="<?php echo esc_attr( $simple_auth_password ?? '' ); ?>"
+                                               class="regular-text" style="margin-top: 5px;" />
+                                        <p class="description" style="margin-top: 5px;"><?php esc_html_e( '簡易認証で使用するパスワードを設定してください。', 'bf-secret-file-downloader' ); ?></p>
+                                    </div>
+                                </fieldset>
+                                <p class="description"><?php esc_html_e( 'ファイルアクセスを許可する認証方法を選択してください。複数選択可能です。', 'bf-secret-file-downloader' ); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e( '許可するユーザーロール', 'bf-secret-file-downloader' ); ?></th>
+                            <td>
+                                <fieldset>
+                                    <legend class="screen-reader-text"><?php esc_html_e( '許可するユーザーロール', 'bf-secret-file-downloader' ); ?></legend>
+                                    <div class="bf-role-selection-controls" style="margin-bottom: 10px;">
+                                        <button type="button" id="bf-select-all-roles" class="button button-small"><?php esc_html_e( 'すべて選択', 'bf-secret-file-downloader' ); ?></button>
+                                        <button type="button" id="bf-deselect-all-roles" class="button button-small"><?php esc_html_e( 'すべて解除', 'bf-secret-file-downloader' ); ?></button>
+                                    </div>
+                                    <?php
+                                    $roles = array(
+                                        'administrator' => __( '管理者', 'bf-secret-file-downloader' ),
+                                        'editor' => __( '編集者', 'bf-secret-file-downloader' ),
+                                        'author' => __( '投稿者', 'bf-secret-file-downloader' ),
+                                        'contributor' => __( '寄稿者', 'bf-secret-file-downloader' ),
+                                        'subscriber' => __( '購読者', 'bf-secret-file-downloader' )
+                                    );
+                                    foreach ( $roles as $role => $label ) :
+                                    ?>
+                                    <label>
+                                        <input type="checkbox" name="bf_basic_guard_allowed_roles[]" value="<?php echo esc_attr( $role ); ?>" class="bf-role-checkbox"
+                                               <?php echo in_array( $role, $allowed_roles ?? array() ) ? 'checked' : ''; ?> />
+                                        <?php echo esc_html( $label ); ?>
+                                    </label>
+                                    <br>
+                                    <?php endforeach; ?>
+                                </fieldset>
+                                <p class="description"><?php esc_html_e( 'ファイルアクセスを許可するユーザーロールを選択してください。複数選択可能です。', 'bf-secret-file-downloader' ); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+
                     <!-- その他の設定 -->
-                      <table class="form-table">
+                    <h3><?php esc_html_e( 'その他の設定', 'bf-secret-file-downloader' ); ?></h3>
+                    <table class="form-table">
                         <tr>
                             <th scope="row"><?php esc_html_e( 'アップロード制限', 'bf-secret-file-downloader' ); ?></th>
                             <td>
                                 <input type="number" name="bf_basic_guard_max_file_size"
                                        value="<?php echo isset( $max_file_size ) ? esc_html( $max_file_size ) : '10'; ?>"
                                        min="1" max="100" />
-                                                                  <span><?php esc_html_e( 'MB', 'bf-secret-file-downloader' ); ?></span>
+                                <span><?php esc_html_e( 'MB', 'bf-secret-file-downloader' ); ?></span>
                             </td>
                         </tr>
                     </table>
@@ -485,6 +554,24 @@ jQuery(document).ready(function($) {
         if (e.target === this) {
             $(this).hide();
         }
+    });
+
+    // 簡易認証チェックボックスの制御
+    $('#simple_auth_checkbox').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#simple_auth_password_section').show();
+        } else {
+            $('#simple_auth_password_section').hide();
+        }
+    });
+
+    // ロール選択の制御
+    $('#bf-select-all-roles').on('click', function() {
+        $('.bf-role-checkbox').prop('checked', true);
+    });
+
+    $('#bf-deselect-all-roles').on('click', function() {
+        $('.bf-role-checkbox').prop('checked', false);
     });
 });
 </script>

@@ -129,3 +129,23 @@ function bf_secret_file_downloader_init() {
 }
 
 add_action( 'init', 'bf_secret_file_downloader_init' );
+
+/**
+ * プラグインアクティベーション時の処理
+ */
+function bf_secret_file_downloader_activate() {
+    // デフォルト設定を追加
+    if ( ! get_option( 'bf_basic_guard_auth_methods' ) ) {
+        add_option( 'bf_basic_guard_auth_methods', array( 'logged_in' ) );
+    }
+
+    if ( ! get_option( 'bf_basic_guard_allowed_roles' ) ) {
+        add_option( 'bf_basic_guard_allowed_roles', array( 'administrator' ) );
+    }
+
+    if ( ! get_option( 'bf_basic_guard_simple_auth_password' ) ) {
+        add_option( 'bf_basic_guard_simple_auth_password', '' );
+    }
+}
+
+register_activation_hook( __FILE__, 'bf_secret_file_downloader_activate' );
