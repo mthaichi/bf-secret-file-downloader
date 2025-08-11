@@ -854,6 +854,7 @@ class FileListPage {
             'max_file_size_mb' => get_option( 'bf_basic_guard_max_file_size', 10 ),
             'sort_by' => $sort_by,
             'sort_order' => $sort_order,
+            'current_directory_has_auth' => $this->has_directory_auth( $relative_path ),
             'current_directory_has_password' => $this->has_directory_password( $relative_path ),
         );
     }

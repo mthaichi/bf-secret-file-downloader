@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     <div class="bf-secret-file-downloader-file-list">
         <div class="bf-secret-file-downloader-header">
-                            <p><?php esc_html_e( 'BASIC認証で保護されたファイルを管理します。', 'bf-secret-file-downloader' ); ?></p>
+                            <p><?php esc_html_e( '非公開ディレクトリにあるファイルを管理します。', 'bf-secret-file-downloader' ); ?></p>
         </div>
 
         <?php if ( ! $target_directory_set ) : ?>
@@ -59,18 +59,23 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <?php if ( isset( $current_directory_has_auth ) && $current_directory_has_auth ) : ?>
                             <span class="bf-auth-indicator">
                                 <span class="dashicons dashicons-lock"></span>
-                                <span class="bf-auth-status-text"><?php esc_html_e( '認証保護中', 'bf-secret-file-downloader' ); ?></span>
+                                <span class="bf-auth-status-text"><?php esc_html_e( 'ディレクトリ毎認証設定あり', 'bf-secret-file-downloader' ); ?></span>
                             </span>
-                            <div class="bf-auth-details" style="margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #0073aa;">
-                                <strong><?php esc_html_e( '認証設定詳細:', 'bf-secret-file-downloader' ); ?></strong>
+                            <div class="bf-auth-details">
+                                <div class="auth-details-title"><?php esc_html_e( 'ディレクトリ毎認証設定詳細:', 'bf-secret-file-downloader' ); ?></div>
                                 <div id="auth-details-content">
                                     <!-- JavaScriptで動的に設定内容を表示 -->
                                 </div>
-                                <button type="button" id="remove-auth-btn" class="button button-small" style="margin-top: 10px;">
+                                <button type="button" id="remove-auth-btn" class="button button-small">
                                     <span class="dashicons dashicons-trash"></span>
-                                    <?php esc_html_e( '設定解除', 'bf-secret-file-downloader' ); ?>
+                                    <?php esc_html_e( 'ディレクトリ毎設定削除', 'bf-secret-file-downloader' ); ?>
                                 </button>
                             </div>
+                        <?php else : ?>
+                            <span class="bf-auth-indicator" style="color: #666;">
+                                <span class="dashicons dashicons-admin-users"></span>
+                                <span class="bf-auth-status-text"><?php esc_html_e( '共通認証設定適用中', 'bf-secret-file-downloader' ); ?></span>
+                            </span>
                         <?php endif; ?>
                     </div>
                     <div class="bf-path-actions">
@@ -80,7 +85,13 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 <?php esc_html_e( '上の階層へ', 'bf-secret-file-downloader' ); ?>
                             </button>
                         <?php endif; ?>
-                        <!-- ディレクトリごとの認証設定は無効化されました -->
+                        <!-- ディレクトリ毎認証設定ボタン（ルートディレクトリ以外に表示） -->
+                        <?php if ( ! empty( $current_path ) ) : ?>
+                            <button type="button" id="directory-auth-btn" class="button button-small">
+                                <span class="dashicons dashicons-admin-users"></span>
+                                <?php esc_html_e( '認証設定', 'bf-secret-file-downloader' ); ?>
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -1275,6 +1286,39 @@ jQuery(document).ready(function($) {
     // Dashiconsが読み込まれているかチェック
     checkDashicons();
 
+    // ページ読み込み時の認証設定詳細表示を初期化
+    setTimeout(function() {
+        initializeAuthDetails();
+    }, 200);
+
+    // 認証設定詳細テンプレート関数
+    function getAuthDetailsTemplate() {
+        return '<div class="bf-auth-details">' +
+               '<div class="auth-details-title"><?php esc_html_e( 'ディレクトリ毎認証設定詳細:', 'bf-secret-file-downloader' ); ?></div>' +
+               '<div id="auth-details-content"></div>' +
+               '<button type="button" id="remove-auth-btn" class="button button-small">' +
+               '<span class="dashicons dashicons-trash"></span><?php esc_html_e( 'ディレクトリ毎設定削除', 'bf-secret-file-downloader' ); ?>' +
+               '</button>' +
+               '</div>';
+    }
+
+    // ページ読み込み時の認証設定詳細表示
+    function initializeAuthDetails() {
+        var currentPath = $('#current-path').val();
+        var hasAuth = checkCurrentDirectoryHasAuth();
+
+        if (hasAuth && currentPath) {
+            // 認証設定詳細が既に表示されているかチェック
+            var authDetails = $('.bf-auth-details');
+            if (authDetails.length === 0) {
+                $('.bf-path-info').append(getAuthDetailsTemplate());
+            }
+
+            // 認証設定詳細を読み込んで表示
+            loadDirectoryAuthSettings(currentPath);
+        }
+    }
+
     // ディレクトリクリック時の処理
     $('.clickable-directory').on('click', function(e) {
         e.preventDefault();
@@ -1724,27 +1768,12 @@ jQuery(document).ready(function($) {
         $('#current-path').val(data.current_path);
         $('#current-path-display').text(data.current_path || '<?php esc_html_e( "ルートディレクトリ", "bf-secret-file-downloader" ); ?>');
 
-        // 認証インジケーターの更新
-        var hasAuth = data.current_directory_has_auth || false;
-        updateAuthIndicator(hasAuth);
-
-
-
         // パス表示エリア全体を再構築
         var pathHtml = '<div class="bf-path-info">' +
             '<strong><?php esc_html_e( '現在のディレクトリ:', 'bf-secret-file-downloader' ); ?></strong>' +
             '<code id="current-path-display">' + (data.current_path || '<?php esc_html_e( "ルートディレクトリ", "bf-secret-file-downloader" ); ?>') + '</code>' +
-            '<input type="hidden" id="current-path" value="' + (data.current_path || '') + '">';
-
-        // 認証インジケーターを追加
-        if (hasAuth) {
-            pathHtml += '<span class="bf-auth-indicator">' +
-                '<span class="dashicons dashicons-lock"></span>' +
-                '<span class="bf-auth-status-text"><?php esc_html_e( '認証保護中', 'bf-secret-file-downloader' ); ?></span>' +
-                '</span>';
-        }
-
-        pathHtml += '</div>' +
+            '<input type="hidden" id="current-path" value="' + (data.current_path || '') + '">' +
+            '</div>' +
             '<div class="bf-path-actions">';
 
         // 上の階層へボタン
@@ -1755,22 +1784,24 @@ jQuery(document).ready(function($) {
                 '</button>';
         }
 
-                // 認証設定ボタン（管理者権限がある場合）
+        // ディレクトリ毎認証設定ボタン（ルートディレクトリ以外に表示）
         <?php if ( current_user_can( 'manage_options' ) ) : ?>
-        var authButtonText = hasAuth
-            ? '<?php esc_html_e( '認証設定管理', 'bf-secret-file-downloader' ); ?>'
-            : '<?php esc_html_e( '認証設定', 'bf-secret-file-downloader' ); ?>';
-
-        pathHtml += '<button type="button" id="directory-auth-btn" class="button button-small">' +
-            '<span class="dashicons dashicons-admin-network"></span>' +
-            authButtonText +
-            '</button>';
+        if (data.current_path && data.current_path !== '') {
+            pathHtml += '<button type="button" id="directory-auth-btn" class="button button-small">' +
+                '<span class="dashicons dashicons-admin-users"></span>' +
+                '<?php esc_html_e( '認証設定', 'bf-secret-file-downloader' ); ?>' +
+                '</button>';
+        }
         <?php endif; ?>
 
         pathHtml += '</div>';
 
         // パス表示エリアを更新
         $('.bf-secret-file-downloader-path').html(pathHtml);
+
+        // 認証インジケーターの更新（パス表示エリア更新後に実行）
+        var hasAuth = data.current_directory_has_auth || false;
+        updateAuthIndicator(hasAuth);
 
         // イベントハンドラを再設定
         $('#go-up-btn').on('click', function(e) {
@@ -2733,16 +2764,16 @@ jQuery(document).ready(function($) {
 
         if (hasAuth) {
             statusIcon.removeClass('dashicons-unlock').addClass('dashicons-lock');
-            statusIcon.css('color', '#d63638');
-            statusDescription.html('<?php esc_html_e( 'このディレクトリ（', 'bf-secret-file-downloader' ); ?><code>' + currentPathDisplay + '</code><?php esc_html_e( '）は現在認証保護されています。', 'bf-secret-file-downloader' ); ?>');
-            $('#bf-auth-modal-description').text('<?php esc_html_e( '認証設定を変更するか、下の「認証設定を削除」ボタンで保護を解除できます。', 'bf-secret-file-downloader' ); ?>');
+            statusIcon.css('color', '#0073aa');
+            statusDescription.html('<?php esc_html_e( 'このディレクトリ（', 'bf-secret-file-downloader' ); ?><code>' + currentPathDisplay + '</code><?php esc_html_e( '）にはディレクトリ毎の認証設定があります。', 'bf-secret-file-downloader' ); ?>');
+            $('#bf-auth-modal-description').text('<?php esc_html_e( 'ディレクトリ毎設定を変更するか、下の「ディレクトリ毎設定削除」ボタンで共通設定に戻すことができます。', 'bf-secret-file-downloader' ); ?>');
             $('#bf-remove-auth').show();
             $('#bf-show-current-auth').show();
         } else {
-            statusIcon.removeClass('dashicons-lock').addClass('dashicons-unlock');
-            statusIcon.css('color', '#46b450');
-            statusDescription.html('<?php esc_html_e( 'このディレクトリ（', 'bf-secret-file-downloader' ); ?><code>' + currentPathDisplay + '</code><?php esc_html_e( '）は認証保護されていません。', 'bf-secret-file-downloader' ); ?>');
-            $('#bf-auth-modal-description').text('<?php esc_html_e( 'このディレクトリ内のファイルをダウンロードする際に要求する認証設定を行ってください。', 'bf-secret-file-downloader' ); ?>');
+            statusIcon.removeClass('dashicons-lock').addClass('dashicons-admin-users');
+            statusIcon.css('color', '#666');
+            statusDescription.html('<?php esc_html_e( 'このディレクトリ（', 'bf-secret-file-downloader' ); ?><code>' + currentPathDisplay + '</code><?php esc_html_e( '）にはディレクトリ毎の認証設定がありません。', 'bf-secret-file-downloader' ); ?>');
+            $('#bf-auth-modal-description').text('<?php esc_html_e( '共通設定が適用されています。ディレクトリ毎の認証設定を追加する場合は、下の設定を行ってください。', 'bf-secret-file-downloader' ); ?>');
             $('#bf-remove-auth').hide();
             $('#bf-show-current-auth').hide();
         }
@@ -2751,10 +2782,10 @@ jQuery(document).ready(function($) {
         if (hasAuth) {
             loadDirectoryAuthSettings(currentPath);
         } else {
-            // デフォルト設定を表示
-            $('#bf-auth-methods-logged-in').prop('checked', true);
+            // ディレクトリ毎設定がない場合は何もチェックされていない状態にする
+            $('#bf-auth-methods-logged-in').prop('checked', false);
             $('#bf-auth-methods-simple-auth').prop('checked', false);
-            $('#bf-allowed-roles-administrator').prop('checked', true);
+            $('input[name="bf_allowed_roles[]"]').prop('checked', false);
             $('#bf-simple-auth-password').val('');
             $('#bf-simple-auth-password-section').hide();
         }
@@ -2770,7 +2801,16 @@ jQuery(document).ready(function($) {
 
     // 現在のディレクトリに認証設定があるかチェック
     function checkCurrentDirectoryHasAuth() {
-        return $('.bf-auth-indicator').length > 0;
+        var indicator = $('.bf-auth-indicator');
+        if (indicator.length === 0) {
+            return false;
+        }
+
+        // インジケーターのテキストをチェックして、ディレクトリ毎設定があるかどうかを判定
+        var statusText = indicator.find('.bf-auth-status-text').text();
+        var hasAuthDetails = $('.bf-auth-details').length > 0;
+
+        return statusText.includes('ディレクトリ毎認証設定あり') || hasAuthDetails;
     }
 
     // ディレクトリ認証設定を読み込み
@@ -2810,6 +2850,9 @@ jQuery(document).ready(function($) {
                     } else {
                         $('#bf-simple-auth-password-section').hide();
                     }
+
+                    // 認証設定の詳細を表示
+                    displayAuthDetails(authSettings);
                 }
             },
             error: function() {
@@ -2867,6 +2910,11 @@ jQuery(document).ready(function($) {
                     showSuccessMessage(response.data.message);
                     closeDirectoryAuthModal();
                     updateAuthIndicator(response.data.has_auth);
+
+                    // 認証設定の詳細を表示
+                    if (response.data.has_auth) {
+                        loadDirectoryAuthSettings(currentPath);
+                    }
                 } else {
                     alert(response.data || '<?php esc_html_e( '認証設定の保存に失敗しました。', 'bf-secret-file-downloader' ); ?>');
                 }
@@ -2882,7 +2930,7 @@ jQuery(document).ready(function($) {
 
     // ディレクトリ認証設定を削除
     function removeDirectoryAuth() {
-        if (!confirm('<?php esc_html_e( 'このディレクトリの認証設定を削除しますか？', 'bf-secret-file-downloader' ); ?>')) {
+        if (!confirm('<?php esc_html_e( 'このディレクトリの認証設定を削除しますか？共通設定に戻ります。', 'bf-secret-file-downloader' ); ?>')) {
             return;
         }
 
@@ -2918,119 +2966,14 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // ディレクトリ認証設定モーダルを開く
-    function openDirectoryAuthModal() {
-        var currentPath = $('#current-path').val();
-        var currentPathDisplay = $('#current-path-display').text();
-        var hasAuth = checkCurrentDirectoryHasAuth();
 
-        // モーダルタイトルの更新
-        if (hasAuth) {
-            $('#bf-auth-modal-title').text('<?php esc_html_e( 'ディレクトリ認証設定管理', 'bf-secret-file-downloader' ); ?>');
-        } else {
-            $('#bf-auth-modal-title').text('<?php esc_html_e( 'ディレクトリ認証設定', 'bf-secret-file-downloader' ); ?>');
-        }
-
-        // 現在の状態表示を更新
-        var statusIcon = $('.bf-auth-status-icon .dashicons');
-        var statusDescription = $('#bf-auth-status-description');
-
-        if (hasAuth) {
-            statusIcon.removeClass('dashicons-unlock').addClass('dashicons-lock');
-            statusIcon.css('color', '#d63638');
-            statusDescription.html('<?php esc_html_e( 'このディレクトリ（', 'bf-secret-file-downloader' ); ?><code>' + currentPathDisplay + '</code><?php esc_html_e( '）は現在認証保護されています。', 'bf-secret-file-downloader' ); ?>');
-            $('#bf-auth-modal-description').text('<?php esc_html_e( '認証設定を変更するか、下の「認証設定を削除」ボタンで保護を解除できます。', 'bf-secret-file-downloader' ); ?>');
-            $('#bf-remove-auth').show();
-        } else {
-            statusIcon.removeClass('dashicons-lock').addClass('dashicons-unlock');
-            statusIcon.css('color', '#46b450');
-            statusDescription.html('<?php esc_html_e( 'このディレクトリ（', 'bf-secret-file-downloader' ); ?><code>' + currentPathDisplay + '</code><?php esc_html_e( '）は認証保護されていません。', 'bf-secret-file-downloader' ); ?>');
-            $('#bf-auth-modal-description').text('<?php esc_html_e( 'このディレクトリ内のファイルをダウンロードする際に要求する認証設定を行ってください。', 'bf-secret-file-downloader' ); ?>');
-            $('#bf-remove-auth').hide();
-        }
-
-        // 認証設定を取得
-        if (hasAuth) {
-            loadDirectoryAuthSettings(currentPath);
-        } else {
-            // デフォルト設定を表示
-            $('#bf-auth-methods-logged-in').prop('checked', true);
-            $('#bf-auth-methods-simple-auth').prop('checked', false);
-            $('#bf-allowed-roles-administrator').prop('checked', true);
-            $('#bf-simple-auth-password').val('');
-            $('#bf-simple-auth-password-section').hide();
-        }
-
-        // モーダルを表示
-        $('#bf-directory-auth-modal').fadeIn(300);
-    }
-
-    // ディレクトリ認証設定モーダルを閉じる
-    function closeDirectoryAuthModal() {
-        $('#bf-directory-auth-modal').fadeOut(300);
-    }
-
-    // 現在のディレクトリに認証設定があるかチェック
-    function checkCurrentDirectoryHasAuth() {
-        return $('.bf-auth-indicator').length > 0;
-    }
-
-    // ディレクトリ認証設定を読み込み
-    function loadDirectoryAuthSettings(currentPath) {
-        $.ajax({
-            url: ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'bf_basic_guard_get_directory_auth',
-                path: currentPath,
-                nonce: '<?php echo esc_js( $nonce ); ?>'
-            },
-            success: function(response) {
-                if (response.success) {
-                    var authSettings = response.data;
-
-                    // 認証方法の設定
-                    $('#bf-auth-methods-logged-in').prop('checked', authSettings.auth_methods.includes('logged_in'));
-                    $('#bf-auth-methods-simple-auth').prop('checked', authSettings.auth_methods.includes('simple_auth'));
-
-                    // 許可ロールの設定
-                    $('input[name="bf_allowed_roles[]"]').prop('checked', false);
-                    if (authSettings.allowed_roles) {
-                        authSettings.allowed_roles.forEach(function(role) {
-                            $('#bf-allowed-roles-' + role).prop('checked', true);
-                        });
-                    }
-
-                    // 簡易認証パスワードの設定
-                    if (authSettings.simple_auth_password) {
-                        $('#bf-simple-auth-password').val(authSettings.simple_auth_password);
-                    }
-
-                    // 簡易認証パスワードセクションの表示制御
-                    if (authSettings.auth_methods.includes('simple_auth')) {
-                        $('#bf-simple-auth-password-section').show();
-                    } else {
-                        $('#bf-simple-auth-password-section').hide();
-                    }
-
-                    // 認証設定の詳細を表示
-                    displayAuthDetails(authSettings);
-                } else {
-                    console.error('認証設定の読み込みに失敗しました:', response.data);
-                }
-            },
-            error: function() {
-                console.error('認証設定の読み込みで通信エラーが発生しました');
-            }
-        });
-    }
 
         // 認証設定の詳細を表示
     function displayAuthDetails(authSettings) {
-        var detailsHtml = '<ul style="margin: 10px 0; padding-left: 20px;">';
+        var detailsHtml = '<div class="auth-details-list">';
 
         // 認証方法の表示
-        detailsHtml += '<li><strong><?php esc_html_e( '認証方法:', 'bf-secret-file-downloader' ); ?></strong> ';
+        detailsHtml += '<div class="auth-detail-item"><strong><?php esc_html_e( '認証方法:', 'bf-secret-file-downloader' ); ?></strong> ';
         var authMethods = [];
         if (authSettings.auth_methods.includes('logged_in')) {
             authMethods.push('<?php esc_html_e( 'ログインユーザー', 'bf-secret-file-downloader' ); ?>');
@@ -3038,11 +2981,11 @@ jQuery(document).ready(function($) {
         if (authSettings.auth_methods.includes('simple_auth')) {
             authMethods.push('<?php esc_html_e( '簡易認証', 'bf-secret-file-downloader' ); ?>');
         }
-        detailsHtml += authMethods.join(', ') + '</li>';
+        detailsHtml += authMethods.join(', ') + '</div>';
 
         // 許可ロールの表示
         if (authSettings.allowed_roles && authSettings.allowed_roles.length > 0) {
-            detailsHtml += '<li><strong><?php esc_html_e( '許可ロール:', 'bf-secret-file-downloader' ); ?></strong> ';
+            detailsHtml += '<div class="auth-detail-item"><strong><?php esc_html_e( '許可ロール:', 'bf-secret-file-downloader' ); ?></strong> ';
             var roleLabels = {
                 'administrator': '<?php esc_html_e( '管理者', 'bf-secret-file-downloader' ); ?>',
                 'editor': '<?php esc_html_e( '編集者', 'bf-secret-file-downloader' ); ?>',
@@ -3053,16 +2996,16 @@ jQuery(document).ready(function($) {
             var roles = authSettings.allowed_roles.map(function(role) {
                 return roleLabels[role] || role;
             });
-            detailsHtml += roles.join(', ') + '</li>';
+            detailsHtml += roles.join(', ') + '</div>';
         }
 
         // 簡易認証パスワードの表示
         if (authSettings.auth_methods.includes('simple_auth') && authSettings.simple_auth_password) {
-            detailsHtml += '<li><strong><?php esc_html_e( '簡易認証パスワード:', 'bf-secret-file-downloader' ); ?></strong> ';
-            detailsHtml += '••••••••</li>';
+            detailsHtml += '<div class="auth-detail-item"><strong><?php esc_html_e( '簡易認証パスワード:', 'bf-secret-file-downloader' ); ?></strong> ';
+            detailsHtml += '••••••••</div>';
         }
 
-        detailsHtml += '</ul>';
+        detailsHtml += '</div>';
         $('#auth-details-content').html(detailsHtml);
     }
 
@@ -3072,52 +3015,37 @@ jQuery(document).ready(function($) {
     function updateAuthIndicator(hasAuth) {
         var indicator = $('.bf-auth-indicator');
         var authDetails = $('.bf-auth-details');
+        var currentPath = $('#current-path').val();
 
         if (hasAuth) {
             if (indicator.length === 0) {
-                $('.bf-path-info').append('<span class="bf-auth-indicator"><span class="dashicons dashicons-lock"></span><span class="bf-auth-status-text"><?php esc_html_e( '認証保護中', 'bf-secret-file-downloader' ); ?></span></span>');
+                $('.bf-path-info').append('<span class="bf-auth-indicator"><span class="dashicons dashicons-lock"></span><span class="bf-auth-status-text"><?php esc_html_e( 'ディレクトリ毎認証設定あり', 'bf-secret-file-downloader' ); ?></span></span>');
+            } else {
+                // 既存のインジケーターを更新
+                indicator.html('<span class="dashicons dashicons-lock"></span><span class="bf-auth-status-text"><?php esc_html_e( 'ディレクトリ毎認証設定あり', 'bf-secret-file-downloader' ); ?></span>');
+                indicator.css('color', '');
             }
 
             // 認証設定詳細を表示
             if (authDetails.length === 0) {
-                $('.bf-path-info').append('<div class="bf-auth-details" style="margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #0073aa;"><strong><?php esc_html_e( '認証設定詳細:', 'bf-secret-file-downloader' ); ?></strong><div id="auth-details-content"></div><button type="button" id="remove-auth-btn" class="button button-small" style="margin-top: 10px;"><span class="dashicons dashicons-trash"></span><?php esc_html_e( '設定解除', 'bf-secret-file-downloader' ); ?></button></div>');
+                $('.bf-path-info').append(getAuthDetailsTemplate());
             }
+
+            // 認証設定詳細を読み込んで表示
+            loadDirectoryAuthSettings(currentPath);
         } else {
-            indicator.remove();
+            // ディレクトリ毎設定がない場合は共通設定適用中の表示
+            if (indicator.length === 0) {
+                $('.bf-path-info').append('<span class="bf-auth-indicator" style="color: #666;"><span class="dashicons dashicons-admin-users"></span><span class="bf-auth-status-text"><?php esc_html_e( '共通認証設定適用中', 'bf-secret-file-downloader' ); ?></span></span>');
+            } else {
+                indicator.html('<span class="dashicons dashicons-admin-users"></span><span class="bf-auth-status-text"><?php esc_html_e( '共通認証設定適用中', 'bf-secret-file-downloader' ); ?></span>');
+                indicator.css('color', '#666');
+            }
             authDetails.remove();
         }
     }
 
-    // ディレクトリ認証設定を削除
-    function removeDirectoryAuth() {
-        var currentPath = $('#current-path').val();
 
-        if (!confirm('<?php esc_html_e( 'このディレクトリの認証設定を解除しますか？共通設定に戻ります。', 'bf-secret-file-downloader' ); ?>')) {
-            return;
-        }
-
-        $.ajax({
-            url: ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'bf_basic_guard_set_directory_auth',
-                path: currentPath,
-                action_type: 'remove',
-                nonce: '<?php echo esc_js( $nonce ); ?>'
-            },
-            success: function(response) {
-                if (response.success) {
-                    showSuccessMessage('<?php esc_html_e( '認証設定を解除しました。共通設定に戻りました。', 'bf-secret-file-downloader' ); ?>');
-                    updateAuthIndicator(false);
-                } else {
-                    alert(response.data || '<?php esc_html_e( '認証設定の解除に失敗しました。', 'bf-secret-file-downloader' ); ?>');
-                }
-            },
-            error: function() {
-                alert('<?php esc_html_e( '通信エラーが発生しました。', 'bf-secret-file-downloader' ); ?>');
-            }
-        });
-    }
 
 
 
@@ -3138,3 +3066,215 @@ jQuery(document).ready(function($) {
 
 });
 </script>
+
+<style>
+/* モーダルスタイル */
+.bf-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.bf-modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 0;
+    border: 1px solid #888;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.bf-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9f9f9;
+}
+
+.bf-modal-header h3 {
+    margin: 0;
+    color: #23282d;
+}
+
+.bf-modal-close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.bf-modal-close:hover {
+    color: #000;
+}
+
+.bf-modal-body {
+    padding: 20px;
+}
+
+.bf-modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #ddd;
+    background-color: #f9f9f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bf-action-buttons-left {
+    display: flex;
+    gap: 10px;
+}
+
+.bf-action-buttons-right {
+    display: flex;
+    gap: 10px;
+}
+
+.bf-status-box {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+}
+
+/* 認証設定詳細スタイル */
+.bf-auth-details {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.bf-auth-details .auth-details-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.bf-auth-details #remove-auth-btn {
+    margin-top: 10px;
+}
+
+.bf-auth-details .auth-details-list {
+    margin-top: 10px;
+}
+
+.bf-auth-details .auth-detail-item {
+    margin-bottom: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.bf-auth-details .auth-detail-item:last-child {
+    border-bottom: none;
+}
+    margin-bottom: 20px;
+}
+
+.bf-status-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.bf-auth-status-icon .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.bf-auth-section {
+    margin-bottom: 25px;
+}
+
+.bf-auth-section h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #23282d;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.bf-danger-button {
+    background-color: #dc3232 !important;
+    border-color: #dc3232 !important;
+    color: #fff !important;
+}
+
+.bf-danger-button:hover {
+    background-color: #c92626 !important;
+    border-color: #c92626 !important;
+}
+
+/* 認証インジケータースタイル */
+.bf-auth-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+    padding: 5px 10px;
+    background-color: #f9f9f9;
+    border-radius: 3px;
+    border: 1px solid #ddd;
+}
+
+.bf-auth-indicator .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.bf-auth-status-text {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 認証設定詳細リストスタイル */
+.auth-details-list {
+    margin: 10px 0;
+}
+
+.auth-detail-item {
+    margin-bottom: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.auth-detail-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.auth-details-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #23282d;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .bf-modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+
+    .bf-modal-footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .bf-action-buttons-left,
+    .bf-action-buttons-right {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>

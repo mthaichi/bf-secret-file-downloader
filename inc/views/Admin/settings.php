@@ -38,6 +38,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     <div class="bf-secret-file-downloader-settings">
         <div class="bf-secret-file-downloader-header">
             <p><?php esc_html_e( 'BF Secret File Downloaderの設定を管理します。ファイルアクセスには認証が必要で、ログインユーザーまたは簡易認証パスワードでの認証が可能です。', 'bf-secret-file-downloader' ); ?></p>
+            <div class="notice notice-info">
+                <p>
+                    <strong><?php esc_html_e( '認証設定について:', 'bf-secret-file-downloader' ); ?></strong>
+                    <?php esc_html_e( 'このページで設定する認証は共通設定として適用されます。各ディレクトリには個別の認証設定も可能で、ディレクトリ毎設定がある場合は共通設定を上書きします。', 'bf-secret-file-downloader' ); ?>
+                </p>
+            </div>
         </div>
 
         <div class="bf-secret-file-downloader-content">
