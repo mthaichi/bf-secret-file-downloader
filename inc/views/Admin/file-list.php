@@ -670,9 +670,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     margin: 15px 0;
 }
 
-.clickable-directory:hover {
-    background-color: #f0f8ff !important;
-}
+
 
 .bf-secret-file-downloader-actions {
     background: #fff;
@@ -724,13 +722,33 @@ if ( ! defined( 'ABSPATH' ) ) {
     font-weight: 600;
 }
 
-/* ディレクトリクリックの無効化（行アクションから操作） */
-.has-row-actions.clickable-directory {
-    cursor: default;
+/* ディレクトリ行のスタイル */
+.clickable-directory,
+.clickable-directory:hover,
+.clickable-directory td,
+.clickable-directory td:hover {
+    cursor: default !important;
 }
 
-.has-row-actions.clickable-directory:hover {
-    background-color: inherit;
+/* チェックボックスエリアのスタイル */
+.check-column {
+    cursor: default !important;
+}
+
+.check-column input[type="checkbox"] {
+    cursor: pointer !important;
+}
+
+.check-column label {
+    cursor: pointer !important;
+}
+
+/* 行アクションリンク以外の要素のカーソル形状を固定 */
+.clickable-directory .column-name,
+.clickable-directory .column-type,
+.clickable-directory .column-size,
+.clickable-directory .column-modified {
+    cursor: default !important;
 }
 
 .bf-actions-header {
@@ -901,11 +919,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     content: "\f123" !important;
 }
 
-/* ホバー効果 */
-.clickable-directory:hover .bf-directory-icon {
-    transform: scale(1.1) !important;
-    transition: all 0.2s ease !important;
-}
+
 
 .tablenav-pages {
     float: right;
@@ -1342,14 +1356,20 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // ディレクトリクリック時の処理
-    $('.clickable-directory').on('click', function(e) {
+            // 削除リンクのイベント（マウスオーバーメニューから）
+    $(document).on('click', '.delete-file-link', function(e) {
         e.preventDefault();
-        var path = $(this).data('path');
-        if (path) {
-            navigateToDirectory(path, 1);
-        }
+        e.stopPropagation(); // イベントの伝播を確実に停止
+        var $link = $(this);
+        var filePath = $link.data('file-path');
+        var fileName = $link.data('file-name');
+        var fileType = $link.data('file-type');
+
+        console.log('削除リンクがクリックされました:', filePath, fileName, fileType); // デバッグ用
+        deleteFile(filePath, fileName, fileType);
     });
+
+        // ディレクトリクリック時の処理を削除 - 行アクションリンクのみで操作
 
     // ディレクトリ認証設定ボタンのクリック処理
     $('#directory-auth-btn').on('click', function(e) {
@@ -1528,20 +1548,10 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // 削除リンクのイベント（マウスオーバーメニューから）
-    $(document).on('click', '.delete-file-link', function(e) {
-        e.preventDefault();
-        var $link = $(this);
-        var filePath = $link.data('file-path');
-        var fileName = $link.data('file-name');
-        var fileType = $link.data('file-type');
-
-        deleteFile(filePath, fileName, fileType);
-    });
-
     // ダウンロードリンクのイベント
     $(document).on('click', '.download-file-link', function(e) {
         e.preventDefault();
+        e.stopPropagation(); // イベントの伝播を確実に停止
         var $link = $(this);
         var filePath = $link.data('file-path');
         var fileName = $link.data('file-name');
@@ -1552,6 +1562,7 @@ jQuery(document).ready(function($) {
     // URLコピーリンクのイベント
     $(document).on('click', '.copy-url-link', function(e) {
         e.preventDefault();
+        e.stopPropagation(); // イベントの伝播を確実に停止
         var $link = $(this);
         var filePath = $link.data('file-path');
         var fileName = $link.data('file-name');
@@ -1562,6 +1573,7 @@ jQuery(document).ready(function($) {
         // ディレクトリを開くリンクのイベント
     $(document).on('click', '.open-directory', function(e) {
         e.preventDefault();
+        e.stopPropagation(); // イベントの伝播を確実に停止
         var $link = $(this);
         var path = $link.data('path');
 
@@ -1583,6 +1595,16 @@ jQuery(document).ready(function($) {
 
         // 全てチェックされている場合、全選択チェックボックスもチェック
         $('#cb-select-all-1').prop('checked', totalCheckboxes === checkedCheckboxes);
+    });
+
+    // チェックボックスクリック時のイベント伝播を停止
+    $(document).on('click', 'input[name="file_paths[]"]', function(e) {
+        e.stopPropagation();
+    });
+
+    // チェックボックスラベルクリック時のイベント伝播を停止
+    $(document).on('click', '.check-column label', function(e) {
+        e.stopPropagation();
     });
 
     // 一括操作ボタンのイベント
@@ -1739,6 +1761,8 @@ jQuery(document).ready(function($) {
         var currentSortOrder = getCurrentSortOrder();
         navigateToDirectoryWithSort(path, page, currentSortBy, currentSortOrder);
     }
+
+
 
     function navigateToDirectoryOld(path, page) {
         $('#bf-secret-file-downloader-loading').show();
@@ -1954,14 +1978,20 @@ jQuery(document).ready(function($) {
                 tbody.append(row);
             });
 
-            // ディレクトリクリックイベントを再バインド（行アクション付きのものは除外）
-            $('.clickable-directory').not('.has-row-actions').on('click', function(e) {
-                e.preventDefault();
-                var path = $(this).data('path');
-                if (path) {
-                    navigateToDirectory(path, 1);
-                }
+                                    // ディレクトリクリックイベントを削除 - 行アクションリンクのみで操作
+
+            // 動的に生成されたチェックボックスのイベント伝播を停止
+            $('input[name="file_paths[]"]').off('click').on('click', function(e) {
+                e.stopPropagation();
             });
+
+            // 動的に生成されたチェックボックスラベルのイベント伝播を停止
+            $('.check-column label').off('click').on('click', function(e) {
+                e.stopPropagation();
+            });
+
+            // 動的に生成された行アクションリンクのイベント伝播を停止（既存のイベントハンドラーを保持）
+            // この処理は削除し、既存のイベントハンドラーに依存する
         } else {
             tbody.append(
                 '<tr><td colspan="5" style="text-align: center; padding: 40px;">' +
