@@ -1239,7 +1239,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
+    line-height: 1;
+}
+
+.bf-url-input-group button .dashicons {
+    vertical-align: middle;
+    line-height: 1;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
 }
 
 .bf-url-preview {
@@ -1274,6 +1284,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     .bf-url-input-group button {
         margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        line-height: 1;
+    }
+
+    .bf-url-input-group button .dashicons {
+        vertical-align: middle;
+        line-height: 1;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
     }
 }
 </style>

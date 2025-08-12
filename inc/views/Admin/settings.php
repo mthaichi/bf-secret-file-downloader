@@ -157,6 +157,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                     <?php submit_button(); ?>
                 </form>
+
+                <!-- 設定リセットセクション -->
+                <div class="bf-reset-settings-section" style="margin-top: 30px; padding: 20px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+                    <h3 style="margin-top: 0; color: #856404;"><?php esc_html_e( '設定のリセット', 'bf-secret-file-downloader' ); ?></h3>
+                    <p style="margin-bottom: 15px; color: #856404;">
+                        <?php esc_html_e( 'このボタンをクリックすると、すべての設定が初期状態にリセットされます。この操作は取り消すことができません。', 'bf-secret-file-downloader' ); ?>
+                    </p>
+                    <button type="button" id="bf-reset-settings" class="button button-secondary" style="background-color: #dc3545; border-color: #dc3545; color: white;">
+                        <?php esc_html_e( '設定をリセット', 'bf-secret-file-downloader' ); ?>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -587,6 +598,40 @@ jQuery(document).ready(function($) {
 
     $('#bf-deselect-all-roles').on('click', function() {
         $('.bf-role-checkbox').prop('checked', false);
+    });
+
+    // 設定リセットボタンの制御
+    $('#bf-reset-settings').on('click', function() {
+        if (confirm('<?php esc_html_e( "本当にすべての設定をリセットしますか？この操作は取り消すことができません。", "bf-secret-file-downloader" ); ?>')) {
+            // ボタンを無効化してローディング状態に
+            var $button = $(this);
+            var originalText = $button.text();
+            $button.prop('disabled', true).text('<?php esc_html_e( "リセット中...", "bf-secret-file-downloader" ); ?>');
+
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'bf_basic_guard_reset_settings',
+                    nonce: '<?php echo esc_js( $nonce ); ?>'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.data.message);
+                        // ページをリロードして設定を反映
+                        location.reload();
+                    } else {
+                        alert('<?php esc_html_e( "設定のリセットに失敗しました。", "bf-secret-file-downloader" ); ?>');
+                        $button.prop('disabled', false).text(originalText);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log('Reset settings AJAX error:', xhr, status, error);
+                    alert('<?php esc_html_e( "エラーが発生しました。", "bf-secret-file-downloader" ); ?>' + ': ' + error);
+                    $button.prop('disabled', false).text(originalText);
+                }
+            });
+        }
     });
 });
 </script>

@@ -37,6 +37,7 @@ class SettingsPage {
         add_action( 'admin_init', array( $this, 'register_settings' ) );
         add_action( 'wp_ajax_bf_basic_guard_browse_directory', array( $this, 'ajax_browse_directory' ) );
         add_action( 'wp_ajax_bf_basic_guard_create_directory', array( $this, 'ajax_create_directory' ) );
+        add_action( 'wp_ajax_bf_basic_guard_reset_settings', array( $this, 'ajax_reset_settings' ) );
     }
 
     /**
@@ -58,13 +59,13 @@ class SettingsPage {
         // 認証設定を追加
         register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_auth_methods', array(
             'type' => 'array',
-            'default' => array( 'logged_in' ),
+            'default' => array(),
             'sanitize_callback' => array( $this, 'sanitize_auth_methods' )
         ) );
 
         register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_allowed_roles', array(
             'type' => 'array',
-            'default' => array( 'administrator' ),
+            'default' => array(),
             'sanitize_callback' => array( $this, 'sanitize_roles' )
         ) );
 
@@ -471,6 +472,30 @@ class SettingsPage {
     }
 
     /**
+     * 設定をリセットします
+     */
+    public function ajax_reset_settings() {
+        // セキュリティチェック
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( 'Unauthorized' );
+        }
+
+        check_ajax_referer( 'bf_basic_guard_browse_nonce', 'nonce' );
+
+        // 設定を削除
+        delete_option( 'bf_basic_guard_target_directory' );
+        delete_option( 'bf_basic_guard_max_file_size' );
+        delete_option( 'bf_basic_guard_auth_methods' );
+        delete_option( 'bf_basic_guard_allowed_roles' );
+        delete_option( 'bf_basic_guard_simple_auth_password' );
+
+        // ディレクトリパスワードもクリア
+        $this->clear_all_directory_passwords();
+
+        wp_send_json_success( array( 'message' => '設定がリセットされました。' ) );
+    }
+
+    /**
      * ページを表示します
      */
         public function render() {
@@ -554,7 +579,7 @@ class SettingsPage {
      * @return array 認証方法の配列
      */
     private function get_auth_methods() {
-        return get_option( 'bf_basic_guard_auth_methods', array( 'logged_in' ) );
+        return get_option( 'bf_basic_guard_auth_methods', array() );
     }
 
     /**
@@ -563,7 +588,7 @@ class SettingsPage {
      * @return array 許可するユーザーロールの配列
      */
     private function get_allowed_roles() {
-        return get_option( 'bf_basic_guard_allowed_roles', array( 'administrator' ) );
+        return get_option( 'bf_basic_guard_allowed_roles', array() );
     }
 
     /**
