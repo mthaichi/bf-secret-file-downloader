@@ -243,7 +243,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                                     <span class="bf-fallback-icon" style="display: none; font-size: 18px; margin-right: 8px; vertical-align: middle;">📁</span>
                                                 </span>
                                                 <?php if ( $file['readable'] ) : ?>
-                                                    <strong class="bf-directory-name row-title"><?php echo esc_html( $file['name'] ); ?></strong>
+                                                    <strong class="bf-directory-name row-title"><a href="#" class="open-directory" data-path="<?php echo esc_attr( $file['path'] ); ?>"><?php echo esc_html( $file['name'] ); ?></a></strong>
                                                 <?php else : ?>
                                                     <span class="bf-directory-name-disabled row-title"><?php echo esc_html( $file['name'] ); ?></span>
                                                     <small class="bf-access-denied">(<?php esc_html_e( 'アクセス不可', 'bf-secret-file-downloader' ); ?>)</small>
@@ -273,7 +273,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                                         ?>
                                                     </span>
                                                 </span>
-                                                <span class="bf-file-name row-title"><?php echo esc_html( $file['name'] ); ?></span>
+                                                <span class="bf-file-name row-title"><a href="#" class="download-file-link" data-file-path="<?php echo esc_attr( $file['path'] ); ?>" data-file-name="<?php echo esc_attr( $file['name'] ); ?>"><?php echo esc_html( $file['name'] ); ?></a></span>
                                                                                 <div class="row-actions">
                                     <span class="download"><a href="#" class="download-file-link"
                                             data-file-path="<?php echo esc_attr( $file['path'] ); ?>"
@@ -361,14 +361,44 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <?php esc_html_e( 'このディレクトリ内のファイルをダウンロードする際に要求する認証設定を行ってください。', 'bf-secret-file-downloader' ); ?>
             </p>
 
-            <!-- 認証方法の設定 -->
+            <!-- 認証設定 -->
             <div class="bf-auth-section">
                 <h4><?php esc_html_e( '認証方法', 'bf-secret-file-downloader' ); ?></h4>
                 <fieldset>
+                    <legend class="screen-reader-text"><?php esc_html_e( '認証方法', 'bf-secret-file-downloader' ); ?></legend>
                     <label>
                         <input type="checkbox" name="bf_auth_methods[]" value="logged_in" id="bf-auth-methods-logged-in" />
                         <?php esc_html_e( 'ログインしているユーザー', 'bf-secret-file-downloader' ); ?>
                     </label>
+                    <div id="bf-allowed-roles-section" style="margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #0073aa; display: none;">
+                        <label for="bf-allowed-roles">
+                            <strong><?php esc_html_e( '許可するユーザーロール', 'bf-secret-file-downloader' ); ?></strong>
+                        </label>
+                        <div class="bf-role-selection-controls" style="margin: 10px 0;">
+                            <button type="button" id="bf-select-all-roles" class="button button-small"><?php esc_html_e( 'すべて選択', 'bf-secret-file-downloader' ); ?></button>
+                            <button type="button" id="bf-deselect-all-roles" class="button button-small"><?php esc_html_e( 'すべて解除', 'bf-secret-file-downloader' ); ?></button>
+                        </div>
+                        <fieldset>
+                            <legend class="screen-reader-text"><?php esc_html_e( '許可するユーザーロール', 'bf-secret-file-downloader' ); ?></legend>
+                            <?php
+                            $roles = array(
+                                'administrator' => __( '管理者', 'bf-secret-file-downloader' ),
+                                'editor' => __( '編集者', 'bf-secret-file-downloader' ),
+                                'author' => __( '投稿者', 'bf-secret-file-downloader' ),
+                                'contributor' => __( '寄稿者', 'bf-secret-file-downloader' ),
+                                'subscriber' => __( '購読者', 'bf-secret-file-downloader' )
+                            );
+                            foreach ( $roles as $role => $label ) :
+                            ?>
+                            <label>
+                                <input type="checkbox" name="bf_allowed_roles[]" value="<?php echo esc_attr( $role ); ?>" class="bf-role-checkbox" id="bf-allowed-roles-<?php echo esc_attr( $role ); ?>"
+                                       />
+                                <?php echo esc_html( $label ); ?>
+                            </label>
+                            <?php endforeach; ?>
+                        </fieldset>
+                        <p class="description" style="margin-top: 10px;"><?php esc_html_e( 'ファイルアクセスを許可するユーザーロールを選択してください。複数選択可能です。', 'bf-secret-file-downloader' ); ?></p>
+                    </div>
                     <br>
                     <label>
                         <input type="checkbox" name="bf_auth_methods[]" value="simple_auth" id="bf-auth-methods-simple-auth" />
@@ -384,37 +414,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <p class="description" style="margin-top: 5px;"><?php esc_html_e( '簡易認証で使用するパスワードを設定してください。', 'bf-secret-file-downloader' ); ?></p>
                     </div>
                 </fieldset>
-            </div>
-
-            <!-- ユーザーロールの設定 -->
-            <div class="bf-auth-section">
-                <h4><?php esc_html_e( '許可するユーザーロール', 'bf-secret-file-downloader' ); ?></h4>
-                <fieldset>
-                    <label>
-                        <input type="checkbox" name="bf_allowed_roles[]" value="administrator" id="bf-allowed-roles-administrator" />
-                        <?php esc_html_e( '管理者', 'bf-secret-file-downloader' ); ?>
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" name="bf_allowed_roles[]" value="editor" id="bf-allowed-roles-editor" />
-                        <?php esc_html_e( '編集者', 'bf-secret-file-downloader' ); ?>
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" name="bf_allowed_roles[]" value="author" id="bf-allowed-roles-author" />
-                        <?php esc_html_e( '投稿者', 'bf-secret-file-downloader' ); ?>
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" name="bf_allowed_roles[]" value="contributor" id="bf-allowed-roles-contributor" />
-                        <?php esc_html_e( '寄稿者', 'bf-secret-file-downloader' ); ?>
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" name="bf_allowed_roles[]" value="subscriber" id="bf-allowed-roles-subscriber" />
-                        <?php esc_html_e( '購読者', 'bf-secret-file-downloader' ); ?>
-                    </label>
-                </fieldset>
+                <p class="description"><?php esc_html_e( 'ファイルアクセスを許可する認証方法を選択してください。複数選択可能です。', 'bf-secret-file-downloader' ); ?></p>
             </div>
         </div>
         <div class="bf-modal-footer">
@@ -1906,7 +1906,7 @@ jQuery(document).ready(function($) {
 
                     var rowActions = '<div class="row-actions">';
                     if (file.readable) {
-                        nameCell.html(iconWrapper + '<strong class="bf-directory-name row-title">' + $('<div>').text(file.name).html() + '</strong>');
+                        nameCell.html(iconWrapper + '<strong class="bf-directory-name row-title"><a href="#" class="open-directory" data-path="' + $('<div>').text(file.path).html() + '">' + $('<div>').text(file.name).html() + '</a></strong>');
                         rowActions += '<span class="open"><a href="#" class="open-directory" data-path="' + $('<div>').text(file.path).html() + '"><?php esc_html_e( '開く', 'bf-secret-file-downloader' ); ?></a> | </span>';
                     } else {
                         nameCell.html(iconWrapper + '<span class="bf-directory-name-disabled row-title">' + $('<div>').text(file.name).html() + '</span>' +
@@ -1939,7 +1939,7 @@ jQuery(document).ready(function($) {
                         '<span class="dashicons dashicons-media-default bf-file-icon" style="font-size: 16px !important; margin-right: 8px; vertical-align: middle; font-family: dashicons !important;"></span>' +
                         '<span class="bf-fallback-icon" style="display: none; font-size: 16px; margin-right: 8px; vertical-align: middle;">' + fallbackEmoji + '</span>' +
                         '</span>';
-                    nameCell.html(iconWrapper + '<span class="bf-file-name row-title">' + $('<div>').text(file.name).html() + '</span>');
+                    nameCell.html(iconWrapper + '<span class="bf-file-name row-title"><a href="#" class="download-file-link" data-file-path="' + $('<div>').text(file.path).html() + '" data-file-name="' + $('<div>').text(file.name).html() + '">' + $('<div>').text(file.name).html() + '</a></span>');
 
                     var rowActions = '<div class="row-actions">';
                     rowActions += '<span class="download"><a href="#" class="download-file-link" ' +
@@ -2841,6 +2841,7 @@ jQuery(document).ready(function($) {
             $('input[name="bf_allowed_roles[]"]').prop('checked', false);
             $('#bf-simple-auth-password').val('');
             $('#bf-simple-auth-password-section').hide();
+            $('#bf-allowed-roles-section').hide();
         }
 
         // モーダルを表示
@@ -2902,6 +2903,13 @@ jQuery(document).ready(function($) {
                         $('#bf-simple-auth-password-section').show();
                     } else {
                         $('#bf-simple-auth-password-section').hide();
+                    }
+
+                    // ロール選択セクションの表示/非表示
+                    if (authSettings.auth_methods.includes('logged_in')) {
+                        $('#bf-allowed-roles-section').show();
+                    } else {
+                        $('#bf-allowed-roles-section').hide();
                     }
 
                     // 認証設定の詳細を表示
@@ -3111,6 +3119,24 @@ jQuery(document).ready(function($) {
         }
     });
 
+    // ログインユーザーチェックボックスの制御
+    $('#bf-auth-methods-logged-in').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#bf-allowed-roles-section').show();
+        } else {
+            $('#bf-allowed-roles-section').hide();
+        }
+    });
+
+    // ロール選択の制御
+    $('#bf-select-all-roles').on('click', function() {
+        $('.bf-role-checkbox').prop('checked', true);
+    });
+
+    $('#bf-deselect-all-roles').on('click', function() {
+        $('.bf-role-checkbox').prop('checked', false);
+    });
+
     // 設定解除ボタンのイベントリスナー
     $(document).on('click', '#remove-auth-btn', function() {
         removeDirectoryAuth();
@@ -3254,6 +3280,43 @@ jQuery(document).ready(function($) {
     color: #23282d;
     border-bottom: 1px solid #ddd;
     padding-bottom: 5px;
+}
+
+/* 認証設定ダイアログのスタイル */
+.bf-auth-section fieldset {
+    margin: 0;
+    padding: 0;
+}
+
+.bf-auth-section fieldset legend {
+    margin-bottom: 10px;
+}
+
+.bf-auth-section label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.bf-auth-section .description {
+    color: #666;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+.bf-role-selection-controls {
+    margin: 10px 0;
+}
+
+.bf-role-selection-controls + fieldset label {
+    margin-bottom: 2px;
+}
+
+.bf-role-selection-controls .button {
+    margin-right: 5px;
+}
+
+.bf-role-selection-controls .button:last-child {
+    margin-right: 0;
 }
 
 .bf-danger-button {
