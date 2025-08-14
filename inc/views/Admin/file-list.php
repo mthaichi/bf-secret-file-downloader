@@ -220,98 +220,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                             </tr>
                         </thead>
                         <tbody id="file-list-tbody">
-                            <?php if ( ! empty( $files ) ) : ?>
-                                <?php foreach ( $files as $file ) : ?>
-                                    <tr data-path="<?php echo esc_attr( $file['path'] ); ?>"
-                                        data-type="<?php echo esc_attr( $file['type'] ); ?>"
-                                        <?php if ( $file['type'] === 'directory' && $file['readable'] ) : ?>
-                                            class="clickable-directory"
-                                            style="cursor: pointer;"
-                                        <?php endif; ?>
-                                    >
-                                        <th scope="row" class="check-column">
-                                            <input type="checkbox"
-                                                   name="file_paths[]"
-                                                   value="<?php echo esc_attr( $file['path'] ); ?>"
-                                                   data-file-name="<?php echo esc_attr( $file['name'] ); ?>"
-                                                   data-file-type="<?php echo esc_attr( $file['type'] ); ?>">
-                                        </th>
-                                        <td class="column-name has-row-actions">
-                                            <?php if ( $file['type'] === 'directory' ) : ?>
-                                                <span class="bf-icon-wrapper">
-                                                    <span class="dashicons dashicons-folder bf-directory-icon" style="font-size: 20px !important; margin-right: 8px; vertical-align: middle; font-family: dashicons !important;"></span>
-                                                    <span class="bf-fallback-icon" style="display: none; font-size: 18px; margin-right: 8px; vertical-align: middle;">📁</span>
-                                                </span>
-                                                <?php if ( $file['readable'] ) : ?>
-                                                    <strong class="bf-directory-name row-title"><a href="#" class="open-directory" data-path="<?php echo esc_attr( $file['path'] ); ?>"><?php echo esc_html( $file['name'] ); ?></a></strong>
-                                                <?php else : ?>
-                                                    <span class="bf-directory-name-disabled row-title"><?php echo esc_html( $file['name'] ); ?></span>
-                                                    <small class="bf-access-denied">(<?php esc_html_e( 'アクセス不可', 'bf-secret-file-downloader' ); ?>)</small>
-                                                <?php endif; ?>
-                                                <div class="row-actions">
-                                                    <?php if ( $file['readable'] ) : ?>
-                                                        <span class="open"><a href="#" class="open-directory"
-                                                                data-path="<?php echo esc_attr( $file['path'] ); ?>"><?php esc_html_e( '開く', 'bf-secret-file-downloader' ); ?></a> | </span>
-                                                    <?php endif; ?>
-                                                    <?php if ( current_user_can( 'delete_posts' ) ) : ?>
-                                                        <span class="delete"><a href="#" class="delete-file-link"
-                                                                data-file-path="<?php echo esc_attr( $file['path'] ); ?>"
-                                                                data-file-name="<?php echo esc_attr( $file['name'] ); ?>"
-                                                                data-file-type="<?php echo esc_attr( $file['type'] ); ?>"><?php esc_html_e( '削除', 'bf-secret-file-downloader' ); ?></a></span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            <?php else : ?>
-                                                <span class="bf-icon-wrapper">
-                                                    <span class="dashicons dashicons-media-default bf-file-icon" style="font-size: 16px !important; margin-right: 8px; vertical-align: middle; font-family: dashicons !important;"></span>
-                                                    <span class="bf-fallback-icon" style="display: none; font-size: 16px; margin-right: 8px; vertical-align: middle;">
-                                                        <?php
-                                                        $emoji = '📄';
-                                                        if ( $file['type_class'] === 'image-file' ) $emoji = '🖼️';
-                                                        else if ( $file['type_class'] === 'document-file' ) $emoji = '📝';
-                                                        else if ( $file['type_class'] === 'archive-file' ) $emoji = '📦';
-                                                        echo $emoji;
-                                                        ?>
-                                                    </span>
-                                                </span>
-                                                <span class="bf-file-name row-title"><a href="#" class="download-file-link" data-file-path="<?php echo esc_attr( $file['path'] ); ?>" data-file-name="<?php echo esc_attr( $file['name'] ); ?>"><?php echo esc_html( $file['name'] ); ?></a></span>
-                                                                                <div class="row-actions">
-                                    <span class="download"><a href="#" class="download-file-link"
-                                            data-file-path="<?php echo esc_attr( $file['path'] ); ?>"
-                                            data-file-name="<?php echo esc_attr( $file['name'] ); ?>"><?php esc_html_e( 'ダウンロード', 'bf-secret-file-downloader' ); ?></a> | </span>
-                                    <span class="copy-url"><a href="#" class="copy-url-link"
-                                            data-file-path="<?php echo esc_attr( $file['path'] ); ?>"
-                                            data-file-name="<?php echo esc_attr( $file['name'] ); ?>"><?php esc_html_e( 'URLをコピー', 'bf-secret-file-downloader' ); ?></a><?php if ( current_user_can( 'delete_posts' ) ) : ?> | <?php endif; ?></span>
-                                    <?php if ( current_user_can( 'delete_posts' ) ) : ?>
-                                        <span class="delete"><a href="#" class="delete-file-link"
-                                                data-file-path="<?php echo esc_attr( $file['path'] ); ?>"
-                                                data-file-name="<?php echo esc_attr( $file['name'] ); ?>"
-                                                data-file-type="<?php echo esc_attr( $file['type'] ); ?>"><?php esc_html_e( '削除', 'bf-secret-file-downloader' ); ?></a></span>
-                                    <?php endif; ?>
-                                </div>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="column-type">
-                                            <?php if ( $file['type'] === 'directory' ) : ?>
-                                                <?php esc_html_e( 'ディレクトリ', 'bf-secret-file-downloader' ); ?>
-                                            <?php else : ?>
-                                                <?php esc_html_e( 'ファイル', 'bf-secret-file-downloader' ); ?>
-                                            <?php endif; ?>
-                                        </td>
-                                                                 <td class="column-size">
-                             <?php echo esc_html( $file['formatted_size'] ); ?>
-                         </td>
-                                                                                <td class="column-modified">
-                                            <?php echo esc_html( wp_date( 'Y-m-d H:i:s', $file['modified'] ) ); ?>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else : ?>
-                                <tr>
-                                    <td colspan="5" style="text-align: center; padding: 40px;">
-                                        <?php esc_html_e( 'ファイルまたはディレクトリが見つかりませんでした。', 'bf-secret-file-downloader' ); ?>
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
+                            <!-- ファイルリストはJavaScriptで動的に生成されます -->
                         </tbody>
                     </table>
                 </div>
@@ -570,750 +479,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 </div>
 
-<style>
-.bf-secret-file-downloader-path {
-    background: #f1f1f1;
-    padding: 10px;
-    margin: 10px 0;
-    border-left: 4px solid #0073aa;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.bf-path-info {
-    flex: 1;
-    min-width: 200px;
-}
-
-.bf-path-actions {
-    flex-shrink: 0;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.bf-path-actions .button {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-}
-
-.bf-path-actions .dashicons {
-    font-size: 16px;
-}
-
-/* レスポンシブ対応 */
-@media (max-width: 600px) {
-    .bf-secret-file-downloader-path {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .bf-path-info {
-        min-width: auto;
-        margin-bottom: 10px;
-    }
-
-    .bf-path-actions {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-}
-
-/* ソート機能のスタイル */
-.sortable {
-    cursor: pointer;
-}
-
-.sortable a.sort-link {
-    text-decoration: none;
-    color: inherit;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-
-.sortable a.sort-link:hover {
-    color: #0073aa;
-}
-
-.sorting-indicator {
-    font-size: 10px;
-    opacity: 0.5;
-    line-height: 1;
-    margin-left: 6px;
-}
-
-.sorting-indicator:before {
-    content: "▲▼";
-    font-size: 8px;
-}
-
-.sortable.sorted.asc .sorting-indicator:before {
-    content: "▲";
-    opacity: 1;
-    font-size: 10px;
-}
-
-.sortable.sorted.desc .sorting-indicator:before {
-    content: "▼";
-    opacity: 1;
-    font-size: 10px;
-}
-
-.bf-secret-file-downloader-stats {
-    margin: 15px 0;
-}
-
-
-
-.bf-secret-file-downloader-actions {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
-}
-
-/* WordPress形式の行アクション */
-.has-row-actions .row-actions {
-    visibility: hidden;
-    color: #ddd;
-    margin-top: 8px;
-    font-size: 13px;
-}
-
-.has-row-actions:hover .row-actions {
-    visibility: visible;
-    color: #000;
-}
-
-.row-actions a {
-    color: #0073aa;
-    text-decoration: none;
-}
-
-.row-actions a:hover {
-    color: #005177;
-}
-
-.row-actions .delete a {
-    color: #d63638;
-}
-
-.row-actions .delete a:hover {
-    color: #a00;
-}
-
-.row-actions .copy-url a {
-    color: #0073aa;
-}
-
-.row-actions .copy-url a:hover {
-    color: #005177;
-}
-
-.row-title {
-    font-weight: 600;
-}
-
-/* ディレクトリ行のスタイル */
-.clickable-directory,
-.clickable-directory:hover,
-.clickable-directory td,
-.clickable-directory td:hover {
-    cursor: default !important;
-}
-
-/* チェックボックスエリアのスタイル */
-.check-column {
-    cursor: default !important;
-}
-
-.check-column input[type="checkbox"] {
-    cursor: pointer !important;
-}
-
-.check-column label {
-    cursor: pointer !important;
-}
-
-/* 行アクションリンク以外の要素のカーソル形状を固定 */
-.clickable-directory .column-name,
-.clickable-directory .column-type,
-.clickable-directory .column-size,
-.clickable-directory .column-modified {
-    cursor: default !important;
-}
-
-.bf-actions-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 15px;
-}
-
-.bf-actions-header h3 {
-    margin: 0;
-    color: #333;
-}
-
-.bf-action-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.bf-action-buttons .button {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.bf-create-directory-form {
-    background: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 15px;
-    margin: 15px 0;
-}
-
-.bf-create-directory-form .form-group {
-    margin-bottom: 10px;
-}
-
-.bf-create-directory-form label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-.bf-create-directory-form .form-actions {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
-}
-
-.bf-create-directory-form .description {
-    margin: 10px 0 0 0;
-    font-style: italic;
-    color: #666;
-}
-
-.bf-secret-file-downloader-drop-zone {
-    border: 2px dashed #ccc;
-    border-radius: 8px;
-    padding: 40px 20px;
-    text-align: center;
-    margin: 20px 0;
-    background: #fafafa;
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.bf-secret-file-downloader-drop-zone:hover {
-    border-color: #0073aa;
-    background: #f0f8ff;
-}
-
-.bf-secret-file-downloader-drop-zone.dragover {
-    border-color: #0073aa;
-    background: #e6f3ff;
-    transform: scale(1.02);
-}
-
-.bf-secret-file-downloader-drop-zone .dashicons-upload {
-    font-size: 48px !important;
-    color: #0073aa !important;
-    display: block !important;
-    margin: 0 auto 20px !important;
-    text-align: center !important;
-    width: 100% !important;
-    line-height: 1 !important;
-    font-family: dashicons !important;
-}
-
-.drop-zone-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.drop-zone-content p {
-    margin: 10px 0;
-    color: #666;
-    text-align: center;
-}
-
-.drop-zone-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 115, 170, 0.9);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.bf-secret-file-downloader-file-table .dashicons {
-    margin-right: 8px !important;
-    vertical-align: middle !important;
-    font-size: 18px !important;
-    font-family: dashicons !important;
-    display: inline-block !important;
-    width: auto !important;
-    height: auto !important;
-    line-height: 1 !important;
-    text-decoration: none !important;
-    text-align: center !important;
-    speak: none !important;
-    font-weight: normal !important;
-    font-variant: normal !important;
-    text-transform: none !important;
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
-}
-
-/* ディレクトリアイコンのスタイル */
-.bf-directory-icon {
-    font-size: 20px !important;
-}
-
-.bf-directory-icon:before {
-    content: "\f318" !important;
-}
-
-.bf-directory-name {
-    font-weight: bold !important;
-}
-
-.bf-directory-name-disabled {
-    color: #999 !important;
-}
-
-.bf-access-denied {
-    color: #999 !important;
-    font-style: italic !important;
-}
-
-/* ファイルアイコンのスタイル */
-.bf-file-icon {
-    font-size: 16px !important;
-}
-
-.bf-file-icon:before {
-    content: "\f123" !important;
-}
-
-
-
-.tablenav-pages {
-    float: right;
-}
-
-.tablenav-pages .pagination-links {
-    font-size: 13px;
-    line-height: 1.8;
-}
-
-.tablenav-pages a,
-.tablenav-pages span.current {
-    display: inline-block;
-    padding: 3px 5px;
-    margin-right: 5px;
-    text-decoration: none;
-    border: 1px solid #ddd;
-    background: #f7f7f7;
-}
-
-.tablenav-pages a:hover {
-    background: #0073aa;
-    color: #fff;
-    border-color: #0073aa;
-}
-
-.tablenav-pages span.current {
-    background: #0073aa;
-    color: #fff;
-    border-color: #0073aa;
-    font-weight: bold;
-}
-
-/* パスワード関連のスタイル */
-.bf-password-indicator {
-    margin-left: 10px;
-    color: #0073aa;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    background-color: rgba(0, 115, 170, 0.1);
-    border-radius: 4px;
-    border: 1px solid rgba(0, 115, 170, 0.3);
-}
-
-.bf-password-indicator .dashicons {
-    font-size: 16px;
-}
-
-.bf-password-status-text {
-    font-size: 12px;
-    font-weight: 600;
-}
-
-/* モーダルスタイル */
-.bf-modal {
-    position: fixed;
-    z-index: 100000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.bf-modal-content {
-    background-color: #fff;
-    margin: 5% auto;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    animation: bf-modal-appear 0.3s;
-}
-
-@keyframes bf-modal-appear {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-.bf-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #ddd;
-    background-color: #f9f9f9;
-    border-radius: 8px 8px 0 0;
-}
-
-.bf-modal-header h3 {
-    margin: 0;
-    color: #333;
-}
-
-.bf-modal-close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    line-height: 1;
-}
-
-.bf-modal-close:hover,
-.bf-modal-close:focus {
-    color: #000;
-    text-decoration: none;
-}
-
-.bf-modal-body {
-    padding: 20px;
-}
-
-.bf-modal-footer {
-    padding: 20px;
-    border-top: 1px solid #ddd;
-    text-align: right;
-    background-color: #f9f9f9;
-    border-radius: 0 0 8px 8px;
-}
-
-.bf-modal-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.bf-action-buttons-left {
-    flex: 1;
-}
-
-.bf-action-buttons-right {
-    display: flex;
-    gap: 10px;
-}
-
-.bf-danger-button {
-    color: #d63638 !important;
-    border-color: #d63638 !important;
-}
-
-.bf-danger-button:hover {
-    background-color: #d63638 !important;
-    color: #fff !important;
-}
-
-.bf-status-box {
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 20px;
-}
-
-.bf-status-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.bf-status-icon {
-    flex-shrink: 0;
-}
-
-.bf-status-icon .dashicons {
-    font-size: 24px;
-    color: #0073aa;
-}
-
-.bf-status-text {
-    flex: 1;
-}
-
-.bf-status-text strong {
-    display: block;
-    margin-bottom: 4px;
-    color: #333;
-}
-
-.bf-status-text p {
-    margin: 0;
-    color: #666;
-    font-size: 14px;
-}
-
-.bf-password-form {
-    margin: 20px 0;
-}
-
-.bf-password-form label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-}
-
-.bf-password-input-group {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.bf-password-input-group input {
-    flex: 1;
-}
-
-.bf-password-input-group button {
-    flex-shrink: 0;
-}
-
-#bf-show-current-password {
-    background-color: #f0f8ff;
-    border-color: #0073aa;
-    color: #0073aa;
-}
-
-#bf-show-current-password:hover {
-    background-color: #0073aa;
-    color: #fff;
-}
-
-/* URLコピーモーダルのスタイル */
-.bf-url-info {
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-radius: 6px;
-}
-
-.bf-url-info h4 {
-    margin: 0 0 10px 0;
-    color: #333;
-}
-
-.bf-url-options {
-    margin-bottom: 20px;
-}
-
-.bf-url-options h4 {
-    margin: 0 0 15px 0;
-    color: #333;
-}
-
-.bf-url-option-group {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-.bf-url-option {
-    flex: 1;
-    min-width: 200px;
-    cursor: pointer;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 15px;
-    transition: all 0.3s ease;
-    background-color: #fff;
-}
-
-.bf-url-option:hover {
-    border-color: #0073aa;
-    background-color: #f0f8ff;
-}
-
-.bf-url-option input[type="radio"] {
-    display: none;
-}
-
-.bf-url-option input[type="radio"]:checked + .bf-option-content {
-    color: #0073aa;
-}
-
-.bf-url-option input[type="radio"]:checked + .bf-option-content .bf-option-icon {
-    color: #0073aa;
-}
-
-.bf-option-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.bf-option-icon {
-    font-size: 24px;
-    color: #666;
-    flex-shrink: 0;
-}
-
-.bf-option-text {
-    flex: 1;
-}
-
-.bf-option-text strong {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 16px;
-}
-
-.bf-option-text span {
-    font-size: 14px;
-    color: #666;
-}
-
-.bf-url-display {
-    margin-bottom: 20px;
-}
-
-.bf-url-display label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-}
-
-.bf-url-input-group {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.bf-url-input-group input {
-    flex: 1;
-    font-family: monospace;
-    font-size: 14px;
-    background-color: #f9f9f9;
-}
-
-.bf-url-input-group button {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    line-height: 1;
-}
-
-.bf-url-input-group button .dashicons {
-    vertical-align: middle;
-    line-height: 1;
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-}
-
-.bf-url-preview {
-    margin-top: 20px;
-}
-
-.bf-url-preview h4 {
-    margin: 0 0 10px 0;
-    color: #333;
-}
-
-.bf-preview-frame {
-    background-color: #f9f9f9;
-    border-radius: 6px;
-    padding: 10px;
-}
-
-/* レスポンシブ対応 */
-@media (max-width: 768px) {
-    .bf-url-option-group {
-        flex-direction: column;
-    }
-
-    .bf-url-option {
-        min-width: auto;
-    }
-
-    .bf-url-input-group {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .bf-url-input-group button {
-        margin-top: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        line-height: 1;
-    }
-
-    .bf-url-input-group button .dashicons {
-        vertical-align: middle;
-        line-height: 1;
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-    }
-}
-</style>
 
 <script type="text/javascript">
 jQuery(document).ready(function($) {
@@ -1810,15 +975,125 @@ jQuery(document).ready(function($) {
         updateFileList(data);
     }
 
-        function updateFileList(data) {
-        // 現在のパス更新
-        $('#current-path').val(data.current_path);
-        $('#current-path-display').text(data.current_path || '<?php esc_html_e( "ルートディレクトリ", "bf-secret-file-downloader" ); ?>');
+        // テンプレート関数群
+    function createIconWrapper(file) {
+        if (file.type === 'directory') {
+            return '<span class="bf-icon-wrapper">' +
+                '<span class="dashicons dashicons-folder bf-directory-icon" style="font-size: 20px !important; margin-right: 8px; vertical-align: middle; font-family: dashicons !important;"></span>' +
+                '<span class="bf-fallback-icon" style="display: none; font-size: 18px; margin-right: 8px; vertical-align: middle;">📁</span>' +
+                '</span>';
+        } else {
+            var iconClass = file.type_class || '';
+            var fallbackEmoji = '📄';
 
-        // パス表示エリア全体を再構築
+            if (iconClass === 'image-file') {
+                fallbackEmoji = '🖼️';
+            } else if (iconClass === 'document-file') {
+                fallbackEmoji = '📝';
+            } else if (iconClass === 'archive-file') {
+                fallbackEmoji = '📦';
+            }
+
+            return '<span class="bf-icon-wrapper">' +
+                '<span class="dashicons dashicons-media-default bf-file-icon" style="font-size: 16px !important; margin-right: 8px; vertical-align: middle; font-family: dashicons !important;"></span>' +
+                '<span class="bf-fallback-icon" style="display: none; font-size: 16px; margin-right: 8px; vertical-align: middle;">' + fallbackEmoji + '</span>' +
+                '</span>';
+        }
+    }
+
+    function createRowActions(file) {
+        var strings = (typeof bfFileListData !== 'undefined' && bfFileListData.strings) ? bfFileListData.strings : {};
+        var rowActions = '<div class="row-actions">';
+
+        if (file.type === 'directory') {
+            if (file.readable) {
+                rowActions += '<span class="open"><a href="#" class="open-directory" data-path="' + $('<div>').text(file.path).html() + '">' + (strings.open || '<?php esc_html_e( '開く', 'bf-secret-file-downloader' ); ?>') + '</a> | </span>';
+            }
+        } else {
+            rowActions += '<span class="download"><a href="#" class="download-file-link" ' +
+                'data-file-path="' + $('<div>').text(file.path).html() + '" ' +
+                'data-file-name="' + $('<div>').text(file.name).html() + '">' + (strings.download || '<?php esc_html_e( 'ダウンロード', 'bf-secret-file-downloader' ); ?>') + '</a> | </span>';
+            rowActions += '<span class="copy-url"><a href="#" class="copy-url-link" ' +
+                'data-file-path="' + $('<div>').text(file.path).html() + '" ' +
+                'data-file-name="' + $('<div>').text(file.name).html() + '">' + (strings.copyUrl || '<?php esc_html_e( 'URLをコピー', 'bf-secret-file-downloader' ); ?>') + '</a>' +
+                '<?php if ( current_user_can( 'delete_posts' ) ) : ?> | <?php endif; ?></span>';
+        }
+
+        <?php if ( current_user_can( 'delete_posts' ) ) : ?>
+        rowActions += '<span class="delete"><a href="#" class="delete-file-link" ' +
+            'data-file-path="' + $('<div>').text(file.path).html() + '" ' +
+            'data-file-name="' + $('<div>').text(file.name).html() + '" ' +
+            'data-file-type="' + $('<div>').text(file.type).html() + '">' + (strings.delete || '<?php esc_html_e( '削除', 'bf-secret-file-downloader' ); ?>') + '</a></span>';
+        <?php endif; ?>
+
+        rowActions += '</div>';
+        return rowActions;
+    }
+
+    function createNameCell(file) {
+        var strings = (typeof bfFileListData !== 'undefined' && bfFileListData.strings) ? bfFileListData.strings : {};
+        var nameCell = $('<td class="column-name has-row-actions"></td>');
+        var iconWrapper = createIconWrapper(file);
+        var rowActions = createRowActions(file);
+
+        if (file.type === 'directory') {
+            if (file.readable) {
+                nameCell.html(iconWrapper + '<strong class="bf-directory-name row-title"><a href="#" class="open-directory" data-path="' + $('<div>').text(file.path).html() + '">' + $('<div>').text(file.name).html() + '</a></strong>');
+            } else {
+                nameCell.html(iconWrapper + '<span class="bf-directory-name-disabled row-title">' + $('<div>').text(file.name).html() + '</span>' +
+                             '<small class="bf-access-denied">(' + (strings.accessDenied || '<?php esc_html_e( 'アクセス不可', 'bf-secret-file-downloader' ); ?>') + ')</small>');
+            }
+        } else {
+            nameCell.html(iconWrapper + '<span class="bf-file-name row-title"><a href="#" class="download-file-link" data-file-path="' + $('<div>').text(file.path).html() + '" data-file-name="' + $('<div>').text(file.name).html() + '">' + $('<div>').text(file.name).html() + '</a></span>');
+        }
+
+        nameCell.append(rowActions);
+        return nameCell;
+    }
+
+    function createFileRow(file) {
+        var row = $('<tr></tr>')
+            .attr('data-path', file.path)
+            .attr('data-type', file.type);
+
+        if (file.type === 'directory' && file.readable) {
+            row.addClass('clickable-directory').css('cursor', 'pointer');
+        }
+
+        // チェックボックス列
+        var checkboxCell = $('<th scope="row" class="check-column"></th>');
+        var checkbox = $('<input type="checkbox" name="file_paths[]">')
+            .attr('value', file.path)
+            .attr('data-file-name', file.name)
+            .attr('data-file-type', file.type);
+        checkboxCell.append(checkbox);
+
+        var nameCell = createNameCell(file);
+
+        var strings = (typeof bfFileListData !== 'undefined' && bfFileListData.strings) ? bfFileListData.strings : {};
+        var typeCell = $('<td class="column-type"></td>').text(
+            file.type === 'directory'
+                ? (strings.directory || '<?php esc_html_e( 'ディレクトリ', 'bf-secret-file-downloader' ); ?>')
+                : (strings.file || '<?php esc_html_e( 'ファイル', 'bf-secret-file-downloader' ); ?>')
+        );
+
+        var sizeCell = $('<td class="column-size"></td>').text(
+            file.size === '-' ? '-' : formatFileSize(file.size)
+        );
+
+        var modifiedCell = $('<td class="column-modified"></td>').text(
+            new Date(file.modified * 1000).toLocaleString('ja-JP')
+        );
+
+        row.append(checkboxCell, nameCell, typeCell, sizeCell, modifiedCell);
+        return row;
+    }
+
+    function createPathDisplayTemplate(data) {
+        var strings = (typeof bfFileListData !== 'undefined' && bfFileListData.strings) ? bfFileListData.strings : {};
         var pathHtml = '<div class="bf-path-info">' +
-            '<strong><?php esc_html_e( '現在のディレクトリ:', 'bf-secret-file-downloader' ); ?></strong>' +
-            '<code id="current-path-display">' + (data.current_path || '<?php esc_html_e( "ルートディレクトリ", "bf-secret-file-downloader" ); ?>') + '</code>' +
+            '<strong>' + (strings.currentDirectory || '<?php esc_html_e( '現在のディレクトリ:', 'bf-secret-file-downloader' ); ?>') + '</strong>' +
+            '<code id="current-path-display">' + (data.current_path || (strings.rootDirectory || '<?php esc_html_e( "ルートディレクトリ", "bf-secret-file-downloader" ); ?>')) + '</code>' +
             '<input type="hidden" id="current-path" value="' + (data.current_path || '') + '">' +
             '</div>' +
             '<div class="bf-path-actions">';
@@ -1827,7 +1102,7 @@ jQuery(document).ready(function($) {
         if (data.current_path && data.current_path !== '') {
             pathHtml += '<button type="button" id="go-up-btn" class="button button-small">' +
                 '<span class="dashicons dashicons-arrow-up-alt2"></span>' +
-                '<?php esc_html_e( '上の階層へ', 'bf-secret-file-downloader' ); ?>' +
+                (strings.goUp || '<?php esc_html_e( '上の階層へ', 'bf-secret-file-downloader' ); ?>') +
                 '</button>';
         }
 
@@ -1836,15 +1111,22 @@ jQuery(document).ready(function($) {
         if (data.current_path && data.current_path !== '') {
             pathHtml += '<button type="button" id="directory-auth-btn" class="button button-small">' +
                 '<span class="dashicons dashicons-admin-users"></span>' +
-                '<?php esc_html_e( '認証設定', 'bf-secret-file-downloader' ); ?>' +
+                (strings.authSettings || '<?php esc_html_e( '認証設定', 'bf-secret-file-downloader' ); ?>') +
                 '</button>';
         }
         <?php endif; ?>
 
         pathHtml += '</div>';
+        return pathHtml;
+    }
 
-        // パス表示エリアを更新
-        $('.bf-secret-file-downloader-path').html(pathHtml);
+    function updateFileList(data) {
+        // 現在のパス更新
+        $('#current-path').val(data.current_path);
+        $('#current-path-display').text(data.current_path || '<?php esc_html_e( "ルートディレクトリ", "bf-secret-file-downloader" ); ?>');
+
+        // パス表示エリア全体を再構築
+        $('.bf-secret-file-downloader-path').html(createPathDisplayTemplate(data));
 
         // 認証インジケーターの更新（パス表示エリア更新後に実行）
         var hasAuth = data.current_directory_has_auth || false;
@@ -1866,10 +1148,11 @@ jQuery(document).ready(function($) {
         });
 
         // 統計情報更新
+        var strings = (typeof bfFileListData !== 'undefined' && bfFileListData.strings) ? bfFileListData.strings : {};
         $('.bf-secret-file-downloader-stats p').text(
             data.total_items > 0
-                ? '<?php echo esc_js( __( '%d個のアイテムが見つかりました。', 'bf-secret-file-downloader' ) ); ?>'.replace('%d', data.total_items)
-                : '<?php echo esc_js( __( 'アイテムが見つかりませんでした。', 'bf-secret-file-downloader' ) ); ?>'
+                ? (strings.itemsFound || '<?php echo esc_js( __( '%d個のアイテムが見つかりました。', 'bf-secret-file-downloader' ) ); ?>').replace('%d', data.total_items)
+                : (strings.noItemsFound || '<?php echo esc_js( __( 'アイテムが見つかりませんでした。', 'bf-secret-file-downloader' ) ); ?>')
         );
 
         // ファイルリスト更新
@@ -1878,107 +1161,8 @@ jQuery(document).ready(function($) {
 
         if (data.items && data.items.length > 0) {
             $.each(data.items, function(index, file) {
-                                var row = $('<tr></tr>')
-                    .attr('data-path', file.path)
-                    .attr('data-type', file.type);
-
-                if (file.type === 'directory' && file.readable) {
-                    row.addClass('clickable-directory').css('cursor', 'pointer');
-                }
-
-                // チェックボックス列
-                var checkboxCell = $('<th scope="row" class="check-column"></th>');
-                var checkbox = $('<input type="checkbox" name="file_paths[]">')
-                    .attr('value', file.path)
-                    .attr('data-file-name', file.name)
-                    .attr('data-file-type', file.type);
-                checkboxCell.append(checkbox);
-
-                var nameCell = $('<td class="column-name"></td>');
-
-                nameCell.addClass('has-row-actions');
-
-                if (file.type === 'directory') {
-                    var iconWrapper = '<span class="bf-icon-wrapper">' +
-                        '<span class="dashicons dashicons-folder bf-directory-icon" style="font-size: 20px !important; margin-right: 8px; vertical-align: middle; font-family: dashicons !important;"></span>' +
-                        '<span class="bf-fallback-icon" style="display: none; font-size: 18px; margin-right: 8px; vertical-align: middle;">📁</span>' +
-                        '</span>';
-
-                    var rowActions = '<div class="row-actions">';
-                    if (file.readable) {
-                        nameCell.html(iconWrapper + '<strong class="bf-directory-name row-title"><a href="#" class="open-directory" data-path="' + $('<div>').text(file.path).html() + '">' + $('<div>').text(file.name).html() + '</a></strong>');
-                        rowActions += '<span class="open"><a href="#" class="open-directory" data-path="' + $('<div>').text(file.path).html() + '"><?php esc_html_e( '開く', 'bf-secret-file-downloader' ); ?></a> | </span>';
-                    } else {
-                        nameCell.html(iconWrapper + '<span class="bf-directory-name-disabled row-title">' + $('<div>').text(file.name).html() + '</span>' +
-                                     '<small class="bf-access-denied">(<?php esc_html_e( 'アクセス不可', 'bf-secret-file-downloader' ); ?>)</small>');
-                    }
-
-                    <?php if ( current_user_can( 'delete_posts' ) ) : ?>
-                    rowActions += '<span class="delete"><a href="#" class="delete-file-link" ' +
-                        'data-file-path="' + $('<div>').text(file.path).html() + '" ' +
-                        'data-file-name="' + $('<div>').text(file.name).html() + '" ' +
-                        'data-file-type="' + $('<div>').text(file.type).html() + '"><?php esc_html_e( '削除', 'bf-secret-file-downloader' ); ?></a></span>';
-                    <?php endif; ?>
-                    rowActions += '</div>';
-
-                    nameCell.append(rowActions);
-                } else {
-                    // サーバーから送られてくるtype_classを使用
-                    var iconClass = file.type_class || '';
-                    var fallbackEmoji = '📄';
-
-                    if (iconClass === 'image-file') {
-                        fallbackEmoji = '🖼️';
-                    } else if (iconClass === 'document-file') {
-                        fallbackEmoji = '📝';
-                    } else if (iconClass === 'archive-file') {
-                        fallbackEmoji = '📦';
-                    }
-
-                    var iconWrapper = '<span class="bf-icon-wrapper">' +
-                        '<span class="dashicons dashicons-media-default bf-file-icon" style="font-size: 16px !important; margin-right: 8px; vertical-align: middle; font-family: dashicons !important;"></span>' +
-                        '<span class="bf-fallback-icon" style="display: none; font-size: 16px; margin-right: 8px; vertical-align: middle;">' + fallbackEmoji + '</span>' +
-                        '</span>';
-                    nameCell.html(iconWrapper + '<span class="bf-file-name row-title"><a href="#" class="download-file-link" data-file-path="' + $('<div>').text(file.path).html() + '" data-file-name="' + $('<div>').text(file.name).html() + '">' + $('<div>').text(file.name).html() + '</a></span>');
-
-                    var rowActions = '<div class="row-actions">';
-                    rowActions += '<span class="download"><a href="#" class="download-file-link" ' +
-                        'data-file-path="' + $('<div>').text(file.path).html() + '" ' +
-                        'data-file-name="' + $('<div>').text(file.name).html() + '"><?php esc_html_e( 'ダウンロード', 'bf-secret-file-downloader' ); ?></a> | </span>';
-                    rowActions += '<span class="copy-url"><a href="#" class="copy-url-link" ' +
-                        'data-file-path="' + $('<div>').text(file.path).html() + '" ' +
-                        'data-file-name="' + $('<div>').text(file.name).html() + '"><?php esc_html_e( 'URLをコピー', 'bf-secret-file-downloader' ); ?></a>' +
-                        '<?php if ( current_user_can( 'delete_posts' ) ) : ?> | <?php endif; ?></span>';
-                    <?php if ( current_user_can( 'delete_posts' ) ) : ?>
-                    rowActions += '<span class="delete"><a href="#" class="delete-file-link" ' +
-                        'data-file-path="' + $('<div>').text(file.path).html() + '" ' +
-                        'data-file-name="' + $('<div>').text(file.name).html() + '" ' +
-                        'data-file-type="' + $('<div>').text(file.type).html() + '"><?php esc_html_e( '削除', 'bf-secret-file-downloader' ); ?></a></span>';
-                    <?php endif; ?>
-                    rowActions += '</div>';
-
-                    nameCell.append(rowActions);
-                }
-
-                var typeCell = $('<td class="column-type"></td>').text(
-                    file.type === 'directory'
-                        ? '<?php esc_html_e( 'ディレクトリ', 'bf-secret-file-downloader' ); ?>'
-                        : '<?php esc_html_e( 'ファイル', 'bf-secret-file-downloader' ); ?>'
-                );
-
-                var sizeCell = $('<td class="column-size"></td>').text(
-                    file.size === '-' ? '-' : formatFileSize(file.size)
-                );
-
-                var modifiedCell = $('<td class="column-modified"></td>').text(
-                    new Date(file.modified * 1000).toLocaleString('ja-JP')
-                );
-
-                row.append(checkboxCell, nameCell, typeCell, sizeCell, modifiedCell);
-                tbody.append(row);
+                tbody.append(createFileRow(file));
             });
-
-                                    // ディレクトリクリックイベントを削除 - 行アクションリンクのみで操作
 
             // 動的に生成されたチェックボックスのイベント伝播を停止
             $('input[name="file_paths[]"]').off('click').on('click', function(e) {
@@ -1989,13 +1173,11 @@ jQuery(document).ready(function($) {
             $('.check-column label').off('click').on('click', function(e) {
                 e.stopPropagation();
             });
-
-            // 動的に生成された行アクションリンクのイベント伝播を停止（既存のイベントハンドラーを保持）
-            // この処理は削除し、既存のイベントハンドラーに依存する
         } else {
+            var strings = (typeof bfFileListData !== 'undefined' && bfFileListData.strings) ? bfFileListData.strings : {};
             tbody.append(
                 '<tr><td colspan="5" style="text-align: center; padding: 40px;">' +
-                '<?php esc_html_e( 'ファイルまたはディレクトリが見つかりませんでした。', 'bf-secret-file-downloader' ); ?>' +
+                (strings.noFilesFound || '<?php esc_html_e( 'ファイルまたはディレクトリが見つかりませんでした。', 'bf-secret-file-downloader' ); ?>') +
                 '</td></tr>'
             );
         }
@@ -2360,7 +1542,7 @@ jQuery(document).ready(function($) {
         });
     }
 
-        function deleteFile(filePath, fileName, fileType) {
+    function deleteFile(filePath, fileName, fileType) {
         var confirmMessage = fileType === 'directory'
             ? '<?php esc_html_e( 'ディレクトリ「%s」とその中身すべてを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ); ?>'
             : '<?php esc_html_e( 'ファイル「%s」を削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ); ?>';
@@ -3142,255 +2324,11 @@ jQuery(document).ready(function($) {
         removeDirectoryAuth();
     });
 
+    // 初期データの表示（wp_localize_scriptで渡されたデータを使用）
+    if (typeof bfFileListData !== 'undefined' && bfFileListData.initialData) {
+        updateFileList(bfFileListData.initialData);
+    }
 
 });
 </script>
 
-<style>
-/* モーダルスタイル */
-.bf-modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.bf-modal-content {
-    background-color: #fefefe;
-    margin: 5% auto;
-    padding: 0;
-    border: 1px solid #888;
-    border-radius: 5px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.bf-modal-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #f9f9f9;
-}
-
-.bf-modal-header h3 {
-    margin: 0;
-    color: #23282d;
-}
-
-.bf-modal-close {
-    color: #aaa;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    line-height: 1;
-}
-
-.bf-modal-close:hover {
-    color: #000;
-}
-
-.bf-modal-body {
-    padding: 20px;
-}
-
-.bf-modal-footer {
-    padding: 15px 20px;
-    border-top: 1px solid #ddd;
-    background-color: #f9f9f9;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.bf-action-buttons-left {
-    display: flex;
-    gap: 10px;
-}
-
-.bf-action-buttons-right {
-    display: flex;
-    gap: 10px;
-}
-
-.bf-status-box {
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 15px;
-}
-
-/* 認証設定詳細スタイル */
-.bf-auth-details {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #f9f9f9;
-}
-
-.bf-auth-details .auth-details-title {
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.bf-auth-details #remove-auth-btn {
-    margin-top: 10px;
-}
-
-.bf-auth-details .auth-details-list {
-    margin-top: 10px;
-}
-
-.bf-auth-details .auth-detail-item {
-    margin-bottom: 8px;
-    padding: 5px 0;
-    border-bottom: 1px solid #eee;
-}
-
-.bf-auth-details .auth-detail-item:last-child {
-    border-bottom: none;
-}
-    margin-bottom: 20px;
-}
-
-.bf-status-content {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.bf-auth-status-icon .dashicons {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-}
-
-.bf-auth-section {
-    margin-bottom: 25px;
-}
-
-.bf-auth-section h4 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    color: #23282d;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 5px;
-}
-
-/* 認証設定ダイアログのスタイル */
-.bf-auth-section fieldset {
-    margin: 0;
-    padding: 0;
-}
-
-.bf-auth-section fieldset legend {
-    margin-bottom: 10px;
-}
-
-.bf-auth-section label {
-    display: block;
-    margin-bottom: 4px;
-}
-
-.bf-auth-section .description {
-    color: #666;
-    font-style: italic;
-    margin-top: 5px;
-}
-
-.bf-role-selection-controls {
-    margin: 10px 0;
-}
-
-.bf-role-selection-controls + fieldset label {
-    margin-bottom: 2px;
-}
-
-.bf-role-selection-controls .button {
-    margin-right: 5px;
-}
-
-.bf-role-selection-controls .button:last-child {
-    margin-right: 0;
-}
-
-.bf-danger-button {
-    background-color: #dc3232 !important;
-    border-color: #dc3232 !important;
-    color: #fff !important;
-}
-
-.bf-danger-button:hover {
-    background-color: #c92626 !important;
-    border-color: #c92626 !important;
-}
-
-/* 認証インジケータースタイル */
-.bf-auth-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-left: 10px;
-    padding: 5px 10px;
-    background-color: #f9f9f9;
-    border-radius: 3px;
-    border: 1px solid #ddd;
-}
-
-.bf-auth-indicator .dashicons {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-}
-
-.bf-auth-status-text {
-    font-size: 12px;
-    font-weight: 500;
-}
-
-/* 認証設定詳細リストスタイル */
-.auth-details-list {
-    margin: 10px 0;
-}
-
-.auth-detail-item {
-    margin-bottom: 8px;
-    padding: 5px 0;
-    border-bottom: 1px solid #eee;
-}
-
-.auth-detail-item:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-.auth-details-title {
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #23282d;
-}
-
-/* レスポンシブ対応 */
-@media (max-width: 768px) {
-    .bf-modal-content {
-        width: 95%;
-        margin: 10% auto;
-    }
-
-    .bf-modal-footer {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .bf-action-buttons-left,
-    .bf-action-buttons-right {
-        width: 100%;
-        justify-content: center;
-    }
-}
-</style>

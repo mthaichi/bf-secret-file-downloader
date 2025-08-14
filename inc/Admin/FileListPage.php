@@ -65,6 +65,54 @@ class FileListPage {
 
         // Dashiconsを確実に読み込む
         wp_enqueue_style( 'dashicons' );
+        
+        // jQueryを読み込み
+        wp_enqueue_script( 'jquery' );
+        
+        // 管理画面用CSSを読み込み
+        $css_file_path = plugin_dir_path( dirname( dirname( __FILE__ ) ) ) . 'assets/css/file-list-admin.css';
+        if ( file_exists( $css_file_path ) ) {
+            wp_enqueue_style(
+                'bf-secret-file-downloader-admin',
+                plugin_dir_url( dirname( dirname( __FILE__ ) ) ) . 'assets/css/file-list-admin.css',
+                array( 'dashicons' ),
+                filemtime( $css_file_path )
+            );
+        }
+        
+        // 初期データをJavaScriptに渡す
+        $initial_data = $this->prepare_data();
+        
+        wp_localize_script( 'jquery', 'bfFileListData', array(
+            'initialData' => array(
+                'items' => $initial_data['files'],
+                'current_path' => $initial_data['current_path'],
+                'current_path_display' => $initial_data['current_path_display'],
+                'total_items' => $initial_data['total_files'],
+                'current_page' => $initial_data['page'],
+                'total_pages' => $initial_data['total_pages'],
+                'current_directory_has_auth' => $initial_data['current_directory_has_auth'] ?? false,
+            ),
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce' => $initial_data['nonce'],
+            'strings' => array(
+                'loading' => __( '読み込み中...', 'bf-secret-file-downloader' ),
+                'currentDirectory' => __( '現在のディレクトリ:', 'bf-secret-file-downloader' ),
+                'rootDirectory' => __( 'ルートディレクトリ', 'bf-secret-file-downloader' ),
+                'goUp' => __( '上の階層へ', 'bf-secret-file-downloader' ),
+                'authSettings' => __( '認証設定', 'bf-secret-file-downloader' ),
+                'open' => __( '開く', 'bf-secret-file-downloader' ),
+                'download' => __( 'ダウンロード', 'bf-secret-file-downloader' ),
+                'copyUrl' => __( 'URLをコピー', 'bf-secret-file-downloader' ),
+                'delete' => __( '削除', 'bf-secret-file-downloader' ),
+                'directory' => __( 'ディレクトリ', 'bf-secret-file-downloader' ),
+                'file' => __( 'ファイル', 'bf-secret-file-downloader' ),
+                'accessDenied' => __( 'アクセス不可', 'bf-secret-file-downloader' ),
+                'noFilesFound' => __( 'ファイルまたはディレクトリが見つかりませんでした。', 'bf-secret-file-downloader' ),
+                'itemsFound' => __( '%d個のアイテムが見つかりました。', 'bf-secret-file-downloader' ),
+                'noItemsFound' => __( 'アイテムが見つかりませんでした。', 'bf-secret-file-downloader' ),
+            ),
+        ));
     }
 
     /**
