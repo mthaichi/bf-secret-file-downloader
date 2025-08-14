@@ -39,18 +39,18 @@ class FileListPage {
      * フックを初期化します
      */
     public function init() {
-        add_action( 'wp_ajax_bf_basic_guard_browse_files', array( $this, 'ajax_browse_files' ) );
-        add_action( 'wp_ajax_bf_basic_guard_upload_file', array( $this, 'ajax_upload_file' ) );
-        add_action( 'wp_ajax_bf_basic_guard_create_directory', array( $this, 'ajax_create_directory' ) );
-        add_action( 'wp_ajax_bf_basic_guard_delete_file', array( $this, 'ajax_delete_file' ) );
-        add_action( 'wp_ajax_bf_basic_guard_bulk_delete', array( $this, 'ajax_bulk_delete' ) );
-        add_action( 'wp_ajax_bf_basic_guard_download_file', array( $this, 'ajax_download_file' ) );
-        add_action( 'wp_ajax_bf_basic_guard_set_directory_auth', array( $this, 'ajax_set_directory_auth' ) );
-        add_action( 'wp_ajax_bf_basic_guard_get_directory_auth', array( $this, 'ajax_get_directory_auth' ) );
-        add_action( 'wp_ajax_bf_basic_guard_get_global_auth', array( $this, 'ajax_get_global_auth' ) );
+        add_action( 'wp_ajax_bf_sfd_browse_files', array( $this, 'ajax_browse_files' ) );
+        add_action( 'wp_ajax_bf_sfd_upload_file', array( $this, 'ajax_upload_file' ) );
+        add_action( 'wp_ajax_bf_sfd_create_directory', array( $this, 'ajax_create_directory' ) );
+        add_action( 'wp_ajax_bf_sfd_delete_file', array( $this, 'ajax_delete_file' ) );
+        add_action( 'wp_ajax_bf_sfd_bulk_delete', array( $this, 'ajax_bulk_delete' ) );
+        add_action( 'wp_ajax_bf_sfd_download_file', array( $this, 'ajax_download_file' ) );
+        add_action( 'wp_ajax_bf_sfd_set_directory_auth', array( $this, 'ajax_set_directory_auth' ) );
+        add_action( 'wp_ajax_bf_sfd_get_directory_auth', array( $this, 'ajax_get_directory_auth' ) );
+        add_action( 'wp_ajax_bf_sfd_get_global_auth', array( $this, 'ajax_get_global_auth' ) );
 
-        add_action( 'admin_post_nopriv_bf_basic_guard_file_download', array( $this, 'handle_file_download' ) );
-        add_action( 'admin_post_bf_basic_guard_file_download', array( $this, 'handle_file_download' ) );
+        add_action( 'admin_post_nopriv_bf_sfd_file_download', array( $this, 'handle_file_download' ) );
+        add_action( 'admin_post_bf_sfd_file_download', array( $this, 'handle_file_download' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
     }
 
@@ -65,10 +65,10 @@ class FileListPage {
 
         // Dashiconsを確実に読み込む
         wp_enqueue_style( 'dashicons' );
-        
+
         // jQueryを読み込み
         wp_enqueue_script( 'jquery' );
-        
+
         // 管理画面用CSSを読み込み
         $css_file_path = plugin_dir_path( dirname( dirname( __FILE__ ) ) ) . 'assets/css/file-list-admin.css';
         if ( file_exists( $css_file_path ) ) {
@@ -79,10 +79,10 @@ class FileListPage {
                 filemtime( $css_file_path )
             );
         }
-        
+
         // 初期データをJavaScriptに渡す
         $initial_data = $this->prepare_data();
-        
+
         wp_localize_script( 'jquery', 'bfFileListData', array(
             'initialData' => array(
                 'items' => $initial_data['files'],
@@ -124,7 +124,7 @@ class FileListPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
         $relative_path = sanitize_text_field( $_POST['path'] ?? '' );
         $page = intval( $_POST['page'] ?? 1 );
@@ -132,7 +132,7 @@ class FileListPage {
         $sort_order = sanitize_text_field( $_POST['sort_order'] ?? 'asc' );
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             wp_send_json_error( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ) );
         }
@@ -167,12 +167,12 @@ class FileListPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
         $relative_path = sanitize_text_field( $_POST['target_path'] ?? '' );
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             wp_send_json_error( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ) );
         }
@@ -203,11 +203,11 @@ class FileListPage {
         }
 
         // ファイルサイズチェック
-        $max_size = get_option( 'bf_basic_guard_max_file_size', 10 ) * 1024 * 1024; // MB to bytes
+        $max_size = get_option( 'bf_sfd_max_file_size', 10 ) * 1024 * 1024; // MB to bytes
         if ( $uploaded_file['size'] > $max_size ) {
             wp_send_json_error( sprintf(
                 __( 'ファイルサイズが制限を超えています。（最大: %sMB）', 'bf-secret-file-downloader' ),
-                get_option( 'bf_basic_guard_max_file_size', 10 )
+                get_option( 'bf_sfd_max_file_size', 10 )
             ));
         }
 
@@ -259,7 +259,7 @@ class FileListPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
         $relative_path = sanitize_text_field( $_POST['parent_path'] ?? '' );
         $directory_name = sanitize_text_field( $_POST['directory_name'] ?? '' );
@@ -270,7 +270,7 @@ class FileListPage {
         }
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             wp_send_json_error( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ) );
         }
@@ -332,7 +332,7 @@ class FileListPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
         $relative_path = sanitize_text_field( $_POST['file_path'] ?? '' );
 
@@ -342,7 +342,7 @@ class FileListPage {
         }
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             wp_send_json_error( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ) );
         }
@@ -418,7 +418,7 @@ class FileListPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
         $file_paths = $_POST['file_paths'] ?? array();
 
@@ -428,7 +428,7 @@ class FileListPage {
         }
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             wp_send_json_error( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ) );
         }
@@ -563,7 +563,7 @@ class FileListPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
         $relative_path = sanitize_text_field( $_POST['file_path'] ?? '' );
 
@@ -573,7 +573,7 @@ class FileListPage {
         }
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             wp_send_json_error( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ) );
         }
@@ -605,11 +605,11 @@ class FileListPage {
         );
 
         // トークンをトランジェントとして保存
-        set_transient( 'bf_basic_guard_download_' . $download_token, $token_data, 300 );
+        set_transient( 'bf_sfd_download_' . $download_token, $token_data, 300 );
 
         // ダウンロードURLを生成
         $download_url = add_query_arg( array(
-            'action' => 'bf_basic_guard_file_download',
+            'action' => 'bf_sfd_file_download',
             'bf_download' => $download_token
         ), admin_url( 'admin-post.php' ) );
 
@@ -630,13 +630,13 @@ class FileListPage {
         }
 
         // トークンを検証
-        $token_data = get_transient( 'bf_basic_guard_download_' . $download_token );
+        $token_data = get_transient( 'bf_sfd_download_' . $download_token );
         if ( $token_data === false ) {
             wp_die( __( 'ダウンロードトークンが無効または期限切れです。', 'bf-secret-file-downloader' ), 400 );
         }
 
         // トークンを削除（一回限りの使用）
-        delete_transient( 'bf_basic_guard_download_' . $download_token );
+        delete_transient( 'bf_sfd_download_' . $download_token );
 
         // トークンの有効期限をチェック
         if ( time() > $token_data['expires'] ) {
@@ -649,7 +649,7 @@ class FileListPage {
         }
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             wp_die( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ), 500 );
         }
@@ -838,7 +838,7 @@ class FileListPage {
         $sort_order = $this->get_current_sort_order();
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             return array(
                 'files' => array(),
@@ -850,11 +850,11 @@ class FileListPage {
                 'page' => $page,
                 'total_pages' => 0,
                 'files_per_page' => self::FILES_PER_PAGE,
-                'nonce' => wp_create_nonce( 'bf_basic_guard_file_list_nonce' ),
+                'nonce' => wp_create_nonce( 'bf_sfd_file_list_nonce' ),
                 'target_directory_set' => false,
                 'pagination_html' => '',
                 'current_path_writable' => false,
-                'max_file_size_mb' => get_option( 'bf_basic_guard_max_file_size', 10 ),
+                'max_file_size_mb' => get_option( 'bf_sfd_max_file_size', 10 ),
             );
         }
 
@@ -895,11 +895,11 @@ class FileListPage {
             'page' => $page,
             'total_pages' => $total_pages,
             'files_per_page' => self::FILES_PER_PAGE,
-            'nonce' => wp_create_nonce( 'bf_basic_guard_file_list_nonce' ),
+            'nonce' => wp_create_nonce( 'bf_sfd_file_list_nonce' ),
             'target_directory_set' => true,
             'pagination_html' => $this->render_pagination( $page, $total_pages, $relative_path, $sort_by, $sort_order ),
             'current_path_writable' => ! empty( $full_path ) && is_writable( $full_path ),
-            'max_file_size_mb' => get_option( 'bf_basic_guard_max_file_size', 10 ),
+            'max_file_size_mb' => get_option( 'bf_sfd_max_file_size', 10 ),
             'sort_by' => $sort_by,
             'sort_order' => $sort_order,
             'current_directory_has_auth' => $this->has_directory_auth( $relative_path ),
@@ -947,7 +947,7 @@ class FileListPage {
     private function get_directory_contents( $full_path, $relative_path = '', $page = 1, $sort_by = 'name', $sort_order = 'asc' ) {
         $directories = array();
         $files = array();
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
 
         $items = scandir( $full_path );
         foreach ( $items as $item ) {
@@ -1198,7 +1198,7 @@ class FileListPage {
         }
 
         // 基本となる対象ディレクトリを取得
-        $target_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $target_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $target_directory ) ) {
             return false;
         }
@@ -1218,7 +1218,7 @@ class FileListPage {
      * @return string アップロード制限
      */
     private function get_upload_limit() {
-        $max_size = get_option( 'bf_basic_guard_max_file_size', 10 );
+        $max_size = get_option( 'bf_sfd_max_file_size', 10 );
         return $max_size . 'MB';
     }
 
@@ -1297,7 +1297,7 @@ class FileListPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
         $relative_path = sanitize_text_field( $_POST['path'] ?? '' );
         $auth_methods = $_POST['auth_methods'] ?? array();
@@ -1306,7 +1306,7 @@ class FileListPage {
         $action_type = sanitize_text_field( $_POST['action_type'] ?? 'set' ); // set, remove
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             wp_send_json_error( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ) );
         }
@@ -1359,12 +1359,12 @@ class FileListPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
         $relative_path = sanitize_text_field( $_POST['path'] ?? '' );
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             wp_send_json_error( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ) );
         }
@@ -1396,7 +1396,7 @@ class FileListPage {
      * @param string $simple_auth_password 簡易認証パスワード
      */
     private function set_directory_auth( $relative_path, $auth_methods, $allowed_roles, $simple_auth_password ) {
-        $directory_auths = get_option( 'bf_basic_guard_directory_auths', array() );
+        $directory_auths = get_option( 'bf_sfd_directory_auths', array() );
 
         $auth_data = array(
             'auth_methods' => $auth_methods,
@@ -1410,7 +1410,7 @@ class FileListPage {
         }
 
         $directory_auths[ $relative_path ] = $auth_data;
-        update_option( 'bf_basic_guard_directory_auths', $directory_auths );
+        update_option( 'bf_sfd_directory_auths', $directory_auths );
     }
 
     /**
@@ -1420,7 +1420,7 @@ class FileListPage {
      * @param string $password パスワード
      */
     private function set_directory_password( $relative_path, $password ) {
-        $directory_passwords = get_option( 'bf_basic_guard_directory_passwords', array() );
+        $directory_passwords = get_option( 'bf_sfd_directory_passwords', array() );
 
         // パスワードを暗号化して保存（管理者確認用）
         $encrypted_password = $this->encrypt_password( $password );
@@ -1430,7 +1430,7 @@ class FileListPage {
             'encrypted' => $encrypted_password       // 管理者確認用暗号化パスワード
         );
 
-        update_option( 'bf_basic_guard_directory_passwords', $directory_passwords );
+        update_option( 'bf_sfd_directory_passwords', $directory_passwords );
     }
 
     /**
@@ -1439,11 +1439,11 @@ class FileListPage {
      * @param string $relative_path 相対パス
      */
     private function remove_directory_auth( $relative_path ) {
-        $directory_auths = get_option( 'bf_basic_guard_directory_auths', array() );
+        $directory_auths = get_option( 'bf_sfd_directory_auths', array() );
 
         if ( isset( $directory_auths[ $relative_path ] ) ) {
             unset( $directory_auths[ $relative_path ] );
-            update_option( 'bf_basic_guard_directory_auths', $directory_auths );
+            update_option( 'bf_sfd_directory_auths', $directory_auths );
         }
     }
 
@@ -1453,11 +1453,11 @@ class FileListPage {
      * @param string $relative_path 相対パス
      */
     private function remove_directory_password( $relative_path ) {
-        $directory_passwords = get_option( 'bf_basic_guard_directory_passwords', array() );
+        $directory_passwords = get_option( 'bf_sfd_directory_passwords', array() );
 
         if ( isset( $directory_passwords[ $relative_path ] ) ) {
             unset( $directory_passwords[ $relative_path ] );
-            update_option( 'bf_basic_guard_directory_passwords', $directory_passwords );
+            update_option( 'bf_sfd_directory_passwords', $directory_passwords );
         }
     }
 
@@ -1468,7 +1468,7 @@ class FileListPage {
      * @return bool 認証設定フラグ
      */
     private function has_directory_auth( $relative_path ) {
-        $directory_auths = get_option( 'bf_basic_guard_directory_auths', array() );
+        $directory_auths = get_option( 'bf_sfd_directory_auths', array() );
 
         if ( ! isset( $directory_auths[ $relative_path ] ) ) {
             return false;
@@ -1485,7 +1485,7 @@ class FileListPage {
      * @return bool パスワード設定フラグ
      */
     private function has_directory_password( $relative_path ) {
-        $directory_passwords = get_option( 'bf_basic_guard_directory_passwords', array() );
+        $directory_passwords = get_option( 'bf_sfd_directory_passwords', array() );
 
         if ( ! isset( $directory_passwords[ $relative_path ] ) ) {
             return false;
@@ -1507,7 +1507,7 @@ class FileListPage {
      * @return array|false 認証設定、または失敗時はfalse
      */
     private function get_directory_auth( $relative_path ) {
-        $directory_auths = get_option( 'bf_basic_guard_directory_auths', array() );
+        $directory_auths = get_option( 'bf_sfd_directory_auths', array() );
 
         if ( ! isset( $directory_auths[ $relative_path ] ) ) {
             return false;
@@ -1539,7 +1539,7 @@ class FileListPage {
      * @return bool パスワード一致フラグ
      */
     private function verify_directory_password( $relative_path, $password ) {
-        $directory_passwords = get_option( 'bf_basic_guard_directory_passwords', array() );
+        $directory_passwords = get_option( 'bf_sfd_directory_passwords', array() );
 
         if ( ! isset( $directory_passwords[ $relative_path ] ) ) {
             return false;
@@ -1567,7 +1567,7 @@ class FileListPage {
      * @return string|false 復号化されたパスワード、または失敗時はfalse
      */
     private function get_directory_password( $relative_path ) {
-        $directory_passwords = get_option( 'bf_basic_guard_directory_passwords', array() );
+        $directory_passwords = get_option( 'bf_sfd_directory_passwords', array() );
 
         if ( ! isset( $directory_passwords[ $relative_path ] ) ) {
             return false;
@@ -1644,12 +1644,12 @@ class FileListPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_file_list_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
         // 共通設定を取得
-        $auth_methods = get_option( 'bf_basic_guard_auth_methods', array( 'logged_in' ) );
-        $allowed_roles = get_option( 'bf_basic_guard_allowed_roles', array( 'administrator' ) );
-        $simple_auth_password = get_option( 'bf_basic_guard_simple_auth_password', '' );
+        $auth_methods = get_option( 'bf_sfd_auth_methods', array( 'logged_in' ) );
+        $allowed_roles = get_option( 'bf_sfd_allowed_roles', array( 'administrator' ) );
+        $simple_auth_password = get_option( 'bf_sfd_simple_auth_password', '' );
 
         $global_auth = array(
             'auth_methods' => $auth_methods,

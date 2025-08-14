@@ -877,7 +877,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_browse_files',
+                action: 'bf_sfd_browse_files',
                 path: path,
                 page: page,
                 sort_by: sortBy,
@@ -936,7 +936,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_browse_files',
+                action: 'bf_sfd_browse_files',
                 path: path,
                 page: page,
                 nonce: '<?php echo esc_js( $nonce ); ?>'
@@ -1394,7 +1394,7 @@ jQuery(document).ready(function($) {
 
             // FormDataを作成
             var formData = new FormData();
-            formData.append('action', 'bf_basic_guard_upload_file');
+            formData.append('action', 'bf_sfd_upload_file');
             formData.append('target_path', currentPath);
             formData.append('file', file);
             formData.append('nonce', '<?php echo esc_js( $nonce ); ?>');
@@ -1476,7 +1476,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_create_directory',
+                action: 'bf_sfd_create_directory',
                 parent_path: currentPath,
                 directory_name: directoryName,
                 nonce: '<?php echo esc_js( $nonce ); ?>'
@@ -1516,7 +1516,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_download_file',
+                action: 'bf_sfd_download_file',
                 file_path: filePath,
                 nonce: '<?php echo esc_js( $nonce ); ?>'
             },
@@ -1555,7 +1555,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_delete_file',
+                action: 'bf_sfd_delete_file',
                 file_path: filePath,
                 nonce: '<?php echo esc_js( $nonce ); ?>'
             },
@@ -1625,7 +1625,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_bulk_delete',
+                action: 'bf_sfd_bulk_delete',
                 file_paths: filePaths,
                 current_path: $('#current-path').val(),
                 nonce: '<?php echo esc_js( $nonce ); ?>'
@@ -1742,7 +1742,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_set_directory_password',
+                action: 'bf_sfd_set_directory_password',
                 path: currentPath,
                 password: password,
                 action_type: 'set',
@@ -1782,7 +1782,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_set_directory_password',
+                action: 'bf_sfd_set_directory_password',
                 path: currentPath,
                 action_type: 'remove',
                 nonce: '<?php echo esc_js( $nonce ); ?>'
@@ -1842,7 +1842,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_get_directory_password',
+                action: 'bf_sfd_get_directory_password',
                 path: currentPath,
                 nonce: '<?php echo esc_js( $nonce ); ?>'
             },
@@ -2055,7 +2055,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_get_directory_auth',
+                action: 'bf_sfd_get_directory_auth',
                 path: currentPath,
                 nonce: '<?php echo esc_js( $nonce ); ?>'
             },
@@ -2140,7 +2140,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_set_directory_auth',
+                action: 'bf_sfd_set_directory_auth',
                 path: currentPath,
                 auth_methods: authMethods,
                 allowed_roles: allowedRoles,
@@ -2186,7 +2186,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_set_directory_auth',
+                action: 'bf_sfd_set_directory_auth',
                 path: currentPath,
                 action_type: 'remove',
                 nonce: '<?php echo esc_js( $nonce ); ?>'

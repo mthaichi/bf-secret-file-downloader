@@ -54,8 +54,8 @@ if ( ! defined( 'ABSPATH' ) ) {
             <!-- 設定フォーム -->
             <div class="bf-secret-file-downloader-settings-form">
                 <form method="post" action="options.php">
-                    <?php settings_fields( 'bf_basic_guard_settings' ); ?>
-                    <?php do_settings_sections( 'bf_basic_guard_settings' ); ?>
+                    <?php settings_fields( 'bf_sfd_settings' ); ?>
+                    <?php do_settings_sections( 'bf_sfd_settings' ); ?>
 
                     <!-- 対象ディレクトリ設定 -->
                     <table class="form-table">
@@ -63,7 +63,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <th scope="row"><?php esc_html_e( '対象ディレクトリ', 'bf-secret-file-downloader' ); ?></th>
                             <td>
                                 <div class="bf-directory-item">
-                                    <input type="text" name="bf_basic_guard_target_directory"
+                                    <input type="text" name="bf_sfd_target_directory"
                                            value="<?php echo esc_attr( $target_directory ?? '' ); ?>"
                                            class="regular-text bf-directory-path" readonly />
                                     <button type="button" class="button bf-browse-directory"><?php esc_html_e( '参照', 'bf-secret-file-downloader' ); ?></button>
@@ -85,12 +85,12 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 <fieldset>
                                     <legend class="screen-reader-text"><?php esc_html_e( '認証方法', 'bf-secret-file-downloader' ); ?></legend>
                                     <label>
-                                        <input type="checkbox" name="bf_basic_guard_auth_methods[]" value="logged_in"
+                                        <input type="checkbox" name="bf_sfd_auth_methods[]" value="logged_in"
                                                <?php echo in_array( 'logged_in', $auth_methods ?? array() ) ? 'checked' : ''; ?> />
                                         <?php esc_html_e( 'ログインしているユーザー', 'bf-secret-file-downloader' ); ?>
                                     </label>
                                     <div id="allowed_roles_section" style="margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #0073aa; <?php echo in_array( 'logged_in', $auth_methods ?? array() ) ? '' : 'display: none;'; ?>">
-                                        <label for="bf_basic_guard_allowed_roles">
+                                        <label for="bf_sfd_allowed_roles">
                                             <strong><?php esc_html_e( '許可するユーザーロール', 'bf-secret-file-downloader' ); ?></strong>
                                         </label>
                                         <div class="bf-role-selection-controls" style="margin: 10px 0;">
@@ -110,7 +110,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                             foreach ( $roles as $role => $label ) :
                                             ?>
                                             <label>
-                                                <input type="checkbox" name="bf_basic_guard_allowed_roles[]" value="<?php echo esc_attr( $role ); ?>" class="bf-role-checkbox"
+                                                <input type="checkbox" name="bf_sfd_allowed_roles[]" value="<?php echo esc_attr( $role ); ?>" class="bf-role-checkbox"
                                                        <?php echo in_array( $role, $allowed_roles ?? array() ) ? 'checked' : ''; ?> />
                                                 <?php echo esc_html( $label ); ?>
                                             </label>
@@ -121,16 +121,16 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     </div>
                                     <br>
                                     <label>
-                                        <input type="checkbox" name="bf_basic_guard_auth_methods[]" value="simple_auth" id="simple_auth_checkbox"
+                                        <input type="checkbox" name="bf_sfd_auth_methods[]" value="simple_auth" id="simple_auth_checkbox"
                                                <?php echo in_array( 'simple_auth', $auth_methods ?? array() ) ? 'checked' : ''; ?> />
                                         <?php esc_html_e( '簡易認証を通過したユーザー', 'bf-secret-file-downloader' ); ?>
                                     </label>
                                     <div id="simple_auth_password_section" style="margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #0073aa; <?php echo in_array( 'simple_auth', $auth_methods ?? array() ) ? '' : 'display: none;'; ?>">
-                                        <label for="bf_basic_guard_simple_auth_password">
+                                        <label for="bf_sfd_simple_auth_password">
                                             <strong><?php esc_html_e( '簡易認証パスワード', 'bf-secret-file-downloader' ); ?></strong>
                                         </label>
                                         <br>
-                                        <input type="password" name="bf_basic_guard_simple_auth_password" id="bf_basic_guard_simple_auth_password"
+                                        <input type="password" name="bf_sfd_simple_auth_password" id="bf_sfd_simple_auth_password"
                                                value="<?php echo esc_attr( $simple_auth_password ?? '' ); ?>"
                                                class="regular-text" style="margin-top: 5px;" />
                                         <p class="description" style="margin-top: 5px;"><?php esc_html_e( '簡易認証で使用するパスワードを設定してください。', 'bf-secret-file-downloader' ); ?></p>
@@ -147,7 +147,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <tr>
                             <th scope="row"><?php esc_html_e( 'アップロード制限', 'bf-secret-file-downloader' ); ?></th>
                             <td>
-                                <input type="number" name="bf_basic_guard_max_file_size"
+                                <input type="number" name="bf_sfd_max_file_size"
                                        value="<?php echo isset( $max_file_size ) ? esc_html( $max_file_size ) : '10'; ?>"
                                        min="1" max="100" />
                                 <span><?php esc_html_e( 'MB', 'bf-secret-file-downloader' ); ?></span>
@@ -420,7 +420,7 @@ jQuery(document).ready(function($) {
         $('#bf-select-directory').prop('disabled', true);
 
         var requestData = {
-            action: 'bf_basic_guard_browse_directory',
+            action: 'bf_sfd_browse_directory',
             path: path,
             nonce: '<?php echo esc_js( $nonce ); ?>'
         };
@@ -498,7 +498,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'bf_basic_guard_create_directory',
+                action: 'bf_sfd_create_directory',
                 parent_path: parentPath,
                 directory_name: directoryName,
                 nonce: '<?php echo esc_js( $nonce ); ?>'
@@ -583,7 +583,7 @@ jQuery(document).ready(function($) {
     });
 
     // ログインユーザーチェックボックスの制御
-    $('input[name="bf_basic_guard_auth_methods[]"][value="logged_in"]').on('change', function() {
+    $('input[name="bf_sfd_auth_methods[]"][value="logged_in"]').on('change', function() {
         if ($(this).is(':checked')) {
             $('#allowed_roles_section').show();
         } else {
@@ -612,7 +612,7 @@ jQuery(document).ready(function($) {
                 url: ajaxurl,
                 type: 'POST',
                 data: {
-                    action: 'bf_basic_guard_reset_settings',
+                    action: 'bf_sfd_reset_settings',
                     nonce: '<?php echo esc_js( $nonce ); ?>'
                 },
                 success: function(response) {

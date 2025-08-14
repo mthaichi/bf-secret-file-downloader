@@ -35,41 +35,41 @@ class SettingsPage {
      */
     public function init() {
         add_action( 'admin_init', array( $this, 'register_settings' ) );
-        add_action( 'wp_ajax_bf_basic_guard_browse_directory', array( $this, 'ajax_browse_directory' ) );
-        add_action( 'wp_ajax_bf_basic_guard_create_directory', array( $this, 'ajax_create_directory' ) );
-        add_action( 'wp_ajax_bf_basic_guard_reset_settings', array( $this, 'ajax_reset_settings' ) );
+        add_action( 'wp_ajax_bf_sfd_browse_directory', array( $this, 'ajax_browse_directory' ) );
+        add_action( 'wp_ajax_bf_sfd_create_directory', array( $this, 'ajax_create_directory' ) );
+        add_action( 'wp_ajax_bf_sfd_reset_settings', array( $this, 'ajax_reset_settings' ) );
     }
 
     /**
      * 設定を登録します
      */
     public function register_settings() {
-        register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_target_directory', array(
+        register_setting( 'bf_sfd_settings', 'bf_sfd_target_directory', array(
             'type' => 'string',
             'default' => '',
             'sanitize_callback' => array( $this, 'sanitize_directory' )
         ) );
 
-        register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_max_file_size', array(
+        register_setting( 'bf_sfd_settings', 'bf_sfd_max_file_size', array(
             'type' => 'integer',
             'default' => 10,
             'sanitize_callback' => array( $this, 'sanitize_file_size' )
         ) );
 
         // 認証設定を追加
-        register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_auth_methods', array(
+        register_setting( 'bf_sfd_settings', 'bf_sfd_auth_methods', array(
             'type' => 'array',
             'default' => array(),
             'sanitize_callback' => array( $this, 'sanitize_auth_methods' )
         ) );
 
-        register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_allowed_roles', array(
+        register_setting( 'bf_sfd_settings', 'bf_sfd_allowed_roles', array(
             'type' => 'array',
             'default' => array(),
             'sanitize_callback' => array( $this, 'sanitize_roles' )
         ) );
 
-        register_setting( 'bf_basic_guard_settings', 'bf_basic_guard_simple_auth_password', array(
+        register_setting( 'bf_sfd_settings', 'bf_sfd_simple_auth_password', array(
             'type' => 'string',
             'default' => '',
             'sanitize_callback' => array( $this, 'sanitize_password' )
@@ -85,7 +85,7 @@ class SettingsPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_browse_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_browse_nonce', 'nonce' );
 
         $path = sanitize_text_field( $_POST['path'] ?? '' );
 
@@ -391,7 +391,7 @@ class SettingsPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_browse_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_browse_nonce', 'nonce' );
 
         $parent_path = sanitize_text_field( $_POST['parent_path'] ?? '' );
         $directory_name = sanitize_text_field( $_POST['directory_name'] ?? '' );
@@ -480,14 +480,14 @@ class SettingsPage {
             wp_die( 'Unauthorized' );
         }
 
-        check_ajax_referer( 'bf_basic_guard_browse_nonce', 'nonce' );
+        check_ajax_referer( 'bf_sfd_browse_nonce', 'nonce' );
 
         // 設定を削除
-        delete_option( 'bf_basic_guard_target_directory' );
-        delete_option( 'bf_basic_guard_max_file_size' );
-        delete_option( 'bf_basic_guard_auth_methods' );
-        delete_option( 'bf_basic_guard_allowed_roles' );
-        delete_option( 'bf_basic_guard_simple_auth_password' );
+        delete_option( 'bf_sfd_target_directory' );
+        delete_option( 'bf_sfd_max_file_size' );
+        delete_option( 'bf_sfd_auth_methods' );
+        delete_option( 'bf_sfd_allowed_roles' );
+        delete_option( 'bf_sfd_simple_auth_password' );
 
         // ディレクトリパスワードもクリア
         $this->clear_all_directory_passwords();
@@ -524,7 +524,7 @@ class SettingsPage {
             'allowed_roles' => $this->get_allowed_roles(),
             'simple_auth_password' => $this->get_simple_auth_password(),
 
-            'nonce' => wp_create_nonce( 'bf_basic_guard_browse_nonce' ),
+            'nonce' => wp_create_nonce( 'bf_sfd_browse_nonce' ),
         );
     }
 
@@ -534,7 +534,7 @@ class SettingsPage {
      * @return bool BASIC認証有効フラグ
      */
     private function get_enable_auth() {
-        return (bool) get_option( 'bf_basic_guard_enable_auth', false );
+        return (bool) get_option( 'bf_sfd_enable_auth', false );
     }
 
     /**
@@ -543,7 +543,7 @@ class SettingsPage {
      * @return int 最大ファイルサイズ（MB）
      */
     private function get_max_file_size() {
-        return (int) get_option( 'bf_basic_guard_max_file_size', 10 );
+        return (int) get_option( 'bf_sfd_max_file_size', 10 );
     }
 
     /**
@@ -552,7 +552,7 @@ class SettingsPage {
      * @return bool ダウンロードログ有効フラグ
      */
     private function get_log_downloads() {
-        return (bool) get_option( 'bf_basic_guard_log_downloads', true );
+        return (bool) get_option( 'bf_sfd_log_downloads', true );
     }
 
     /**
@@ -561,7 +561,7 @@ class SettingsPage {
      * @return string セキュリティレベル
      */
     private function get_security_level() {
-        return get_option( 'bf_basic_guard_security_level', 'medium' );
+        return get_option( 'bf_sfd_security_level', 'medium' );
     }
 
     /**
@@ -570,7 +570,7 @@ class SettingsPage {
      * @return string 対象ディレクトリ
      */
     private function get_target_directory() {
-        return get_option( 'bf_basic_guard_target_directory', '' );
+        return get_option( 'bf_sfd_target_directory', '' );
     }
 
     /**
@@ -579,7 +579,7 @@ class SettingsPage {
      * @return array 認証方法の配列
      */
     private function get_auth_methods() {
-        return get_option( 'bf_basic_guard_auth_methods', array() );
+        return get_option( 'bf_sfd_auth_methods', array() );
     }
 
     /**
@@ -588,7 +588,7 @@ class SettingsPage {
      * @return array 許可するユーザーロールの配列
      */
     private function get_allowed_roles() {
-        return get_option( 'bf_basic_guard_allowed_roles', array() );
+        return get_option( 'bf_sfd_allowed_roles', array() );
     }
 
     /**
@@ -597,7 +597,7 @@ class SettingsPage {
      * @return string 簡易認証パスワード
      */
     private function get_simple_auth_password() {
-        return get_option( 'bf_basic_guard_simple_auth_password', '' );
+        return get_option( 'bf_sfd_simple_auth_password', '' );
     }
 
 
@@ -691,7 +691,7 @@ class SettingsPage {
         $value = $this->normalize_path( $value );
 
         // 現在の対象ディレクトリを取得
-        $current_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $current_directory = get_option( 'bf_sfd_target_directory', '' );
 
         // 空の場合はそのまま返す
         if ( empty( $value ) ) {
@@ -720,7 +720,7 @@ class SettingsPage {
      * すべてのディレクトリパスワードをクリアします
      */
     private function clear_all_directory_passwords() {
-        delete_option( 'bf_basic_guard_directory_passwords' );
+        delete_option( 'bf_sfd_directory_passwords' );
     }
 
     /**

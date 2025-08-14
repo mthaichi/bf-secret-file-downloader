@@ -52,7 +52,7 @@ class FrontEnd {
         $download_flag = sanitize_text_field( $_GET['dflag'] ?? 'download' );
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $base_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $base_directory ) ) {
             wp_die( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ), 500 );
         }
@@ -87,7 +87,7 @@ class FrontEnd {
         $mime_type = wp_check_filetype( $filename )['type'] ?? 'application/octet-stream';
 
         // ダウンロードログを記録（設定が有効な場合）
-        if ( get_option( 'bf_basic_guard_log_downloads', false ) ) {
+        if ( get_option( 'bf_sfd_log_downloads', false ) ) {
             $this->log_download( $file_path, $filename );
         }
 
@@ -155,7 +155,7 @@ class FrontEnd {
         }
 
         // 基本となる対象ディレクトリを取得
-        $target_directory = get_option( 'bf_basic_guard_target_directory', '' );
+        $target_directory = get_option( 'bf_sfd_target_directory', '' );
         if ( empty( $target_directory ) ) {
             return false;
         }
@@ -186,7 +186,7 @@ class FrontEnd {
         );
 
         // ログをデータベースに保存（簡易版）
-        $download_logs = get_option( 'bf_basic_guard_download_logs', array() );
+        $download_logs = get_option( 'bf_sfd_download_logs', array() );
         $download_logs[] = $log_entry;
 
         // ログ数を制限（最新1000件）
@@ -194,7 +194,7 @@ class FrontEnd {
             $download_logs = array_slice( $download_logs, -1000 );
         }
 
-        update_option( 'bf_basic_guard_download_logs', $download_logs );
+        update_option( 'bf_sfd_download_logs', $download_logs );
     }
 
     /**
@@ -240,7 +240,7 @@ class FrontEnd {
         }
 
         // 共通設定の認証チェック
-        $auth_methods = get_option( 'bf_basic_guard_auth_methods', array( 'logged_in' ) );
+        $auth_methods = get_option( 'bf_sfd_auth_methods', array( 'logged_in' ) );
 
         // 認証方法が設定されていない場合はアクセス拒否
         if ( empty( $auth_methods ) ) {
@@ -273,7 +273,7 @@ class FrontEnd {
      * @return bool ロール許可フラグ
      */
     private function check_user_role() {
-        $allowed_roles = get_option( 'bf_basic_guard_allowed_roles', array( 'administrator' ) );
+        $allowed_roles = get_option( 'bf_sfd_allowed_roles', array( 'administrator' ) );
 
         if ( empty( $allowed_roles ) ) {
             return false; // ロールが選択されていない場合はアクセス拒否
@@ -382,7 +382,7 @@ class FrontEnd {
      * @return array|false 認証設定、または失敗時はfalse
      */
     private function get_directory_auth( $relative_path ) {
-        $directory_auths = get_option( 'bf_basic_guard_directory_auths', array() );
+        $directory_auths = get_option( 'bf_sfd_directory_auths', array() );
 
         if ( ! isset( $directory_auths[ $relative_path ] ) ) {
             return false;
@@ -420,7 +420,7 @@ class FrontEnd {
         // POSTで簡易認証パスワードが送信された場合
         if ( isset( $_POST['simple_auth_password'] ) ) {
             $submitted_password = sanitize_text_field( $_POST['simple_auth_password'] );
-            $stored_password = get_option( 'bf_basic_guard_simple_auth_password', '' );
+            $stored_password = get_option( 'bf_sfd_simple_auth_password', '' );
 
             if ( ! empty( $stored_password ) && $submitted_password === $stored_password ) {
                 // セッションに認証情報を保存
@@ -473,7 +473,7 @@ class FrontEnd {
      * @return bool パスワード設定フラグ
      */
     private function has_directory_password( $relative_path ) {
-        $directory_passwords = get_option( 'bf_basic_guard_directory_passwords', array() );
+        $directory_passwords = get_option( 'bf_sfd_directory_passwords', array() );
 
         if ( ! isset( $directory_passwords[ $relative_path ] ) ) {
             return false;
@@ -496,7 +496,7 @@ class FrontEnd {
      */
     private function verify_directory_access( $relative_path ) {
         // セッションから認証済みかチェック
-        if ( isset( $_SESSION['bf_basic_guard_auth'][ $relative_path ] ) ) {
+        if ( isset( $_SESSION['bf_sfd_auth'][ $relative_path ] ) ) {
             return true;
         }
 
@@ -507,10 +507,10 @@ class FrontEnd {
 
             if ( $submitted_path === $relative_path && $this->verify_directory_password( $relative_path, $submitted_password ) ) {
                 // セッションに認証情報を保存
-                if ( ! isset( $_SESSION['bf_basic_guard_auth'] ) ) {
-                    $_SESSION['bf_basic_guard_auth'] = array();
+                if ( ! isset( $_SESSION['bf_sfd_auth'] ) ) {
+                    $_SESSION['bf_sfd_auth'] = array();
                 }
-                $_SESSION['bf_basic_guard_auth'][ $relative_path ] = true;
+                $_SESSION['bf_sfd_auth'][ $relative_path ] = true;
                 return true;
             }
         }
@@ -526,7 +526,7 @@ class FrontEnd {
      * @return bool パスワード一致フラグ
      */
     private function verify_directory_password( $relative_path, $password ) {
-        $directory_passwords = get_option( 'bf_basic_guard_directory_passwords', array() );
+        $directory_passwords = get_option( 'bf_sfd_directory_passwords', array() );
 
         if ( ! isset( $directory_passwords[ $relative_path ] ) ) {
             return false;
@@ -566,7 +566,7 @@ class FrontEnd {
             $auth_methods = $directory_auth['auth_methods'] ?? array();
             $simple_auth_password = $directory_auth['simple_auth_password'] ?? '';
         } else {
-            $auth_methods = get_option( 'bf_basic_guard_auth_methods', array( 'logged_in' ) );
+            $auth_methods = get_option( 'bf_sfd_auth_methods', array( 'logged_in' ) );
             $simple_auth_password = '';
         }
 
