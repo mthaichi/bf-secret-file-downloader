@@ -778,13 +778,13 @@ jQuery(document).ready(function($) {
 
         var action = $('#bulk-action-selector-top').val();
         if (action === '-1') {
-            alert('<?php esc_html_e( '操作を選択してください。', 'bf-secret-file-downloader' ); ?>');
+            alert('<?php echo esc_js( __( '操作を選択してください。', 'bf-secret-file-downloader' ) ); ?>');
             return;
         }
 
         var checkedFiles = $('input[name="file_paths[]"]:checked');
         if (checkedFiles.length === 0) {
-            alert('<?php esc_html_e( '削除するアイテムを選択してください。', 'bf-secret-file-downloader' ); ?>');
+            alert('<?php echo esc_js( __( '削除するアイテムを選択してください。', 'bf-secret-file-downloader' ) ); ?>');
             return;
         }
 
@@ -896,9 +896,9 @@ jQuery(document).ready(function($) {
                     window.history.pushState({path: path, page: page, sortBy: sortBy, sortOrder: sortOrder}, '', newUrl);
                 } else {
                     // ディレクトリにアクセスできない場合は親ディレクトリに移動を試行
-                    var errorMessage = response.data || '<?php esc_html_e( 'エラーが発生しました', 'bf-secret-file-downloader' ); ?>';
+                    var errorMessage = response.data || '<?php echo esc_js( __( 'エラーが発生しました', 'bf-secret-file-downloader' ) ); ?>';
 
-                    if (errorMessage.indexOf('<?php esc_html_e( 'ディレクトリにアクセスできません', 'bf-secret-file-downloader' ); ?>') !== -1 ||
+                    if (errorMessage.indexOf('<?php echo esc_js( __( 'ディレクトリにアクセスできません', 'bf-secret-file-downloader' ) ); ?>') !== -1 ||
                         errorMessage.indexOf('アクセスできません') !== -1) {
                         // ディレクトリアクセスエラーの場合、親ディレクトリに移動を試行
                         var parentPath = getParentPath(path);
@@ -1544,8 +1544,8 @@ jQuery(document).ready(function($) {
 
     function deleteFile(filePath, fileName, fileType) {
         var confirmMessage = fileType === 'directory'
-            ? '<?php esc_html_e( 'ディレクトリ「%s」とその中身すべてを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ); ?>'
-            : '<?php esc_html_e( 'ファイル「%s」を削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ); ?>';
+            ? '<?php echo esc_js( __( 'ディレクトリ「%s」とその中身すべてを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>'
+            : '<?php echo esc_js( __( 'ファイル「%s」を削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>';
 
         if (!confirm(confirmMessage.replace('%s', fileName))) {
             return;
@@ -1609,9 +1609,9 @@ jQuery(document).ready(function($) {
         // 確認メッセージ
         var confirmMessage;
         if (hasDirectories) {
-            confirmMessage = '<?php esc_html_e( '選択された%d個のアイテム（ディレクトリを含む）とその中身すべてを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ); ?>';
+            confirmMessage = '<?php echo esc_js( __( '選択された%d個のアイテム（ディレクトリを含む）とその中身すべてを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>';
         } else {
-            confirmMessage = '<?php esc_html_e( '選択された%d個のアイテムを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ); ?>';
+            confirmMessage = '<?php echo esc_js( __( '選択された%d個のアイテムを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>';
         }
 
         if (!confirm(confirmMessage.replace('%d', filePaths.length))) {
