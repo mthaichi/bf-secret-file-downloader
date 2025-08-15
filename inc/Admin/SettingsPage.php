@@ -679,6 +679,26 @@ class SettingsPage {
     }
 
     /**
+     * パスが絶対パスかどうかをチェックします
+     *
+     * @param string $path パス
+     * @return bool 絶対パスの場合true
+     */
+    private function is_absolute_path( $path ) {
+        // Unix/Linux系の場合は '/' で始まる
+        if ( strpos( $path, '/' ) === 0 ) {
+            return true;
+        }
+
+        // Windows系の場合は 'C:' のようなドライブレターで始まる
+        if ( preg_match( '/^[a-zA-Z]:[\/\\\\]/', $path ) ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * サニタイズ: ディレクトリパス
      *
      * @param string $value ディレクトリパス
@@ -695,6 +715,111 @@ class SettingsPage {
 
         // 空の場合はそのまま返す
         if ( empty( $value ) ) {
+            return '';
+        }
+
+        // セキュリティチェック: 危険なディレクトリの拒否
+        $dangerous_directories = [
+            '/',                    // ルートディレクトリ - 極めて危険
+            '/etc',                 // システム設定ディレクトリ
+            '/usr',                 // システムユーティリティ
+            '/usr/bin',             // システムバイナリ
+            '/usr/sbin',            // システム管理バイナリ
+            '/var',                 // 可変データディレクトリ（一部例外あり）
+            '/var/log',             // システムログ
+            '/root',                // root ユーザーホーム
+            '/tmp',                 // テンポラリディレクトリ
+            '/proc',                // プロセスファイルシステム
+            '/sys',                 // システムファイルシステム
+            '/dev',                 // デバイスファイル
+            '/bin',                 // 基本バイナリ
+            '/sbin',                // システムバイナリ
+            '/boot',                // ブートファイル
+
+            // WordPress関連の危険なディレクトリ
+            ABSPATH,                // WordPressルートディレクトリ - wp-config.php等が含まれる
+            dirname( ABSPATH ),     // WordPressの親ディレクトリ
+            ABSPATH . 'wp-admin',   // WordPress管理ディレクトリ
+            ABSPATH . 'wp-includes', // WordPressコアファイル
+        ];
+
+        // wp-contentディレクトリ内の危険な場所も追加
+        if ( defined( 'WP_CONTENT_DIR' ) ) {
+            $dangerous_directories[] = WP_CONTENT_DIR . '/plugins';     // プラグインディレクトリ
+            $dangerous_directories[] = WP_CONTENT_DIR . '/themes';      // テーマディレクトリ
+            $dangerous_directories[] = WP_CONTENT_DIR . '/mu-plugins'; // Must-useプラグイン
+        }
+
+        // シンボリックリンク攻撃の検出
+        if ( is_link( $value ) ) {
+            add_action( 'admin_footer', function() use ( $value ) {
+                ?>
+                <script type="text/javascript">
+                jQuery(document).ready(function($) {
+                    alert('<?php echo esc_js( sprintf(
+                        __( 'セキュリティ上の理由により、シンボリックリンク "%s" は設定できません。シンボリックリンクを介した攻撃を防ぐため、実際のディレクトリパスを指定してください。', 'bf-secret-file-downloader' ),
+                        $value
+                    ) ); ?>');
+                });
+                </script>
+                <?php
+            });
+            return '';
+        }
+
+        // 危険なディレクトリのチェック（シンボリックリンク解決前と後の両方）
+        $check_paths = [ $value ]; // 元のパス
+        $real_value = realpath( $value );
+        if ( $real_value !== false && $real_value !== $value ) {
+            $check_paths[] = $real_value; // 解決されたパス
+        }
+
+        foreach ( $check_paths as $check_path ) {
+            foreach ( $dangerous_directories as $dangerous_dir ) {
+                $real_dangerous = realpath( $dangerous_dir );
+
+                // 元のパスと解決されたパスの両方をチェック
+                $paths_to_check = [ $dangerous_dir ];
+                if ( $real_dangerous !== false && $real_dangerous !== $dangerous_dir ) {
+                    $paths_to_check[] = $real_dangerous;
+                }
+
+                foreach ( $paths_to_check as $dangerous_path ) {
+                    if ( $check_path === $dangerous_path ||
+                         strpos( $check_path, $dangerous_path . DIRECTORY_SEPARATOR ) === 0 ) {
+
+                        // セキュリティアラートを表示
+                        add_action( 'admin_footer', function() use ( $value, $check_path, $dangerous_path ) {
+                            ?>
+                            <script type="text/javascript">
+                            jQuery(document).ready(function($) {
+                                alert('<?php echo esc_js( sprintf(
+                                    __( 'セキュリティ上の理由により、ディレクトリ "%s" は設定できません。このパス（または解決先: %s）は危険なディレクトリ "%s" に解決されます。', 'bf-secret-file-downloader' ),
+                                    $value, $check_path, $dangerous_path
+                                ) ); ?>');
+                            });
+                            </script>
+                            <?php
+                        });
+
+                        // 空文字を返して設定を拒否
+                        return '';
+                    }
+                }
+            }
+        }
+
+        // 相対パスや不正なパスのチェック
+        if ( strpos( $value, '..' ) !== false || ! $this->is_absolute_path( $value ) ) {
+            add_action( 'admin_footer', function() {
+                ?>
+                <script type="text/javascript">
+                jQuery(document).ready(function($) {
+                    alert('<?php echo esc_js( __( '相対パスや不正なパスは設定できません。絶対パスを使用してください。', 'bf-secret-file-downloader' ) ); ?>');
+                });
+                </script>
+                <?php
+            });
             return '';
         }
 

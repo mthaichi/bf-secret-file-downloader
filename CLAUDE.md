@@ -71,3 +71,19 @@ phpstan analyse     # Run PHPStan static analysis
 - Includes comprehensive PHPUnit test suite
 - Uses webpack for frontend asset building
 - Supports WordPress environment with wp-env
+
+# 言語設定 / Language Settings
+
+このプロジェクトは日本語プロジェクトです。
+
+**重要な指示:**
+- すべてのレスポンスは日本語で行ってください
+- コメントやドキュメントも日本語で記述してください  
+- エラーメッセージや説明も日本語で提供してください
+- コードの変更や説明は日本語で行ってください
+
+This is a Japanese project.
+- Always respond in Japanese
+- Write comments and documentation in Japanese
+- Provide error messages and explanations in Japanese
+- Explain code changes and descriptions in Japanese

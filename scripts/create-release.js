@@ -9,6 +9,8 @@ const includeFiles = [
   'composer.json',
   'README.md',
   'inc/',
+  'languages/',
+  'assets/',
   'vendor/'
 ];
 
@@ -42,6 +44,16 @@ function createRelease() {
   output.on('close', () => {
     console.log(`✅ リリースZIPが作成されました: ${outputPath}`);
     console.log(`📦 ファイルサイズ: ${(archive.pointer() / 1024 / 1024).toFixed(2)} MB`);
+
+    // 後処理: 開発用依存関係を含むcomposer installを実行
+    console.log('🔄 開発用依存関係を含むcomposer installを実行中...');
+    try {
+      execSync('composer install', { stdio: 'inherit' });
+      console.log('✅ 開発用依存関係の復元が完了しました');
+    } catch (error) {
+      console.error('❌ 開発用依存関係の復元中にエラーが発生しました:', error.message);
+      process.exit(1);
+    }
   });
 
   archive.on('error', (err) => {

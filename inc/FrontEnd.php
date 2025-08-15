@@ -149,6 +149,36 @@ class FrontEnd {
      * @return bool アクセス許可フラグ
      */
     private function is_allowed_directory( $path ) {
+        // パスがnullまたは空の場合は拒否
+        if ( $path === null || $path === '' ) {
+            return false;
+        }
+
+        // シンボリックリンクの直接拒否
+        if ( is_link( $path ) ) {
+            error_log( 'BF Secret File Downloader: シンボリックリンクへのアクセス試行を検出: ' . $path );
+            return false;
+        }
+
+        // パス内にシンボリックリンクが含まれていないかチェック
+        $path_parts = explode( DIRECTORY_SEPARATOR, $path );
+        $current_path = '';
+        foreach ( $path_parts as $part ) {
+            if ( empty( $part ) && empty( $current_path ) ) {
+                $current_path = DIRECTORY_SEPARATOR; // ルートディレクトリ
+                continue;
+            } elseif ( empty( $part ) ) {
+                continue; // 空の部分はスキップ
+            }
+
+            $current_path .= ( $current_path === DIRECTORY_SEPARATOR ? '' : DIRECTORY_SEPARATOR ) . $part;
+
+            if ( is_link( $current_path ) ) {
+                error_log( 'BF Secret File Downloader: パス内にシンボリックリンクを検出: ' . $current_path . ' (フルパス: ' . $path . ')' );
+                return false;
+            }
+        }
+
         $real_path = realpath( $path );
         if ( $real_path === false ) {
             return false;
@@ -160,13 +190,260 @@ class FrontEnd {
             return false;
         }
 
+        // セキュリティチェック: 危険なターゲットディレクトリの即座拒否
+        $dangerous_target_directories = [
+            '/',                    // ルートディレクトリ - 極めて危険
+            '/etc',                 // システム設定ディレクトリ
+            '/usr',                 // システムユーティリティ
+            '/usr/bin',             // システムバイナリ
+            '/usr/sbin',            // システム管理バイナリ
+            '/var/log',             // システムログ
+            '/root',                // root ユーザーホーム
+            '/tmp',                 // テンポラリディレクトリ
+            '/proc',                // プロセスファイルシステム
+            '/sys',                 // システムファイルシステム
+            '/dev',                 // デバイスファイル
+            '/bin',                 // 基本バイナリ
+            '/sbin',                // システムバイナリ
+            '/boot',                // ブートファイル
+
+            // WordPress関連の危険なディレクトリ
+            ABSPATH,                // WordPressルートディレクトリ - wp-config.php等が含まれる
+            dirname( ABSPATH ),     // WordPressの親ディレクトリ
+            ABSPATH . 'wp-admin',   // WordPress管理ディレクトリ
+            ABSPATH . 'wp-includes', // WordPressコアファイル
+        ];
+
+        // wp-contentディレクトリ内の危険な場所も追加
+        if ( defined( 'WP_CONTENT_DIR' ) ) {
+            $dangerous_target_directories[] = WP_CONTENT_DIR . '/plugins';     // プラグインディレクトリ
+            $dangerous_target_directories[] = WP_CONTENT_DIR . '/themes';      // テーマディレクトリ
+            $dangerous_target_directories[] = WP_CONTENT_DIR . '/mu-plugins'; // Must-useプラグイン
+        }
+
+        // シンボリックリンク攻撃の検出
+        if ( is_link( $target_directory ) ) {
+            error_log( 'BF Secret File Downloader: シンボリックリンク攻撃を検出: ' . $target_directory );
+            return false;
+        }
+
+        // ターゲットディレクトリが危険な場合は即座に拒否（シンボリックリンク解決前と後の両方）
+        $check_paths = [ $target_directory ]; // 元のパス
+        $real_target_check = realpath( $target_directory );
+        if ( $real_target_check !== false && $real_target_check !== $target_directory ) {
+            $check_paths[] = $real_target_check; // 解決されたパス
+        }
+
+        foreach ( $check_paths as $check_path ) {
+            foreach ( $dangerous_target_directories as $dangerous_dir ) {
+                $real_dangerous = realpath( $dangerous_dir );
+
+                // 元のパスと解決されたパスの両方をチェック
+                $paths_to_check = [ $dangerous_dir ];
+                if ( $real_dangerous !== false && $real_dangerous !== $dangerous_dir ) {
+                    $paths_to_check[] = $real_dangerous;
+                }
+
+                foreach ( $paths_to_check as $dangerous_path ) {
+                    if ( $check_path === $dangerous_path ||
+                         strpos( $check_path, $dangerous_path . DIRECTORY_SEPARATOR ) === 0 ) {
+
+                        // ログに記録（本番環境では削除推奨）
+                        error_log( 'BF Secret File Downloader: 危険なターゲットディレクトリが設定されています: ' . $target_directory . ' (解決先: ' . $check_path . ' -> ' . $dangerous_path . ')' );
+
+                        return false;
+                    }
+                }
+            }
+        }
+
         $real_target_directory = realpath( $target_directory );
         if ( $real_target_directory === false ) {
             return false;
         }
 
+        // 新しいセキュリティチェック: パス内にWordPressの機密ファイルやディレクトリが含まれていないかチェック
+        if ( ! $this->is_path_safe_from_wordpress_secrets( $real_path ) ) {
+            error_log( 'BF Secret File Downloader: パス内にWordPressの機密ファイルやディレクトリが検出されました: ' . $real_path );
+            return false;
+        }
+
         // 対象ディレクトリまたはそのサブディレクトリのみ許可
         return strpos( $real_path, $real_target_directory ) === 0;
+    }
+
+    /**
+     * パス内にWordPressの機密ファイルやディレクトリが含まれていないかチェックします
+     *
+     * @param string $path チェックするパス
+     * @return bool 安全な場合はtrue、危険な場合はfalse
+     */
+    private function is_path_safe_from_wordpress_secrets( $path ) {
+        // WordPressの機密ファイルやディレクトリのパターン
+        $wordpress_secret_patterns = [
+            // WordPressルートディレクトリの機密ファイル
+            'wp-config.php',
+            'wp-config-sample.php',
+            '.htaccess',
+            'readme.html',
+            'license.txt',
+            'wp-config.php.bak',
+            'wp-config.php.old',
+            'wp-config.php.backup',
+
+            // WordPress管理ディレクトリ
+            'wp-admin',
+            'wp-admin/',
+            '/wp-admin',
+            '/wp-admin/',
+
+            // WordPressコアファイルディレクトリ
+            'wp-includes',
+            'wp-includes/',
+            '/wp-includes',
+            '/wp-includes/',
+
+            // WordPressコンテンツディレクトリ内の機密場所
+            'wp-content/plugins',
+            'wp-content/themes',
+            'wp-content/mu-plugins',
+            'wp-content/uploads/plugins',
+            'wp-content/uploads/themes',
+
+            // データベース関連ファイル
+            '.sql',
+            '.sql.gz',
+            '.sql.bak',
+            'database.sql',
+            'backup.sql',
+
+            // ログファイル
+            'error_log',
+            'debug.log',
+            'access.log',
+            '.log',
+
+            // 設定ファイル
+            'config.php',
+            'configuration.php',
+            'settings.php',
+            '.env',
+            '.env.local',
+            '.env.production',
+
+            // バックアップファイル
+            '.bak',
+            '.backup',
+            '.old',
+            '.orig',
+
+            // 一時ファイル
+            '.tmp',
+            '.temp',
+            'temp/',
+            'tmp/',
+
+            // Git関連
+            '.git',
+            '.gitignore',
+            '.gitattributes',
+
+            // その他の機密ファイル
+            'composer.json',
+            'composer.lock',
+            'package.json',
+            'package-lock.json',
+            'yarn.lock',
+            'npm-debug.log',
+
+            // セッションファイル
+            'sessions/',
+            'session/',
+            'cache/',
+            'caches/',
+        ];
+
+        // パスを小文字に変換してチェック（大文字小文字を区別しない）
+        $path_lower = strtolower( $path );
+
+        // パスを正規化（バックスラッシュをスラッシュに統一）
+        $path_normalized = str_replace( '\\', '/', $path_lower );
+
+        // 各パターンをチェック
+        foreach ( $wordpress_secret_patterns as $pattern ) {
+            $pattern_lower = strtolower( $pattern );
+            $pattern_normalized = str_replace( '\\', '/', $pattern_lower );
+
+            // パターンがパスに含まれているかチェック
+            if ( strpos( $path_normalized, $pattern_normalized ) !== false ) {
+                // より厳密なチェック：ディレクトリ区切り文字で囲まれているかチェック
+                $pattern_regex = '/[\/\\\\]' . preg_quote( $pattern_normalized, '/' ) . '[\/\\\\]?/';
+                if ( preg_match( $pattern_regex, $path_normalized ) ) {
+                    return false;
+                }
+
+                // ファイル名の完全一致チェック
+                $basename = basename( $path_normalized );
+                if ( $basename === $pattern_normalized ) {
+                    return false;
+                }
+            }
+        }
+
+        // WordPressの定数が定義されている場合の追加チェック
+        if ( defined( 'ABSPATH' ) ) {
+            $abspath_lower = strtolower( str_replace( '\\', '/', ABSPATH ) );
+
+            // WordPressルートディレクトリ内の機密ファイルへのアクセスをチェック
+            $wp_secret_files = [
+                'wp-config.php',
+                'wp-config-sample.php',
+                '.htaccess',
+                'readme.html',
+                'license.txt',
+            ];
+
+            foreach ( $wp_secret_files as $secret_file ) {
+                $secret_path = $abspath_lower . strtolower( $secret_file );
+                if ( $path_normalized === $secret_path ) {
+                    return false;
+                }
+            }
+
+            // wp-adminディレクトリへのアクセスをチェック
+            $wp_admin_path = $abspath_lower . 'wp-admin';
+            if ( strpos( $path_normalized, $wp_admin_path ) === 0 ) {
+                return false;
+            }
+
+            // wp-includesディレクトリへのアクセスをチェック
+            $wp_includes_path = $abspath_lower . 'wp-includes';
+            if ( strpos( $path_normalized, $wp_includes_path ) === 0 ) {
+                return false;
+            }
+        }
+
+        // wp-contentディレクトリの機密場所へのアクセスをチェック
+        if ( defined( 'WP_CONTENT_DIR' ) ) {
+            $wp_content_lower = strtolower( str_replace( '\\', '/', WP_CONTENT_DIR ) );
+
+            $wp_content_secrets = [
+                '/plugins',
+                '/themes',
+                '/mu-plugins',
+                '/uploads/plugins',
+                '/uploads/themes',
+            ];
+
+            foreach ( $wp_content_secrets as $secret_dir ) {
+                $secret_path = $wp_content_lower . strtolower( $secret_dir );
+                if ( strpos( $path_normalized, $secret_path ) === 0 ) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**

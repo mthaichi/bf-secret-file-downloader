@@ -482,8 +482,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 <script type="text/javascript">
 jQuery(document).ready(function($) {
-    console.log('ページ読み込み完了');
-    console.log('フォールバックアイコンの数:', $('.bf-fallback-icon').length);
 
     // Dashiconsが読み込まれているかチェック
     checkDashicons();
@@ -521,7 +519,7 @@ jQuery(document).ready(function($) {
         }
     }
 
-            // 削除リンクのイベント（マウスオーバーメニューから）
+    // 削除リンクのイベント（マウスオーバーメニューから）
     $(document).on('click', '.delete-file-link', function(e) {
         e.preventDefault();
         e.stopPropagation(); // イベントの伝播を確実に停止
