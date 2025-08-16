@@ -48,7 +48,30 @@ if ( ! defined( 'ABSPATH' ) ) {
                                           <?php esc_html_e( 'でディレクトリを指定してください。', 'bf-secret-file-downloader' ); ?>
                 </p>
             </div>
-        <?php else : ?>
+        <?php endif; ?>
+
+        <?php if ( isset( $danger_flag_set ) && $danger_flag_set ) : ?>
+            <div class="notice notice-error">
+                <p>
+                    <strong><?php esc_html_e( 'セキュリティ警告:', 'bf-secret-file-downloader' ); ?></strong>
+                    <?php esc_html_e( '対象ディレクトリにWordPressファイルが検出されました。', 'bf-secret-file-downloader' ); ?>
+                </p>
+                <p>
+                    <?php esc_html_e( 'セキュリティ上の理由により、ファイル一覧の表示及びダウンロード機能は無効化されています。', 'bf-secret-file-downloader' ); ?>
+                </p>
+                <p>
+                    <strong><?php esc_html_e( '対処方法:', 'bf-secret-file-downloader' ); ?></strong>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=bf-secret-file-downloader-settings' ) ); ?>" class="button button-primary">
+                        <?php esc_html_e( '設定ページで対象ディレクトリを変更する', 'bf-secret-file-downloader' ); ?>
+                    </a>
+                </p>
+                <p class="description">
+                    <?php esc_html_e( 'WordPressのコアファイルやテーマ、プラグインファイルが含まれないディレクトリを指定してください。', 'bf-secret-file-downloader' ); ?>
+                </p>
+            </div>
+        <?php endif; ?>
+
+        <?php if ( $target_directory_set && ! ( isset( $danger_flag_set ) && $danger_flag_set ) ) : ?>
             <div class="bf-secret-file-downloader-content">
                 <!-- 現在のパス表示 -->
                 <div class="bf-secret-file-downloader-path">

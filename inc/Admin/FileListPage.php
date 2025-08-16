@@ -126,6 +126,9 @@ class FileListPage {
 
         check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
+        // 対象ディレクトリの安全性をチェック（ディレクトリ変更時自動チェック）
+        $this->check_and_update_directory_safety();
+
         $relative_path = sanitize_text_field( $_POST['path'] ?? '' );
         $page = intval( $_POST['page'] ?? 1 );
         $sort_by = sanitize_text_field( $_POST['sort_by'] ?? 'name' );
@@ -558,6 +561,11 @@ class FileListPage {
      * ファイルダウンロードのAJAXハンドラ
      */
     public function ajax_download_file() {
+        // 危険フラグをチェック
+        if ( \Breadfish\SecretFileDownloader\DirectorySecurity::is_danger_flag_set() ) {
+            wp_send_json_error( __( 'セキュリティ上の理由により、現在ダウンロード機能は無効化されています。対象ディレクトリの設定を変更してください。', 'bf-secret-file-downloader' ) );
+        }
+
         // セキュリティチェック
         if ( ! current_user_can( 'read' ) ) {
             wp_die( 'Unauthorized' );
@@ -623,6 +631,11 @@ class FileListPage {
      * ファイルダウンロード処理
      */
     public function handle_file_download() {
+        // 危険フラグをチェック
+        if ( \Breadfish\SecretFileDownloader\DirectorySecurity::is_danger_flag_set() ) {
+            wp_die( __( 'セキュリティ上の理由により、現在ダウンロード機能は無効化されています。対象ディレクトリの設定を変更してください。', 'bf-secret-file-downloader' ), 403 );
+        }
+
         $download_token = sanitize_text_field( $_GET['bf_download'] ?? '' );
 
         if ( empty( $download_token ) ) {
@@ -832,6 +845,9 @@ class FileListPage {
      * @return array ビューで使用するデータ
      */
     private function prepare_data() {
+        // 対象ディレクトリの安全性をチェック（起動時自動チェック）
+        $this->check_and_update_directory_safety();
+
         $relative_path = $this->get_current_path();
         $page = $this->get_current_page();
         $sort_by = $this->get_current_sort_by();
@@ -855,6 +871,7 @@ class FileListPage {
                 'pagination_html' => '',
                 'current_path_writable' => false,
                 'max_file_size_mb' => get_option( 'bf_sfd_max_file_size', 10 ),
+                'danger_flag_set' => $this->is_danger_flag_set(),
             );
         }
 
@@ -904,6 +921,7 @@ class FileListPage {
             'sort_order' => $sort_order,
             'current_directory_has_auth' => $this->has_directory_auth( $relative_path ),
             'current_directory_has_password' => $this->has_directory_password( $relative_path ),
+            'danger_flag_set' => $this->is_danger_flag_set(),
         );
     }
 
@@ -1658,6 +1676,23 @@ class FileListPage {
         );
 
         wp_send_json_success( $global_auth );
+    }
+
+    /**
+     * 危険フラグが設定されているかチェックします
+     *
+     * @return bool 危険フラグが設定されている場合はtrue
+     */
+    private function is_danger_flag_set() {
+        return \Breadfish\SecretFileDownloader\DirectorySecurity::is_danger_flag_set();
+    }
+
+    /**
+     * 対象ディレクトリの安全性をチェックし、危険フラグを更新します
+     */
+    private function check_and_update_directory_safety() {
+        $target_directory = get_option( 'bf_sfd_target_directory', '' );
+        \Breadfish\SecretFileDownloader\DirectorySecurity::check_and_update_directory_safety( $target_directory );
     }
 
 

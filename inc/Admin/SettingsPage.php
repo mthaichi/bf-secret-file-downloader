@@ -699,6 +699,15 @@ class SettingsPage {
     }
 
     /**
+     * 危険フラグを取得します（互換性のためのエイリアス）
+     *
+     * @return bool 危険フラグ
+     */
+    public function get_danger_flag() {
+        return \Breadfish\SecretFileDownloader\DirectorySecurity::get_danger_flag();
+    }
+
+    /**
      * サニタイズ: ディレクトリパス
      *
      * @param string $value ディレクトリパス
@@ -713,42 +722,13 @@ class SettingsPage {
         // 現在の対象ディレクトリを取得
         $current_directory = get_option( 'bf_sfd_target_directory', '' );
 
-        // 空の場合はそのまま返す
+        // 空の場合は危険フラグをクリアして返す
         if ( empty( $value ) ) {
+            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
             return '';
         }
 
-        // セキュリティチェック: 危険なディレクトリの拒否
-        $dangerous_directories = [
-            '/',                    // ルートディレクトリ - 極めて危険
-            '/etc',                 // システム設定ディレクトリ
-            '/usr',                 // システムユーティリティ
-            '/usr/bin',             // システムバイナリ
-            '/usr/sbin',            // システム管理バイナリ
-            '/var',                 // 可変データディレクトリ（一部例外あり）
-            '/var/log',             // システムログ
-            '/root',                // root ユーザーホーム
-            '/tmp',                 // テンポラリディレクトリ
-            '/proc',                // プロセスファイルシステム
-            '/sys',                 // システムファイルシステム
-            '/dev',                 // デバイスファイル
-            '/bin',                 // 基本バイナリ
-            '/sbin',                // システムバイナリ
-            '/boot',                // ブートファイル
-
-            // WordPress関連の危険なディレクトリ
-            ABSPATH,                // WordPressルートディレクトリ - wp-config.php等が含まれる
-            dirname( ABSPATH ),     // WordPressの親ディレクトリ
-            ABSPATH . 'wp-admin',   // WordPress管理ディレクトリ
-            ABSPATH . 'wp-includes', // WordPressコアファイル
-        ];
-
-        // wp-contentディレクトリ内の危険な場所も追加
-        if ( defined( 'WP_CONTENT_DIR' ) ) {
-            $dangerous_directories[] = WP_CONTENT_DIR . '/plugins';     // プラグインディレクトリ
-            $dangerous_directories[] = WP_CONTENT_DIR . '/themes';      // テーマディレクトリ
-            $dangerous_directories[] = WP_CONTENT_DIR . '/mu-plugins'; // Must-useプラグイン
-        }
+        // DirectorySecurityクラスを使用した包括的なセキュリティチェック
 
         // シンボリックリンク攻撃の検出
         if ( is_link( $value ) ) {
@@ -772,6 +752,27 @@ class SettingsPage {
         $real_value = realpath( $value );
         if ( $real_value !== false && $real_value !== $value ) {
             $check_paths[] = $real_value; // 解決されたパス
+        }
+
+        // ABSPATHルートディレクトリの直接指定を特別にチェック
+        $abspath_real = realpath( ABSPATH );
+        foreach ( $check_paths as $check_path ) {
+            if ( $check_path === ABSPATH || $check_path === $abspath_real ) {
+                // WordPressルートディレクトリの直接指定を拒否
+                add_action( 'admin_footer', function() use ( $value, $check_path ) {
+                    ?>
+                    <script type="text/javascript">
+                    jQuery(document).ready(function($) {
+                        alert('<?php echo esc_js( sprintf(
+                            __( 'WordPressルートディレクトリ "%s" は設定できません。ルートディレクトリ内にwp-config.phpなどの重要なファイルが含まれているためです。サブディレクトリを指定してください。', 'bf-secret-file-downloader' ),
+                            $check_path
+                        ) ); ?>');
+                    });
+                    </script>
+                    <?php
+                });
+                return '';
+            }
         }
 
         foreach ( $check_paths as $check_path ) {
@@ -823,22 +824,60 @@ class SettingsPage {
             return '';
         }
 
-        // ディレクトリが存在し、読み取り可能な場合のみ保存
-        if ( is_dir( $value ) && is_readable( $value ) ) {
-            // ディレクトリが変更された場合
-            if ( ! empty( $current_directory ) && $current_directory !== $value ) {
-                // 既存のディレクトリパスワードをすべてクリア
-                $this->clear_all_directory_passwords();
-
-                // JavaScript側でアラートを表示するためのフラグを設定
-                add_action( 'admin_footer', array( $this, 'show_directory_change_alert' ) );
-            }
-
-            return $value;
+        // ディレクトリの存在と権限をチェック
+        if ( ! is_dir( $value ) ) {
+            // ディレクトリが存在しない場合
+            add_action( 'admin_footer', function() use ( $value ) {
+                ?>
+                <script type="text/javascript">
+                jQuery(document).ready(function($) {
+                    alert('<?php echo esc_js( sprintf(
+                        __( 'ディレクトリ "%s" が存在しません。正しいディレクトリパスを指定してください。', 'bf-secret-file-downloader' ),
+                        $value
+                    ) ); ?>');
+                });
+                </script>
+                <?php
+            });
+            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
+            return '';
         }
 
-        // 無効なディレクトリの場合は空文字を返す
-        return '';
+        if ( ! is_readable( $value ) ) {
+            // ディレクトリが読み取り不可能な場合
+            add_action( 'admin_footer', function() use ( $value ) {
+                ?>
+                <script type="text/javascript">
+                jQuery(document).ready(function($) {
+                    alert('<?php echo esc_js( sprintf(
+                        __( 'ディレクトリ "%s" に読み取り権限がありません。権限を確認してください。', 'bf-secret-file-downloader' ),
+                        $value
+                    ) ); ?>');
+                });
+                </script>
+                <?php
+            });
+            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
+            return '';
+        }
+
+        // ディレクトリが有効な場合の処理
+        // ディレクトリが変更された場合の処理
+        if ( ! empty( $current_directory ) && $current_directory !== $value ) {
+            // 既存のディレクトリパスワードをすべてクリア
+            $this->clear_all_directory_passwords();
+
+            // 危険フラグをクリア（新しいディレクトリでリセット）
+            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
+
+            // JavaScript側でアラートを表示するためのフラグを設定
+            add_action( 'admin_footer', array( $this, 'show_directory_change_alert' ) );
+        }
+
+        // DirectorySecurityクラスを使用してWordPressファイルの危険性をチェックし、フラグを更新
+        \Breadfish\SecretFileDownloader\DirectorySecurity::check_and_update_directory_safety( $value );
+
+        return $value;
     }
 
     /**

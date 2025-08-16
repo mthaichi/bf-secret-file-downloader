@@ -42,10 +42,15 @@ class FrontEnd {
      * フロントエンドでのファイルダウンロード処理
      */
     public function handle_file_download() {
-        // pathパラメータが存在するかチェック
+        // pathパラメータが存在するかチェック（ダウンロード要求の確認）
         $file_path = sanitize_text_field( $_GET['path'] ?? '' );
         if ( empty( $file_path ) ) {
-            return;
+            return; // ダウンロード要求でない場合は処理を終了
+        }
+
+        // 危険フラグをチェック（ダウンロード要求がある場合のみ）
+        if ( \Breadfish\SecretFileDownloader\DirectorySecurity::is_danger_flag_set() ) {
+            wp_die( __( 'セキュリティ上の理由により、現在ダウンロード機能は無効化されています。管理者に対象ディレクトリの設定変更をご依頼ください。', 'bf-secret-file-downloader' ), 403 );
         }
 
         // ダウンロードフラグを取得（デフォルトはダウンロード）
@@ -115,7 +120,6 @@ class FrontEnd {
 
         exit;
     }
-
 
 
     /**
