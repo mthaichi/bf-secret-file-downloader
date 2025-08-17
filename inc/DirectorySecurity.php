@@ -466,6 +466,7 @@ class DirectorySecurity {
             'error_message' => ''
         );
 
+
         // ルートパスが指定されていない場合は、WordPressのindex.phpが配置されているディレクトリから開始
         if ( empty( $path ) ) {
             $path = ABSPATH;
@@ -522,11 +523,21 @@ class DirectorySecurity {
 
         // 許可されたベースパス内にあるかチェック
         $is_allowed = false;
+        
         foreach ( $allowed_base_paths as $base_path ) {
             $real_base_path = realpath( $base_path );
-            if ( $real_base_path !== false && strpos( $real_path, $real_base_path ) === 0 ) {
-                $is_allowed = true;
-                break;
+            
+            if ( $real_base_path !== false ) {
+                // パスの比較時に末尾スラッシュを統一
+                $normalized_real_path = rtrim( $real_path, '/' );
+                $normalized_base_path = rtrim( $real_base_path, '/' );
+                
+                // 完全一致、またはベースパス配下のサブディレクトリかチェック
+                if ( $normalized_real_path === $normalized_base_path || 
+                     strpos( $normalized_real_path, $normalized_base_path . '/' ) === 0 ) {
+                    $is_allowed = true;
+                    break;
+                }
             }
         }
 

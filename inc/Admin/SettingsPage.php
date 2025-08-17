@@ -95,7 +95,27 @@ class SettingsPage {
         // DirectorySecurityクラスを使用したセキュリティチェック
         $security_check = DirectorySecurity::check_ajax_browse_directory_security( $path );
 
+        // セキュリティチェックが失敗した場合のフォールバック処理
         if ( ! $security_check['allowed'] ) {
+            // フォールバック処理（現在のディレクトリを保持するため）
+            $fallback_to_current = isset( $_POST['fallback_current'] ) ? sanitize_text_field( $_POST['fallback_current'] ) : '';
+
+            if ( ! empty( $fallback_to_current ) ) {
+                $fallback_security_check = DirectorySecurity::check_ajax_browse_directory_security( $fallback_to_current );
+
+                if ( $fallback_security_check['allowed'] ) {
+                    // フォールバック先が安全な場合、そのディレクトリの内容を返す
+                    $path = $fallback_to_current;
+                    $real_path = realpath( $path );
+
+                    $response = $this->get_directory_listing( $path );
+                    $response['warning'] = __( 'アクセス権限がないため、現在のディレクトリを維持しました。', 'bf-secret-file-downloader' );
+                    wp_send_json_success( $response );
+                    return;
+                }
+            }
+            
+            // フォールバックも失敗した場合はエラーを返す
             wp_send_json_error( $security_check['error_message'] );
         }
 
@@ -104,25 +124,6 @@ class SettingsPage {
             $path = ABSPATH;
         }
         $real_path = realpath( $path );
-
-        // フォールバック処理（現在のディレクトリを保持するため）
-        $fallback_to_current = isset( $_POST['fallback_current'] ) ? sanitize_text_field( $_POST['fallback_current'] ) : '';
-
-        // DirectorySecurityの基本チェックでエラーが発生した場合、フォールバックを試行
-        if ( ! empty( $fallback_to_current ) ) {
-            $fallback_security_check = DirectorySecurity::check_ajax_browse_directory_security( $fallback_to_current );
-
-            if ( $fallback_security_check['allowed'] ) {
-                // フォールバック先が安全な場合、そのディレクトリの内容を返す
-                $path = $fallback_to_current;
-                $real_path = realpath( $path );
-
-                $response = $this->get_directory_listing( $path );
-                $response['warning'] = __( 'アクセス権限がないため、現在のディレクトリを維持しました。', 'bf-secret-file-downloader' );
-                wp_send_json_success( $response );
-                return;
-            }
-        }
 
         // ディレクトリリストを取得して返す
         try {
