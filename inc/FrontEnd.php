@@ -391,6 +391,20 @@ class FrontEnd {
                 if ( $basename === $pattern_normalized ) {
                     return false;
                 }
+
+                // ファイル拡張子やパターンが含まれているかの追加チェック
+                // 特にドット始まりのパターン（.sql.gz, .sql, .bak等）の場合
+                if ( strpos( $pattern_normalized, '.' ) === 0 ) {
+                    // ファイル名にパターンが含まれている場合は拒否
+                    if ( strpos( $basename, $pattern_normalized ) !== false ) {
+                        return false;
+                    }
+                }
+                
+                // SQLファイルの特別なケース：ファイル名にsqlが含まれ、パターンも.sqlを含む場合
+                if ( strpos( $pattern_normalized, 'sql' ) !== false && strpos( $basename, 'sql' ) !== false ) {
+                    return false;
+                }
             }
         }
 

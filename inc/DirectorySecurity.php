@@ -34,31 +34,42 @@ class DirectorySecurity {
             return false;
         }
 
-        // WordPressの危険ファイル・ディレクトリのリスト
-        $wordpress_danger_items = array(
+        // WordPress確実判定: 複数の特徴的ファイルが同時に存在するかチェック
+        $wordpress_core_files = array(
             'wp-config.php',
-            'wp-config-sample.php',
+            'wp-config-sample.php'
+        );
+
+        $wordpress_core_dirs = array(
             'wp-admin',
-            'wp-includes',
-            '.htaccess',
-            'readme.html',
-            'license.txt'
+            'wp-includes'
         );
 
         // ディレクトリ内をスキャン
         $items = scandir( $directory_path );
+        $found_core_files = 0;
+        $found_core_dirs = 0;
+
         foreach ( $items as $item ) {
             if ( $item === '.' || $item === '..' ) {
                 continue;
             }
 
-            // 危険アイテムが存在するかチェック
-            if ( in_array( $item, $wordpress_danger_items ) ) {
-                return true;
+            $item_path = $directory_path . DIRECTORY_SEPARATOR . $item;
+
+            // WordPress設定ファイルのチェック
+            if ( in_array( $item, $wordpress_core_files ) ) {
+                $found_core_files++;
+            }
+
+            // WordPressコアディレクトリのチェック  
+            if ( in_array( $item, $wordpress_core_dirs ) && is_dir( $item_path ) ) {
+                $found_core_dirs++;
             }
         }
 
-        return false;
+        // WordPress判定: コア設定ファイルまたは2つ以上のコアディレクトリが存在
+        return ( $found_core_files > 0 || $found_core_dirs >= 2 );
     }
 
     /**

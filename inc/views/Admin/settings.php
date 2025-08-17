@@ -35,6 +35,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap">
     <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 
+    <?php settings_errors(); ?>
+
     <div class="bf-secret-file-downloader-settings">
         <div class="bf-secret-file-downloader-header">
             <p><?php esc_html_e( 'BF Secret File Downloaderの設定を管理します。ファイルアクセスには認証が必要で、ログインユーザーまたは簡易認証パスワードでの認証が可能です。', 'bf-secret-file-downloader' ); ?></p>

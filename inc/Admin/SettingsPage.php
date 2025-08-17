@@ -619,7 +619,25 @@ class SettingsPage {
      * @return string サニタイズされたパスワード
      */
     public function sanitize_password( $value ) {
-        return sanitize_text_field( $value );
+        $sanitized_value = sanitize_text_field( $value );
+        
+        // 簡易認証が有効かチェック
+        $auth_methods = $_POST['bf_sfd_auth_methods'] ?? array();
+        if ( is_array( $auth_methods ) && in_array( 'simple_auth', $auth_methods ) ) {
+            // 簡易認証が有効でパスワードが空の場合
+            if ( empty( $sanitized_value ) ) {
+                add_settings_error(
+                    'bf_sfd_simple_auth_password',
+                    'password_required',
+                    __( '簡易認証を有効にする場合は、パスワードの設定が必要です。', 'bf-secret-file-downloader' ),
+                    'error'
+                );
+                // 現在のパスワードを維持（空にしない）
+                return get_option( 'bf_sfd_simple_auth_password', '' );
+            }
+        }
+        
+        return $sanitized_value;
     }
 
     /**
@@ -730,133 +748,86 @@ class SettingsPage {
 
         // DirectorySecurityクラスを使用した包括的なセキュリティチェック
 
-        // シンボリックリンク攻撃の検出
-        if ( is_link( $value ) ) {
-            add_action( 'admin_footer', function() use ( $value ) {
-                ?>
-                <script type="text/javascript">
-                jQuery(document).ready(function($) {
-                    alert('<?php echo esc_js( sprintf(
-                        __( 'セキュリティ上の理由により、シンボリックリンク "%s" は設定できません。シンボリックリンクを介した攻撃を防ぐため、実際のディレクトリパスを指定してください。', 'bf-secret-file-downloader' ),
-                        $value
-                    ) ); ?>');
-                });
-                </script>
-                <?php
-            });
+        // DirectorySecurityクラスを使用した包括的なセキュリティチェック
+        $safety_check = \Breadfish\SecretFileDownloader\DirectorySecurity::check_directory_safety( $value );
+        
+        if ( ! $safety_check['is_safe'] ) {
+            // セキュリティエラーの場合、WordPress標準のエラーメッセージを表示
+            $error_type = 'error';
+            if ( $safety_check['is_wordpress_root'] ) {
+                $error_code = 'wordpress_root_directory';
+            } elseif ( $safety_check['is_dangerous_system_dir'] ) {
+                $error_code = 'dangerous_system_directory';
+            } elseif ( $safety_check['has_wordpress_files'] ) {
+                $error_code = 'wordpress_files_detected';
+            } else {
+                $error_code = 'directory_security_error';
+            }
+            
+            add_settings_error(
+                'bf_sfd_target_directory',
+                $error_code,
+                $safety_check['danger_reason'],
+                $error_type
+            );
+            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
             return '';
         }
 
-        // 危険なディレクトリのチェック（シンボリックリンク解決前と後の両方）
-        $check_paths = [ $value ]; // 元のパス
-        $real_value = realpath( $value );
-        if ( $real_value !== false && $real_value !== $value ) {
-            $check_paths[] = $real_value; // 解決されたパス
+        // シンボリックリンク攻撃の検出
+        if ( is_link( $value ) ) {
+            add_settings_error(
+                'bf_sfd_target_directory',
+                'symbolic_link_detected',
+                sprintf(
+                    __( 'セキュリティ上の理由により、シンボリックリンク "%s" は設定できません。実際のディレクトリパスを指定してください。', 'bf-secret-file-downloader' ),
+                    $value
+                ),
+                'error'
+            );
+            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
+            return '';
         }
 
-        // ABSPATHルートディレクトリの直接指定を特別にチェック
-        $abspath_real = realpath( ABSPATH );
-        foreach ( $check_paths as $check_path ) {
-            if ( $check_path === ABSPATH || $check_path === $abspath_real ) {
-                // WordPressルートディレクトリの直接指定を拒否
-                add_action( 'admin_footer', function() use ( $value, $check_path ) {
-                    ?>
-                    <script type="text/javascript">
-                    jQuery(document).ready(function($) {
-                        alert('<?php echo esc_js( sprintf(
-                            __( 'WordPressルートディレクトリ "%s" は設定できません。ルートディレクトリ内にwp-config.phpなどの重要なファイルが含まれているためです。サブディレクトリを指定してください。', 'bf-secret-file-downloader' ),
-                            $check_path
-                        ) ); ?>');
-                    });
-                    </script>
-                    <?php
-                });
-                return '';
-            }
-        }
-
-        foreach ( $check_paths as $check_path ) {
-            foreach ( $dangerous_directories as $dangerous_dir ) {
-                $real_dangerous = realpath( $dangerous_dir );
-
-                // 元のパスと解決されたパスの両方をチェック
-                $paths_to_check = [ $dangerous_dir ];
-                if ( $real_dangerous !== false && $real_dangerous !== $dangerous_dir ) {
-                    $paths_to_check[] = $real_dangerous;
-                }
-
-                foreach ( $paths_to_check as $dangerous_path ) {
-                    if ( $check_path === $dangerous_path ||
-                         strpos( $check_path, $dangerous_path . DIRECTORY_SEPARATOR ) === 0 ) {
-
-                        // セキュリティアラートを表示
-                        add_action( 'admin_footer', function() use ( $value, $check_path, $dangerous_path ) {
-                            ?>
-                            <script type="text/javascript">
-                            jQuery(document).ready(function($) {
-                                alert('<?php echo esc_js( sprintf(
-                                    __( 'セキュリティ上の理由により、ディレクトリ "%s" は設定できません。このパス（または解決先: %s）は危険なディレクトリ "%s" に解決されます。', 'bf-secret-file-downloader' ),
-                                    $value, $check_path, $dangerous_path
-                                ) ); ?>');
-                            });
-                            </script>
-                            <?php
-                        });
-
-                        // 空文字を返して設定を拒否
-                        return '';
-                    }
-                }
-            }
-        }
 
         // 相対パスや不正なパスのチェック
         if ( strpos( $value, '..' ) !== false || ! $this->is_absolute_path( $value ) ) {
-            add_action( 'admin_footer', function() {
-                ?>
-                <script type="text/javascript">
-                jQuery(document).ready(function($) {
-                    alert('<?php echo esc_js( __( '相対パスや不正なパスは設定できません。絶対パスを使用してください。', 'bf-secret-file-downloader' ) ); ?>');
-                });
-                </script>
-                <?php
-            });
+            add_settings_error(
+                'bf_sfd_target_directory',
+                'invalid_path_format',
+                __( '相対パスや不正なパスは設定できません。絶対パスを使用してください。', 'bf-secret-file-downloader' ),
+                'error'
+            );
             return '';
         }
 
         // ディレクトリの存在と権限をチェック
         if ( ! is_dir( $value ) ) {
             // ディレクトリが存在しない場合
-            add_action( 'admin_footer', function() use ( $value ) {
-                ?>
-                <script type="text/javascript">
-                jQuery(document).ready(function($) {
-                    alert('<?php echo esc_js( sprintf(
-                        __( 'ディレクトリ "%s" が存在しません。正しいディレクトリパスを指定してください。', 'bf-secret-file-downloader' ),
-                        $value
-                    ) ); ?>');
-                });
-                </script>
-                <?php
-            });
+            add_settings_error(
+                'bf_sfd_target_directory',
+                'directory_not_exists',
+                sprintf(
+                    __( 'ディレクトリ "%s" が存在しません。正しいディレクトリパスを指定してください。', 'bf-secret-file-downloader' ),
+                    $value
+                ),
+                'error'
+            );
             \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
             return '';
         }
 
         if ( ! is_readable( $value ) ) {
             // ディレクトリが読み取り不可能な場合
-            add_action( 'admin_footer', function() use ( $value ) {
-                ?>
-                <script type="text/javascript">
-                jQuery(document).ready(function($) {
-                    alert('<?php echo esc_js( sprintf(
-                        __( 'ディレクトリ "%s" に読み取り権限がありません。権限を確認してください。', 'bf-secret-file-downloader' ),
-                        $value
-                    ) ); ?>');
-                });
-                </script>
-                <?php
-            });
+            add_settings_error(
+                'bf_sfd_target_directory',
+                'directory_not_readable',
+                sprintf(
+                    __( 'ディレクトリ "%s" に読み取り権限がありません。権限を確認してください。', 'bf-secret-file-downloader' ),
+                    $value
+                ),
+                'error'
+            );
             \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
             return '';
         }
