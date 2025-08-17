@@ -12,13 +12,12 @@ Manage and provide download functionality for files protected by Basic Authentic
 
 == Description ==
 
-BF Secret File Downloader is a WordPress plugin that allows you to manage files located in directories protected by Basic Authentication or private areas. It provides comprehensive file management, directory management, download functionality, and a Gutenberg block for download buttons.
+BF Secret File Downloader is a WordPress plugin that allows you to manage files located in directories protected by Basic Authentication or private areas. It provides comprehensive file management, directory management, and download functionality.
 
 = Features =
 
 * **File Management**: Browse and manage files in protected directories
 * **Download Control**: Secure download functionality with access control
-* **Gutenberg Block**: Easy-to-use download button block for the block editor
 * **Access Control**: Multiple authentication methods including WordPress login and simple password
 * **Directory Management**: Organize files in multiple protected directories
 * **i18n Ready**: Translation ready with Japanese and English support
@@ -65,8 +64,7 @@ Currently, the plugin is designed for single-site installations. Multisite suppo
 
 1. Admin file list page showing protected files
 2. Settings page with authentication options
-3. Gutenberg download button block in the editor
-4. Frontend download interface
+3. Frontend download interface
 
 == Changelog ==
 
@@ -74,7 +72,6 @@ Currently, the plugin is designed for single-site installations. Multisite suppo
 * Initial release
 * File management functionality
 * Download control with authentication
-* Gutenberg block integration
 * Multiple authentication methods
 * i18n support for Japanese and English
 

@@ -123,9 +123,6 @@ function bf_secret_file_downloader_init() {
     $frontend = new \Breadfish\SecretFileDownloader\FrontEnd();
     $frontend->init();
 
-    // Gutenbergブロック機能を初期化
-    $block = new \Breadfish\SecretFileDownloader\Block();
-    $block->init();
 }
 
 add_action( 'init', 'bf_secret_file_downloader_init' );
