@@ -38,6 +38,7 @@ class SettingsPage {
         add_action( 'wp_ajax_bf_sfd_browse_directory', array( $this, 'ajax_browse_directory' ) );
         add_action( 'wp_ajax_bf_sfd_create_directory', array( $this, 'ajax_create_directory' ) );
         add_action( 'wp_ajax_bf_sfd_reset_settings', array( $this, 'ajax_reset_settings' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
     }
 
     /**
@@ -887,5 +888,25 @@ class SettingsPage {
      */
     public function get_menu_title() {
         return __( '設定', 'bf-secret-file-downloader' );
+    }
+
+    /**
+     * 管理画面のアセット（CSS/JS）をエンキューします
+     *
+     * @param string $hook_suffix 現在の管理画面のフックサフィックス
+     */
+    public function enqueue_admin_assets( $hook_suffix ) {
+        // 設定ページでのみアセットを読み込む
+        if ( strpos( $hook_suffix, self::PAGE_SLUG ) === false ) {
+            return;
+        }
+
+        // CSSファイルをエンキュー
+        wp_enqueue_style(
+            'bf-sfd-admin-settings',
+            plugin_dir_url( dirname( dirname( __FILE__ ) ) ) . 'assets/css/admin-settings.css',
+            array(),
+            '1.0.0'
+        );
     }
 }

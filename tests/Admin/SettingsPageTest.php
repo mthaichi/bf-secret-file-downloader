@@ -466,7 +466,8 @@ class SettingsPageTest extends \BF_SFD_TestCase {
             'sanitize_auth_methods',
             'sanitize_roles',
             'sanitize_directory',
-            'show_directory_change_alert'
+            'show_directory_change_alert',
+            'enqueue_admin_assets'
         ];
 
         foreach ( $methods as $method ) {
@@ -489,5 +490,36 @@ class SettingsPageTest extends \BF_SFD_TestCase {
         $this->assertTrue( is_callable( array( $this->settings_page, 'ajax_browse_directory' ) ) );
         $this->assertTrue( is_callable( array( $this->settings_page, 'ajax_create_directory' ) ) );
         $this->assertTrue( is_callable( array( $this->settings_page, 'ajax_reset_settings' ) ) );
+    }
+
+    /**
+     * Test enqueue_admin_assets method
+     */
+    public function test_enqueue_admin_assets() {
+        // Mock wp_enqueue_style function
+        WP_Mock::userFunction( 'wp_enqueue_style' )
+            ->with( 'bf-sfd-admin-settings', \WP_Mock\Functions::type( 'string' ), array(), '1.0.0' )
+            ->once();
+
+        WP_Mock::userFunction( 'plugin_dir_url' )
+            ->andReturn( 'http://example.com/wp-content/plugins/bf-secret-file-downloader/' );
+
+        // Test with correct page hook
+        $this->settings_page->enqueue_admin_assets( 'admin_page_bf-secret-file-downloader-settings' );
+
+        $this->assertConditionsMet();
+    }
+
+    /**
+     * Test enqueue_admin_assets method with wrong hook
+     */
+    public function test_enqueue_admin_assets_wrong_hook() {
+        // wp_enqueue_style should NOT be called
+        WP_Mock::userFunction( 'wp_enqueue_style' )->times( 0 );
+
+        // Test with wrong page hook
+        $this->settings_page->enqueue_admin_assets( 'admin_page_other-page' );
+
+        $this->assertTrue( true ); // Assert to avoid risky test
     }
 }

@@ -65,7 +65,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <th scope="row"><?php esc_html_e( '対象ディレクトリ', 'bf-secret-file-downloader' ); ?></th>
                             <td>
                                 <div class="bf-directory-item">
-                                    <input type="text" name="bf_sfd_target_directory"
+                                    <input type="text" name="bf_sfd_target_directory" id="bf_sfd_target_directory"
                                            value="<?php echo esc_attr( $target_directory ?? '' ); ?>"
                                            class="regular-text bf-directory-path" readonly />
                                     <button type="button" class="button bf-browse-directory"><?php esc_html_e( '参照', 'bf-secret-file-downloader' ); ?></button>
@@ -200,145 +200,53 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 </div>
 
-<style>
-.bf-directory-item {
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.bf-directory-path {
-    flex: 1;
-}
-
-.bf-modal {
-    position: fixed;
-    z-index: 100000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-}
-
-.bf-modal-content {
-    position: relative;
-    background-color: #fefefe;
-    margin: 5% auto;
-    padding: 0;
-    border: 1px solid #888;
-    width: 70%;
-    max-width: 800px;
-    height: 70%;
-    display: flex;
-    flex-direction: column;
-}
-
-.bf-modal-header {
-    padding: 20px;
-    background-color: #f1f1f1;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.bf-modal-header h3 {
-    margin: 0;
-}
-
-.bf-modal-close {
-    color: #aaa;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.bf-modal-close:hover,
-.bf-modal-close:focus {
-    color: black;
-}
-
-.bf-modal-body {
-    padding: 20px;
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.bf-directory-navigation {
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.bf-directory-list {
-    flex: 1;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    background-color: #fff;
-}
-
-#bf-directory-items {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.bf-directory-item-list {
-    padding: 8px 12px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.bf-directory-item-list:hover {
-    background-color: #f0f0f0;
-}
-
-.bf-directory-item-list.selected {
-    background-color: #0073aa;
-    color: white;
-}
-
-.bf-directory-icon {
-    font-size: 16px;
-    width: 20px;
-}
-
-.bf-modal-footer {
-    padding: 20px;
-    background-color: #f1f1f1;
-    border-top: 1px solid #ddd;
-    text-align: right;
-}
-
-.bf-modal-footer .button {
-    margin-left: 10px;
-}
-
-.bf-loading {
-    text-align: center;
-    padding: 20px;
-    font-style: italic;
-    color: #666;
-}
-
-
-</style>
-
 <script>
 jQuery(document).ready(function($) {
     var currentTargetInput = null;
     var currentPath = '';
     var selectedPath = '';
+
+    // WordPress標準のエラーフィールドハイライト機能
+    function highlightErrorFields() {
+        // 表示されているエラーメッセージを確認
+        $('.notice.notice-error').each(function() {
+            var $notice = $(this);
+            var errorText = $notice.text().toLowerCase();
+            
+            // パスワードエラーの検出（先にチェックして、パスワード関連なら他のフィールドは対象外）
+            if (errorText.indexOf('パスワード') !== -1 || 
+                errorText.indexOf('簡易認証') !== -1) {
+                $('#bf_sfd_simple_auth_password').addClass('form-field-error');
+                return; // パスワードエラーの場合は他のチェックをスキップ
+            }
+            
+            // 対象ディレクトリエラーの検出（パスワードエラーでない場合のみ）
+            if (errorText.indexOf('対象ディレクトリ') !== -1 || 
+                errorText.indexOf('ディレクトリ') !== -1 ||
+                errorText.indexOf('パス') !== -1 ||
+                errorText.indexOf('wordpress') !== -1 ||
+                errorText.indexOf('シンボリックリンク') !== -1 ||
+                errorText.indexOf('相対パス') !== -1 ||
+                errorText.indexOf('存在しません') !== -1 ||
+                errorText.indexOf('読み取り権限') !== -1 ||
+                errorText.indexOf('セキュリティ') !== -1) {
+                $('#bf_sfd_target_directory').addClass('form-field-error');
+            }
+        });
+    }
+
+    // エラーフィールドのクリア
+    function clearErrorHighlights() {
+        $('.form-field-error').removeClass('form-field-error');
+    }
+
+    // フィールドフォーカス時にエラーハイライトを解除
+    $('input[type="text"], input[type="password"]').on('focus', function() {
+        $(this).removeClass('form-field-error');
+    });
+
+    // ページ読み込み時にエラーフィールドをハイライト
+    highlightErrorFields();
 
 
 
