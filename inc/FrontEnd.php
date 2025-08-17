@@ -7,6 +7,8 @@
 
 namespace Breadfish\SecretFileDownloader;
 
+use Breadfish\SecretFileDownloader\DirectorySecurity;
+
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -49,7 +51,7 @@ class FrontEnd {
         }
 
         // 危険フラグをチェック（ダウンロード要求がある場合のみ）
-        if ( \Breadfish\SecretFileDownloader\DirectorySecurity::is_danger_flag_set() ) {
+        if ( DirectorySecurity::is_danger_flag_set() ) {
             wp_die( __( 'セキュリティ上の理由により、現在ダウンロード機能は無効化されています。管理者に対象ディレクトリの設定変更をご依頼ください。', 'bf-secret-file-downloader' ), 403 );
         }
 
@@ -63,10 +65,10 @@ class FrontEnd {
         }
 
         // フルパスを構築
-        $full_path = $this->build_full_path( $base_directory, $file_path );
+        $full_path = DirectorySecurity::build_safe_path( $base_directory, $file_path );
 
         // セキュリティチェック：許可されたディレクトリのみ
-        if ( ! $this->is_allowed_directory( dirname( $full_path ) ) ) {
+        if ( ! DirectorySecurity::is_allowed_directory( dirname( $full_path ) ) ) {
             wp_die( __( 'このファイルへのアクセスは許可されていません。', 'bf-secret-file-downloader' ), 403 );
         }
 
@@ -267,7 +269,7 @@ class FrontEnd {
         }
 
         // 新しいセキュリティチェック: パス内にWordPressの機密ファイルやディレクトリが含まれていないかチェック
-        if ( ! $this->is_path_safe_from_wordpress_secrets( $real_path ) ) {
+        if ( ! DirectorySecurity::is_path_safe_from_wordpress_secrets( $real_path ) ) {
             error_log( 'BF Secret File Downloader: パス内にWordPressの機密ファイルやディレクトリが検出されました: ' . $real_path );
             return false;
         }
@@ -276,193 +278,6 @@ class FrontEnd {
         return strpos( $real_path, $real_target_directory ) === 0;
     }
 
-    /**
-     * パス内にWordPressの機密ファイルやディレクトリが含まれていないかチェックします
-     *
-     * @param string $path チェックするパス
-     * @return bool 安全な場合はtrue、危険な場合はfalse
-     */
-    private function is_path_safe_from_wordpress_secrets( $path ) {
-        // WordPressの機密ファイルやディレクトリのパターン
-        $wordpress_secret_patterns = [
-            // WordPressルートディレクトリの機密ファイル
-            'wp-config.php',
-            'wp-config-sample.php',
-            '.htaccess',
-            'readme.html',
-            'license.txt',
-            'wp-config.php.bak',
-            'wp-config.php.old',
-            'wp-config.php.backup',
-
-            // WordPress管理ディレクトリ
-            'wp-admin',
-            'wp-admin/',
-            '/wp-admin',
-            '/wp-admin/',
-
-            // WordPressコアファイルディレクトリ
-            'wp-includes',
-            'wp-includes/',
-            '/wp-includes',
-            '/wp-includes/',
-
-            // WordPressコンテンツディレクトリ内の機密場所
-            'wp-content/plugins',
-            'wp-content/themes',
-            'wp-content/mu-plugins',
-            'wp-content/uploads/plugins',
-            'wp-content/uploads/themes',
-
-            // データベース関連ファイル
-            '.sql',
-            '.sql.gz',
-            '.sql.bak',
-            'database.sql',
-            'backup.sql',
-
-            // ログファイル
-            'error_log',
-            'debug.log',
-            'access.log',
-            '.log',
-
-            // 設定ファイル
-            'config.php',
-            'configuration.php',
-            'settings.php',
-            '.env',
-            '.env.local',
-            '.env.production',
-
-            // バックアップファイル
-            '.bak',
-            '.backup',
-            '.old',
-            '.orig',
-
-            // 一時ファイル
-            '.tmp',
-            '.temp',
-            'temp/',
-            'tmp/',
-
-            // Git関連
-            '.git',
-            '.gitignore',
-            '.gitattributes',
-
-            // その他の機密ファイル
-            'composer.json',
-            'composer.lock',
-            'package.json',
-            'package-lock.json',
-            'yarn.lock',
-            'npm-debug.log',
-
-            // セッションファイル
-            'sessions/',
-            'session/',
-            'cache/',
-            'caches/',
-        ];
-
-        // パスを小文字に変換してチェック（大文字小文字を区別しない）
-        $path_lower = strtolower( $path );
-
-        // パスを正規化（バックスラッシュをスラッシュに統一）
-        $path_normalized = str_replace( '\\', '/', $path_lower );
-
-        // 各パターンをチェック
-        foreach ( $wordpress_secret_patterns as $pattern ) {
-            $pattern_lower = strtolower( $pattern );
-            $pattern_normalized = str_replace( '\\', '/', $pattern_lower );
-
-            // パターンがパスに含まれているかチェック
-            if ( strpos( $path_normalized, $pattern_normalized ) !== false ) {
-                // より厳密なチェック：ディレクトリ区切り文字で囲まれているかチェック
-                $pattern_regex = '/[\/\\\\]' . preg_quote( $pattern_normalized, '/' ) . '[\/\\\\]?/';
-                if ( preg_match( $pattern_regex, $path_normalized ) ) {
-                    return false;
-                }
-
-                // ファイル名の完全一致チェック
-                $basename = basename( $path_normalized );
-                if ( $basename === $pattern_normalized ) {
-                    return false;
-                }
-
-                // ファイル拡張子やパターンが含まれているかの追加チェック
-                // 特にドット始まりのパターン（.sql.gz, .sql, .bak等）の場合
-                if ( strpos( $pattern_normalized, '.' ) === 0 ) {
-                    // ファイル名にパターンが含まれている場合は拒否
-                    if ( strpos( $basename, $pattern_normalized ) !== false ) {
-                        return false;
-                    }
-                }
-                
-                // SQLファイルの特別なケース：ファイル名にsqlが含まれ、パターンも.sqlを含む場合
-                if ( strpos( $pattern_normalized, 'sql' ) !== false && strpos( $basename, 'sql' ) !== false ) {
-                    return false;
-                }
-            }
-        }
-
-        // WordPressの定数が定義されている場合の追加チェック
-        if ( defined( 'ABSPATH' ) ) {
-            $abspath_lower = strtolower( str_replace( '\\', '/', ABSPATH ) );
-
-            // WordPressルートディレクトリ内の機密ファイルへのアクセスをチェック
-            $wp_secret_files = [
-                'wp-config.php',
-                'wp-config-sample.php',
-                '.htaccess',
-                'readme.html',
-                'license.txt',
-            ];
-
-            foreach ( $wp_secret_files as $secret_file ) {
-                $secret_path = $abspath_lower . strtolower( $secret_file );
-                if ( $path_normalized === $secret_path ) {
-                    return false;
-                }
-            }
-
-            // wp-adminディレクトリへのアクセスをチェック
-            $wp_admin_path = $abspath_lower . 'wp-admin';
-            if ( strpos( $path_normalized, $wp_admin_path ) === 0 ) {
-                return false;
-            }
-
-            // wp-includesディレクトリへのアクセスをチェック
-            $wp_includes_path = $abspath_lower . 'wp-includes';
-            if ( strpos( $path_normalized, $wp_includes_path ) === 0 ) {
-                return false;
-            }
-        }
-
-        // wp-contentディレクトリの機密場所へのアクセスをチェック
-        if ( defined( 'WP_CONTENT_DIR' ) ) {
-            $wp_content_lower = strtolower( str_replace( '\\', '/', WP_CONTENT_DIR ) );
-
-            $wp_content_secrets = [
-                '/plugins',
-                '/themes',
-                '/mu-plugins',
-                '/uploads/plugins',
-                '/uploads/themes',
-            ];
-
-            foreach ( $wp_content_secrets as $secret_dir ) {
-                $secret_path = $wp_content_lower . strtolower( $secret_dir );
-                if ( strpos( $path_normalized, $secret_path ) === 0 ) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
 
     /**
      * ダウンロードログを記録します

@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: BF Secret File Downloader
- * Plugin URI: https://github.com/breadfish-dev/bf-secret-file-downloader
+ * Plugin URI: https://sfd.breadfish.jp/
  * Description: Manage and provide download functionality for files protected by Basic Authentication or located in private areas. Provides file management, directory management, download functionality, and Gutenberg block features.
  * Version: 1.0.0
  * Author: Breadfish
- * Author URI: https://breadfish.dev
+ * Author URI: https://breadfish.jp/
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: bf-secret-file-downloader

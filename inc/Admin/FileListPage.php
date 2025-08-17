@@ -7,6 +7,8 @@
 
 namespace Breadfish\SecretFileDownloader\Admin;
 
+use Breadfish\SecretFileDownloader\DirectorySecurity;
+
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -127,7 +129,7 @@ class FileListPage {
         check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
         // 対象ディレクトリの安全性をチェック（ディレクトリ変更時自動チェック）
-        $this->check_and_update_directory_safety();
+        DirectorySecurity::check_and_update_directory_safety( get_option( 'bf_sfd_target_directory', '' ) );
 
         $relative_path = sanitize_text_field( $_POST['path'] ?? '' );
         $page = intval( $_POST['page'] ?? 1 );
@@ -141,10 +143,10 @@ class FileListPage {
         }
 
         // フルパスを構築
-        $full_path = $this->build_full_path( $base_directory, $relative_path );
+        $full_path = DirectorySecurity::build_safe_path( $base_directory, $relative_path );
 
         // セキュリティチェック
-        if ( ! $this->is_allowed_directory( $full_path ) ) {
+        if ( ! DirectorySecurity::is_allowed_directory( $full_path ) ) {
             wp_send_json_error( __( 'このディレクトリへのアクセスは許可されていません。', 'bf-secret-file-downloader' ) );
         }
 
@@ -181,12 +183,7 @@ class FileListPage {
         }
 
         // フルパスを構築
-        $target_path = $this->build_full_path( $base_directory, $relative_path );
-
-        // アップロード先ディレクトリのチェック
-        if ( ! $this->is_allowed_directory( $target_path ) ) {
-            wp_send_json_error( __( 'このディレクトリへのアップロードは許可されていません。', 'bf-secret-file-downloader' ) );
-        }
+        $target_path = DirectorySecurity::build_safe_path( $base_directory, $relative_path );
 
         if ( ! is_dir( $target_path ) || ! is_writable( $target_path ) ) {
             wp_send_json_error( __( 'アップロード先ディレクトリに書き込み権限がありません。', 'bf-secret-file-downloader' ) );
@@ -205,6 +202,12 @@ class FileListPage {
             wp_send_json_error( __( '無効なファイル名です。', 'bf-secret-file-downloader' ) );
         }
 
+        // セキュリティチェック（DirectorySecurityクラスを使用）
+        $security_check = DirectorySecurity::check_file_upload_security( $filename, $target_path );
+        if ( ! $security_check['allowed'] ) {
+            wp_send_json_error( $security_check['error_message'] );
+        }
+
         // ファイルサイズチェック
         $max_size = get_option( 'bf_sfd_max_file_size', 10 ) * 1024 * 1024; // MB to bytes
         if ( $uploaded_file['size'] > $max_size ) {
@@ -212,13 +215,6 @@ class FileListPage {
                 __( 'ファイルサイズが制限を超えています。（最大: %sMB）', 'bf-secret-file-downloader' ),
                 get_option( 'bf_sfd_max_file_size', 10 )
             ));
-        }
-
-        // 危険なファイル拡張子のチェック
-        $dangerous_extensions = array( 'php', 'phtml', 'php3', 'php4', 'php5', 'pl', 'py', 'jsp', 'asp', 'sh', 'cgi' );
-        $file_extension = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
-        if ( in_array( $file_extension, $dangerous_extensions ) ) {
-            wp_send_json_error( __( 'このファイル形式はセキュリティ上の理由でアップロードできません。', 'bf-secret-file-downloader' ) );
         }
 
         // アップロード先のファイルパス
@@ -279,26 +275,17 @@ class FileListPage {
         }
 
         // フルパスを構築
-        $parent_path = $this->build_full_path( $base_directory, $relative_path );
+        $parent_path = DirectorySecurity::build_safe_path( $base_directory, $relative_path );
 
-        // ディレクトリ名のバリデーション
-        if ( ! preg_match( '/^[a-zA-Z0-9_\-\.]+$/', $directory_name ) ) {
-            wp_send_json_error( __( 'ディレクトリ名に使用できない文字が含まれています。英数字、アンダーバー、ハイフン、ドットのみ使用可能です。', 'bf-secret-file-downloader' ) );
+        // セキュリティチェック（DirectorySecurityクラスを使用）
+        $security_check = DirectorySecurity::check_ajax_create_directory_security( $parent_path, $directory_name );
+        if ( ! $security_check['allowed'] ) {
+            wp_send_json_error( $security_check['error_message'] );
         }
 
         // ドットで始まるディレクトリ名を禁止
         if ( strpos( $directory_name, '.' ) === 0 ) {
             wp_send_json_error( __( 'ドットで始まるディレクトリ名は作成できません。', 'bf-secret-file-downloader' ) );
-        }
-
-        // 親ディレクトリの存在チェック
-        if ( ! is_dir( $parent_path ) ) {
-            wp_send_json_error( __( '親ディレクトリが存在しません。', 'bf-secret-file-downloader' ) );
-        }
-
-        // セキュリティ：許可されたディレクトリのみ
-        if ( ! $this->is_allowed_directory( $parent_path ) ) {
-            wp_send_json_error( __( 'このディレクトリには作成権限がありません。', 'bf-secret-file-downloader' ) );
         }
 
         // 書き込み権限チェック
@@ -308,11 +295,6 @@ class FileListPage {
 
         // 新しいディレクトリのパス
         $new_directory_path = $parent_path . DIRECTORY_SEPARATOR . $directory_name;
-
-        // 既存チェック
-        if ( file_exists( $new_directory_path ) ) {
-            wp_send_json_error( __( '同名のディレクトリまたはファイルが既に存在します。', 'bf-secret-file-downloader' ) );
-        }
 
         // ディレクトリ作成
         if ( wp_mkdir_p( $new_directory_path ) ) {
@@ -351,10 +333,10 @@ class FileListPage {
         }
 
         // フルパスを構築
-        $full_path = $this->build_full_path( $base_directory, $relative_path );
+        $full_path = DirectorySecurity::build_safe_path( $base_directory, $relative_path );
 
         // セキュリティチェック：許可されたディレクトリのみ
-        if ( ! $this->is_allowed_directory( dirname( $full_path ) ) ) {
+        if ( ! DirectorySecurity::is_allowed_directory( dirname( $full_path ) ) ) {
             wp_send_json_error( __( 'このファイルの削除は許可されていません。', 'bf-secret-file-downloader' ) );
         }
 
@@ -449,10 +431,10 @@ class FileListPage {
             }
 
             // フルパスを構築
-            $full_path = $this->build_full_path( $base_directory, $relative_path );
+            $full_path = DirectorySecurity::build_safe_path( $base_directory, $relative_path );
 
             // セキュリティチェック：許可されたディレクトリのみ
-            if ( ! $this->is_allowed_directory( dirname( $full_path ) ) ) {
+            if ( ! DirectorySecurity::is_allowed_directory( dirname( $full_path ) ) ) {
                 $failed_files[] = array(
                     'path' => $relative_path,
                     'error' => __( 'このファイルの削除は許可されていません。', 'bf-secret-file-downloader' )
@@ -562,7 +544,7 @@ class FileListPage {
      */
     public function ajax_download_file() {
         // 危険フラグをチェック
-        if ( \Breadfish\SecretFileDownloader\DirectorySecurity::is_danger_flag_set() ) {
+        if ( DirectorySecurity::is_danger_flag_set() ) {
             wp_send_json_error( __( 'セキュリティ上の理由により、現在ダウンロード機能は無効化されています。対象ディレクトリの設定を変更してください。', 'bf-secret-file-downloader' ) );
         }
 
@@ -587,10 +569,10 @@ class FileListPage {
         }
 
         // フルパスを構築
-        $full_path = $this->build_full_path( $base_directory, $relative_path );
+        $full_path = DirectorySecurity::build_safe_path( $base_directory, $relative_path );
 
         // セキュリティチェック：許可されたディレクトリのみ
-        if ( ! $this->is_allowed_directory( dirname( $full_path ) ) ) {
+        if ( ! DirectorySecurity::is_allowed_directory( dirname( $full_path ) ) ) {
             wp_send_json_error( __( 'このファイルのダウンロードは許可されていません。', 'bf-secret-file-downloader' ) );
         }
 
@@ -632,7 +614,7 @@ class FileListPage {
      */
     public function handle_file_download() {
         // 危険フラグをチェック
-        if ( \Breadfish\SecretFileDownloader\DirectorySecurity::is_danger_flag_set() ) {
+        if ( DirectorySecurity::is_danger_flag_set() ) {
             wp_die( __( 'セキュリティ上の理由により、現在ダウンロード機能は無効化されています。対象ディレクトリの設定を変更してください。', 'bf-secret-file-downloader' ), 403 );
         }
 
@@ -669,10 +651,10 @@ class FileListPage {
 
         // フルパスを構築
         $relative_path = $token_data['file_path'];
-        $full_path = $this->build_full_path( $base_directory, $relative_path );
+        $full_path = DirectorySecurity::build_safe_path( $base_directory, $relative_path );
 
         // セキュリティチェック
-        if ( ! $this->is_allowed_directory( dirname( $full_path ) ) ) {
+        if ( ! DirectorySecurity::is_allowed_directory( dirname( $full_path ) ) ) {
             wp_die( __( 'このファイルのダウンロードは許可されていません。', 'bf-secret-file-downloader' ), 403 );
         }
 
@@ -718,29 +700,6 @@ class FileListPage {
         \Breadfish\SecretFileDownloader\ViewRenderer::admin( 'file-list.php', $import );
     }
 
-    /**
-     * ベースディレクトリからの相対パスでフルパスを構築します
-     *
-     * @param string $base_directory ベースディレクトリ
-     * @param string $relative_path 相対パス
-     * @return string フルパス
-     */
-    private function build_full_path( $base_directory, $relative_path = '' ) {
-        // 相対パスが空の場合はベースディレクトリをそのまま返す
-        if ( empty( $relative_path ) || $relative_path === '.' ) {
-            return rtrim( $base_directory, DIRECTORY_SEPARATOR );
-        }
-
-        // 危険な文字列をチェック
-        if ( strpos( $relative_path, '..' ) !== false || strpos( $relative_path, '//' ) !== false ) {
-            return $base_directory;
-        }
-
-        // パスを正規化
-        $relative_path = trim( $relative_path, DIRECTORY_SEPARATOR );
-
-        return $base_directory . DIRECTORY_SEPARATOR . $relative_path;
-    }
 
     /**
      * フルパスから相対パスを取得します
@@ -846,7 +805,7 @@ class FileListPage {
      */
     private function prepare_data() {
         // 対象ディレクトリの安全性をチェック（起動時自動チェック）
-        $this->check_and_update_directory_safety();
+        DirectorySecurity::check_and_update_directory_safety( get_option( 'bf_sfd_target_directory', '' ) );
 
         $relative_path = $this->get_current_path();
         $page = $this->get_current_page();
@@ -871,11 +830,11 @@ class FileListPage {
                 'pagination_html' => '',
                 'current_path_writable' => false,
                 'max_file_size_mb' => get_option( 'bf_sfd_max_file_size', 10 ),
-                'danger_flag_set' => $this->is_danger_flag_set(),
+                'danger_flag_set' => DirectorySecurity::is_danger_flag_set(),
             );
         }
 
-        $full_path = $this->build_full_path( $base_directory, $relative_path );
+        $full_path = DirectorySecurity::build_safe_path( $base_directory, $relative_path );
         $files = $this->get_files( $full_path, $relative_path, $page, $sort_by, $sort_order );
         $total_pages = $this->get_total_pages( $full_path );
 
@@ -921,7 +880,7 @@ class FileListPage {
             'sort_order' => $sort_order,
             'current_directory_has_auth' => $this->has_directory_auth( $relative_path ),
             'current_directory_has_password' => $this->has_directory_password( $relative_path ),
-            'danger_flag_set' => $this->is_danger_flag_set(),
+            'danger_flag_set' => DirectorySecurity::is_danger_flag_set(),
         );
     }
 
@@ -940,7 +899,7 @@ class FileListPage {
             return array();
         }
 
-        if ( ! $this->is_allowed_directory( $full_path ) || ! is_dir( $full_path ) || ! is_readable( $full_path ) ) {
+        if ( ! DirectorySecurity::is_allowed_directory( $full_path ) || ! is_dir( $full_path ) || ! is_readable( $full_path ) ) {
             return array();
         }
 
@@ -1170,7 +1129,7 @@ class FileListPage {
             return 0;
         }
 
-        if ( ! $this->is_allowed_directory( $path ) || ! is_dir( $path ) || ! is_readable( $path ) ) {
+        if ( ! DirectorySecurity::is_allowed_directory( $path ) || ! is_dir( $path ) || ! is_readable( $path ) ) {
             return 0;
         }
 
@@ -1203,32 +1162,6 @@ class FileListPage {
         return ceil( $total_files / self::FILES_PER_PAGE );
     }
 
-    /**
-     * ディレクトリへのアクセスが許可されているかチェックします
-     *
-     * @param string $path ディレクトリパス
-     * @return bool アクセス許可フラグ
-     */
-    private function is_allowed_directory( $path ) {
-        $real_path = realpath( $path );
-        if ( $real_path === false ) {
-            return false;
-        }
-
-        // 基本となる対象ディレクトリを取得
-        $target_directory = get_option( 'bf_sfd_target_directory', '' );
-        if ( empty( $target_directory ) ) {
-            return false;
-        }
-
-        $real_target_directory = realpath( $target_directory );
-        if ( $real_target_directory === false ) {
-            return false;
-        }
-
-        // 対象ディレクトリまたはそのサブディレクトリのみ許可
-        return strpos( $real_path, $real_target_directory ) === 0;
-    }
 
     /**
      * アップロード制限を取得します
@@ -1330,10 +1263,10 @@ class FileListPage {
         }
 
         // フルパスを構築
-        $full_path = $this->build_full_path( $base_directory, $relative_path );
+        $full_path = DirectorySecurity::build_safe_path( $base_directory, $relative_path );
 
         // セキュリティチェック
-        if ( ! $this->is_allowed_directory( $full_path ) ) {
+        if ( ! DirectorySecurity::is_allowed_directory( $full_path ) ) {
             wp_send_json_error( __( 'このディレクトリへのアクセスは許可されていません。', 'bf-secret-file-downloader' ) );
         }
 
@@ -1388,10 +1321,10 @@ class FileListPage {
         }
 
         // フルパスを構築
-        $full_path = $this->build_full_path( $base_directory, $relative_path );
+        $full_path = DirectorySecurity::build_safe_path( $base_directory, $relative_path );
 
         // セキュリティチェック
-        if ( ! $this->is_allowed_directory( $full_path ) ) {
+        if ( ! DirectorySecurity::is_allowed_directory( $full_path ) ) {
             wp_send_json_error( __( 'このディレクトリへのアクセスは許可されていません。', 'bf-secret-file-downloader' ) );
         }
 
@@ -1678,22 +1611,6 @@ class FileListPage {
         wp_send_json_success( $global_auth );
     }
 
-    /**
-     * 危険フラグが設定されているかチェックします
-     *
-     * @return bool 危険フラグが設定されている場合はtrue
-     */
-    private function is_danger_flag_set() {
-        return \Breadfish\SecretFileDownloader\DirectorySecurity::is_danger_flag_set();
-    }
-
-    /**
-     * 対象ディレクトリの安全性をチェックし、危険フラグを更新します
-     */
-    private function check_and_update_directory_safety() {
-        $target_directory = get_option( 'bf_sfd_target_directory', '' );
-        \Breadfish\SecretFileDownloader\DirectorySecurity::check_and_update_directory_safety( $target_directory );
-    }
 
 
 }

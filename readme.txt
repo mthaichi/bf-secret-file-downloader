@@ -46,7 +46,7 @@ BF Secret File Downloader is a WordPress plugin that allows you to manage files 
 
 = What file types are supported? =
 
-The plugin supports all common file types. You can configure allowed file extensions in the settings.
+The plugin supports all common file types.
 
 = How secure is the download functionality? =
 

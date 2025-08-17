@@ -7,6 +7,8 @@
 
 namespace Breadfish\SecretFileDownloader\Admin;
 
+use Breadfish\SecretFileDownloader\DirectorySecurity;
+
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -91,8 +93,8 @@ class SettingsPage {
         $path = sanitize_text_field( $_POST['path'] ?? '' );
 
         // DirectorySecurityクラスを使用したセキュリティチェック
-        $security_check = \Breadfish\SecretFileDownloader\DirectorySecurity::check_ajax_browse_directory_security( $path );
-        
+        $security_check = DirectorySecurity::check_ajax_browse_directory_security( $path );
+
         if ( ! $security_check['allowed'] ) {
             wp_send_json_error( $security_check['error_message'] );
         }
@@ -108,15 +110,15 @@ class SettingsPage {
 
         // DirectorySecurityの基本チェックでエラーが発生した場合、フォールバックを試行
         if ( ! empty( $fallback_to_current ) ) {
-            $fallback_security_check = \Breadfish\SecretFileDownloader\DirectorySecurity::check_ajax_browse_directory_security( $fallback_to_current );
-            
+            $fallback_security_check = DirectorySecurity::check_ajax_browse_directory_security( $fallback_to_current );
+
             if ( $fallback_security_check['allowed'] ) {
                 // フォールバック先が安全な場合、そのディレクトリの内容を返す
                 $path = $fallback_to_current;
                 $real_path = realpath( $path );
-                
+
                 $response = $this->get_directory_listing( $path );
-                $response['warning'] = 'アクセス権限がないため、現在のディレクトリを維持しました。';
+                $response['warning'] = __( 'アクセス権限がないため、現在のディレクトリを維持しました。', 'bf-secret-file-downloader' );
                 wp_send_json_success( $response );
                 return;
             }
@@ -127,7 +129,7 @@ class SettingsPage {
             $response = $this->get_directory_listing( $path );
             wp_send_json_success( $response );
         } catch ( \Exception $e ) {
-            wp_send_json_error( 'Failed to read directory' );
+            wp_send_json_error( __( 'ディレクトリの読み取りに失敗しました', 'bf-secret-file-downloader' ) );
         }
     }
 
@@ -146,8 +148,8 @@ class SettingsPage {
         $directory_name = sanitize_text_field( $_POST['directory_name'] ?? '' );
 
         // DirectorySecurityクラスを使用したセキュリティチェック
-        $security_check = \Breadfish\SecretFileDownloader\DirectorySecurity::check_ajax_create_directory_security( $parent_path, $directory_name );
-        
+        $security_check = DirectorySecurity::check_ajax_create_directory_security( $parent_path, $directory_name );
+
         if ( ! $security_check['allowed'] ) {
             wp_send_json_error( $security_check['error_message'] );
         }
@@ -163,7 +165,7 @@ class SettingsPage {
                 'parent_path' => $parent_path
             ));
         } else {
-            wp_send_json_error( 'ディレクトリの作成に失敗しました。' );
+            wp_send_json_error( __( 'ディレクトリの作成に失敗しました。', 'bf-secret-file-downloader' ) );
         }
     }
 
@@ -316,7 +318,7 @@ class SettingsPage {
      */
     public function sanitize_password( $value ) {
         $sanitized_value = sanitize_text_field( $value );
-        
+
         // 簡易認証が有効かチェック
         $auth_methods = $_POST['bf_sfd_auth_methods'] ?? array();
         if ( is_array( $auth_methods ) && in_array( 'simple_auth', $auth_methods ) ) {
@@ -332,7 +334,7 @@ class SettingsPage {
                 return get_option( 'bf_sfd_simple_auth_password', '' );
             }
         }
-        
+
         return $sanitized_value;
     }
 
@@ -418,7 +420,7 @@ class SettingsPage {
      * @return bool 危険フラグ
      */
     public function get_danger_flag() {
-        return \Breadfish\SecretFileDownloader\DirectorySecurity::get_danger_flag();
+        return DirectorySecurity::get_danger_flag();
     }
 
     /**
@@ -438,15 +440,15 @@ class SettingsPage {
 
         // 空の場合は危険フラグをクリアして返す
         if ( empty( $value ) ) {
-            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
+            DirectorySecurity::clear_danger_flag();
             return '';
         }
 
         // DirectorySecurityクラスを使用した包括的なセキュリティチェック
 
         // DirectorySecurityクラスを使用した包括的なセキュリティチェック
-        $safety_check = \Breadfish\SecretFileDownloader\DirectorySecurity::check_directory_safety( $value );
-        
+        $safety_check = DirectorySecurity::check_directory_safety( $value );
+
         if ( ! $safety_check['is_safe'] ) {
             // セキュリティエラーの場合、WordPress標準のエラーメッセージを表示
             $error_type = 'error';
@@ -459,14 +461,14 @@ class SettingsPage {
             } else {
                 $error_code = 'directory_security_error';
             }
-            
+
             add_settings_error(
                 'bf_sfd_target_directory',
                 $error_code,
                 $safety_check['danger_reason'],
                 $error_type
             );
-            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
+            DirectorySecurity::clear_danger_flag();
             return '';
         }
 
@@ -481,7 +483,7 @@ class SettingsPage {
                 ),
                 'error'
             );
-            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
+            DirectorySecurity::clear_danger_flag();
             return '';
         }
 
@@ -509,7 +511,7 @@ class SettingsPage {
                 ),
                 'error'
             );
-            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
+            DirectorySecurity::clear_danger_flag();
             return '';
         }
 
@@ -524,7 +526,7 @@ class SettingsPage {
                 ),
                 'error'
             );
-            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
+            DirectorySecurity::clear_danger_flag();
             return '';
         }
 
@@ -535,14 +537,14 @@ class SettingsPage {
             $this->clear_all_directory_passwords();
 
             // 危険フラグをクリア（新しいディレクトリでリセット）
-            \Breadfish\SecretFileDownloader\DirectorySecurity::clear_danger_flag();
+            DirectorySecurity::clear_danger_flag();
 
             // JavaScript側でアラートを表示するためのフラグを設定
             add_action( 'admin_footer', array( $this, 'show_directory_change_alert' ) );
         }
 
         // DirectorySecurityクラスを使用してWordPressファイルの危険性をチェックし、フラグを更新
-        \Breadfish\SecretFileDownloader\DirectorySecurity::check_and_update_directory_safety( $value );
+        DirectorySecurity::check_and_update_directory_safety( $value );
 
         return $value;
     }
@@ -618,7 +620,7 @@ class SettingsPage {
 
         $items = scandir( $path );
         if ( $items === false ) {
-            throw new \Exception( 'Cannot read directory: ' . $path );
+            throw new \Exception( __( 'ディレクトリを読み取れません: ', 'bf-secret-file-downloader' ) . $path );
         }
 
         foreach ( $items as $item ) {
