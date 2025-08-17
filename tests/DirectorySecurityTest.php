@@ -401,6 +401,68 @@ class DirectorySecurityTest extends \BF_SFD_TestCase {
     }
 
     /**
+     * Test check_ajax_browse_directory_security method
+     */
+    public function test_check_ajax_browse_directory_security() {
+        // Mock WordPress constants
+        if ( ! defined( 'ABSPATH' ) ) {
+            define( 'ABSPATH', '/var/www/html/' );
+        }
+        if ( ! defined( 'WP_CONTENT_DIR' ) ) {
+            define( 'WP_CONTENT_DIR', '/var/www/html/wp-content' );
+        }
+
+        // Test with empty path (should default to ABSPATH)
+        $result = DirectorySecurity::check_ajax_browse_directory_security( '' );
+        $this->assertArrayHasKey( 'allowed', $result );
+        $this->assertArrayHasKey( 'error_message', $result );
+
+        // Test with dangerous system directory
+        $result = DirectorySecurity::check_ajax_browse_directory_security( '/etc' );
+        $this->assertFalse( $result['allowed'] );
+        $this->assertStringContainsString( 'Access denied', $result['error_message'] );
+
+        // Test with non-existent directory
+        $result = DirectorySecurity::check_ajax_browse_directory_security( '/non/existent/path' );
+        $this->assertFalse( $result['allowed'] );
+        $this->assertStringContainsString( 'does not exist', $result['error_message'] );
+    }
+
+    /**
+     * Test check_ajax_create_directory_security method
+     */
+    public function test_check_ajax_create_directory_security() {
+        // Mock WordPress constants
+        if ( ! defined( 'ABSPATH' ) ) {
+            define( 'ABSPATH', '/var/www/html/' );
+        }
+        if ( ! defined( 'WP_CONTENT_DIR' ) ) {
+            define( 'WP_CONTENT_DIR', '/var/www/html/wp-content' );
+        }
+
+        // Mock translation function
+        WP_Mock::userFunction( '__' )
+            ->andReturnUsing( function( $text ) {
+                return $text;
+            });
+
+        // Test with empty parameters
+        $result = DirectorySecurity::check_ajax_create_directory_security( '', '' );
+        $this->assertFalse( $result['allowed'] );
+        $this->assertStringContainsString( 'パスまたはディレクトリ名が指定されていません', $result['error_message'] );
+
+        // Test with invalid directory name
+        $result = DirectorySecurity::check_ajax_create_directory_security( '/tmp', 'invalid@name' );
+        $this->assertFalse( $result['allowed'] );
+        $this->assertStringContainsString( 'ディレクトリ名に使用できない文字', $result['error_message'] );
+
+        // Test with valid directory name pattern
+        $result = DirectorySecurity::check_ajax_create_directory_security( '/non/existent', 'valid_name-123' );
+        $this->assertFalse( $result['allowed'] );
+        $this->assertStringContainsString( '親ディレクトリが存在しません', $result['error_message'] );
+    }
+
+    /**
      * Test edge cases and error conditions
      */
     public function test_edge_cases() {

@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: BF Secret File Downloader
- * Plugin URI:
- * Description: BASIC認証もしくは非公開エリアに置かれたディレクトリに配置されたファイルを管理するWordPressプラグイン。ファイル管理、ディレクトリ管理、ダウンロード機能、ダウンロード用ボタンブロック機能を提供します。
+ * Plugin URI: https://github.com/breadfish-dev/bf-secret-file-downloader
+ * Description: Manage and provide download functionality for files protected by Basic Authentication or located in private areas. Provides file management, directory management, download functionality, and Gutenberg block features.
  * Version: 1.0.0
- * Author:
- * Author URI:
+ * Author: Breadfish
+ * Author URI: https://breadfish.dev
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: bf-secret-file-downloader

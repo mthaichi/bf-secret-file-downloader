@@ -87,3 +87,7 @@ This is a Japanese project.
 - Write comments and documentation in Japanese
 - Provide error messages and explanations in Japanese
 - Explain code changes and descriptions in Japanese
+
+## Debug Memories
+
+- fuzzyがついているのが無視されているようですが

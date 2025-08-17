@@ -90,294 +90,42 @@ class SettingsPage {
 
         $path = sanitize_text_field( $_POST['path'] ?? '' );
 
-        // ルートパスが指定されていない場合は、WordPressのindex.phpが配置されているディレクトリから開始
+        // DirectorySecurityクラスを使用したセキュリティチェック
+        $security_check = \Breadfish\SecretFileDownloader\DirectorySecurity::check_ajax_browse_directory_security( $path );
+        
+        if ( ! $security_check['allowed'] ) {
+            wp_send_json_error( $security_check['error_message'] );
+        }
+
+        // セキュリティチェックが通った場合のパス取得
         if ( empty( $path ) ) {
             $path = ABSPATH;
         }
-
-                // セキュリティ：安全なディレクトリのみ許可
-        $allowed_base_paths = array(
-            ABSPATH,              // WordPressルートディレクトリ
-            WP_CONTENT_DIR,       // wp-contentディレクトリ
-            ABSPATH . 'wp-content',
-            dirname( ABSPATH ),   // WordPressの親ディレクトリ（公開ディレクトリ外アクセス用）
-        );
-
-        $is_allowed = false;
         $real_path = realpath( $path );
 
-        // 危険なシステムディレクトリを明示的に禁止
-        $forbidden_paths = array(
-            '/etc',
-            '/var/log',
-            '/var/cache',
-            '/usr/bin',
-            '/usr/sbin',
-            '/bin',
-            '/sbin',
-            '/root',
-            '/tmp',
-            '/proc',
-            '/sys',
-            '/dev',
-        );
-
-        // 禁止パスチェック（real_pathが取得できた場合のみ）
-        if ( $real_path !== false ) {
-            // システムディレクトリチェック
-            foreach ( $forbidden_paths as $forbidden_path ) {
-                if ( strpos( $real_path, $forbidden_path ) === 0 ) {
-                    wp_send_json_error( 'Access to system directories is forbidden: ' . $path );
-                }
-            }
-        }
-
-        // パーミッションチェック（現在のディレクトリを保持するためのフォールバック処理）
+        // フォールバック処理（現在のディレクトリを保持するため）
         $fallback_to_current = isset( $_POST['fallback_current'] ) ? sanitize_text_field( $_POST['fallback_current'] ) : '';
 
-        // realpathがfalseを返す場合（ディレクトリが存在しない）
-        if ( $real_path === false || ! is_dir( $real_path ) ) {
-            if ( ! empty( $fallback_to_current ) && is_dir( $fallback_to_current ) && is_readable( $fallback_to_current ) ) {
-                // フォールバック: 現在のディレクトリに戻る
+        // DirectorySecurityの基本チェックでエラーが発生した場合、フォールバックを試行
+        if ( ! empty( $fallback_to_current ) ) {
+            $fallback_security_check = \Breadfish\SecretFileDownloader\DirectorySecurity::check_ajax_browse_directory_security( $fallback_to_current );
+            
+            if ( $fallback_security_check['allowed'] ) {
+                // フォールバック先が安全な場合、そのディレクトリの内容を返す
                 $path = $fallback_to_current;
                 $real_path = realpath( $path );
-
-                // 現在のディレクトリの内容を取得
-                $directories = array();
-                $files = array();
-
-                try {
-                    $items = scandir( $path );
-                    foreach ( $items as $item ) {
-                        if ( $item === '.' || $item === '..' ) {
-                            continue;
-                        }
-
-                        $full_path = $path . DIRECTORY_SEPARATOR . $item;
-
-                        if ( is_dir( $full_path ) ) {
-                            $directories[] = array(
-                                'name' => $item,
-                                'path' => $full_path,
-                                'type' => 'directory'
-                            );
-                        } else {
-                            $files[] = array(
-                                'name' => $item,
-                                'path' => $full_path,
-                                'type' => 'file'
-                            );
-                        }
-                    }
-
-                    // ディレクトリを先頭に、ファイルを後に並べる
-                    usort( $directories, function( $a, $b ) {
-                        return strcmp( $a['name'], $b['name'] );
-                    });
-                    usort( $files, function( $a, $b ) {
-                        return strcmp( $a['name'], $b['name'] );
-                    });
-
-                    wp_send_json_success( array(
-                        'current_path' => $path,
-                        'parent_path' => dirname( $path ),
-                        'items' => array_merge( $directories, $files ),
-                        'warning' => 'ディレクトリが存在しないため、現在のディレクトリを維持しました。'
-                    ));
-                    return;
-                } catch ( \Exception $e ) {
-                    wp_send_json_error( 'Directory does not exist: ' . $path );
-                }
-            } else {
-                wp_send_json_error( 'Directory does not exist: ' . $path );
+                
+                $response = $this->get_directory_listing( $path );
+                $response['warning'] = 'アクセス権限がないため、現在のディレクトリを維持しました。';
+                wp_send_json_success( $response );
+                return;
             }
         }
 
-        // 読み取り権限チェック
-        if ( ! is_readable( $real_path ) ) {
-            if ( ! empty( $fallback_to_current ) && is_dir( $fallback_to_current ) && is_readable( $fallback_to_current ) ) {
-                // フォールバック: 現在のディレクトリの情報を再取得
-                $path = $fallback_to_current;
-                $real_path = realpath( $path );
-
-                // 現在のディレクトリの内容を取得して表示を維持
-                $directories = array();
-                $files = array();
-
-                try {
-                    $items = scandir( $path );
-                    foreach ( $items as $item ) {
-                        if ( $item === '.' || $item === '..' ) {
-                            continue;
-                        }
-
-                        $full_path = $path . DIRECTORY_SEPARATOR . $item;
-
-                        if ( is_dir( $full_path ) ) {
-                            $directories[] = array(
-                                'name' => $item,
-                                'path' => $full_path,
-                                'type' => 'directory'
-                            );
-                        } else {
-                            $files[] = array(
-                                'name' => $item,
-                                'path' => $full_path,
-                                'type' => 'file'
-                            );
-                        }
-                    }
-
-                    // ディレクトリを先頭に、ファイルを後に並べる
-                    usort( $directories, function( $a, $b ) {
-                        return strcmp( $a['name'], $b['name'] );
-                    });
-                    usort( $files, function( $a, $b ) {
-                        return strcmp( $a['name'], $b['name'] );
-                    });
-
-                    wp_send_json_success( array(
-                        'current_path' => $path,
-                        'parent_path' => dirname( $path ),
-                        'items' => array_merge( $directories, $files ),
-                        'warning' => 'アクセス権限がないため、現在のディレクトリを維持しました。'
-                    ));
-                    return;
-
-                } catch ( \Exception $e ) {
-                    wp_send_json_error( 'Permission denied: Cannot read directory' );
-                }
-            } else {
-                wp_send_json_error( 'Permission denied: Cannot read directory' );
-            }
-        }
-
-        foreach ( $allowed_base_paths as $base_path ) {
-            $real_base_path = realpath( $base_path );
-            if ( $real_base_path !== false && strpos( $real_path, $real_base_path ) === 0 ) {
-                $is_allowed = true;
-                break;
-            }
-        }
-
-        if ( ! $is_allowed ) {
-            if ( ! empty( $fallback_to_current ) && is_dir( $fallback_to_current ) && is_readable( $fallback_to_current ) ) {
-                // フォールバック: 現在のディレクトリに戻る
-                $path = $fallback_to_current;
-                $real_path = realpath( $path );
-                // セキュリティチェックを再実行
-                $is_allowed = false;
-                foreach ( $allowed_base_paths as $base_path ) {
-                    $real_base_path = realpath( $base_path );
-                    if ( $real_base_path !== false && strpos( $real_path, $real_base_path ) === 0 ) {
-                        $is_allowed = true;
-                        break;
-                    }
-                }
-                if ( ! $is_allowed ) {
-                    wp_send_json_error( 'Access denied to directory: ' . $path );
-                }
-
-                // セキュリティチェックを通過した場合、現在のディレクトリの内容を取得して返す
-                $directories = array();
-                $files = array();
-
-                try {
-                    $items = scandir( $path );
-                    foreach ( $items as $item ) {
-                        if ( $item === '.' || $item === '..' ) {
-                            continue;
-                        }
-
-                        $full_path = $path . DIRECTORY_SEPARATOR . $item;
-
-                        if ( is_dir( $full_path ) ) {
-                            $directories[] = array(
-                                'name' => $item,
-                                'path' => $full_path,
-                                'type' => 'directory'
-                            );
-                        } else {
-                            $files[] = array(
-                                'name' => $item,
-                                'path' => $full_path,
-                                'type' => 'file'
-                            );
-                        }
-                    }
-
-                    // ディレクトリを先頭に、ファイルを後に並べる
-                    usort( $directories, function( $a, $b ) {
-                        return strcmp( $a['name'], $b['name'] );
-                    });
-                    usort( $files, function( $a, $b ) {
-                        return strcmp( $a['name'], $b['name'] );
-                    });
-
-                    wp_send_json_success( array(
-                        'current_path' => $path,
-                        'parent_path' => dirname( $path ),
-                        'items' => array_merge( $directories, $files ),
-                        'warning' => 'アクセス権限がないため、現在のディレクトリを維持しました。'
-                    ));
-                    return;
-
-                } catch ( \Exception $e ) {
-                    wp_send_json_error( 'Access denied to directory: ' . $path );
-                }
-            } else {
-                wp_send_json_error( 'Access denied to directory: ' . $path );
-            }
-        }
-
-        $directories = array();
-        $files = array();
-
+        // ディレクトリリストを取得して返す
         try {
-            $items = scandir( $path );
-            foreach ( $items as $item ) {
-                if ( $item === '.' || $item === '..' ) {
-                    continue;
-                }
-
-                $full_path = $path . DIRECTORY_SEPARATOR . $item;
-
-                if ( is_dir( $full_path ) ) {
-                    $directories[] = array(
-                        'name' => $item,
-                        'path' => $full_path,
-                        'type' => 'directory'
-                    );
-                } else {
-                    $files[] = array(
-                        'name' => $item,
-                        'path' => $full_path,
-                        'type' => 'file'
-                    );
-                }
-            }
-
-            // ディレクトリを先頭に、ファイルを後に並べる
-            usort( $directories, function( $a, $b ) {
-                return strcmp( $a['name'], $b['name'] );
-            });
-            usort( $files, function( $a, $b ) {
-                return strcmp( $a['name'], $b['name'] );
-            });
-
-            $response_data = array(
-                'current_path' => $path,
-                'parent_path' => dirname( $path ),
-                'items' => array_merge( $directories, $files )
-            );
-
-            // フォールバック処理が行われた場合の警告メッセージ
-            if ( ! empty( $fallback_to_current ) && $path === $fallback_to_current ) {
-                $response_data['warning'] = 'アクセス権限がないため、現在のディレクトリを維持しました。';
-            }
-
-            wp_send_json_success( $response_data );
-
+            $response = $this->get_directory_listing( $path );
+            wp_send_json_success( $response );
         } catch ( \Exception $e ) {
             wp_send_json_error( 'Failed to read directory' );
         }
@@ -397,68 +145,15 @@ class SettingsPage {
         $parent_path = sanitize_text_field( $_POST['parent_path'] ?? '' );
         $directory_name = sanitize_text_field( $_POST['directory_name'] ?? '' );
 
-        // 入力値チェック
-        if ( empty( $parent_path ) || empty( $directory_name ) ) {
-            wp_send_json_error( __( 'パスまたはディレクトリ名が指定されていません。', 'bf-secret-file-downloader' ) );
-        }
-
-        // ディレクトリ名のバリデーション
-        if ( ! preg_match( '/^[a-zA-Z0-9_\-\.]+$/', $directory_name ) ) {
-            wp_send_json_error( __( 'ディレクトリ名に使用できない文字が含まれています。', 'bf-secret-file-downloader' ) );
-        }
-
-        // 親ディレクトリの存在チェック
-        $real_parent_path = realpath( $parent_path );
-        if ( $real_parent_path === false || ! is_dir( $real_parent_path ) ) {
-            wp_send_json_error( __( '親ディレクトリが存在しません。', 'bf-secret-file-downloader' ) );
-        }
-
-        // セキュリティ：WordPress内のディレクトリのみ許可
-        $allowed_base_paths = array(
-            ABSPATH,
-            WP_CONTENT_DIR,
-            ABSPATH . 'wp-content',
-            dirname( ABSPATH ),
-        );
-
-        // WordPressシステムディレクトリでの作成を禁止
-        $wp_system_paths = array(
-            ABSPATH . 'wp-content',
-            ABSPATH . 'wp-includes',
-            ABSPATH . 'wp-admin',
-            WP_CONTENT_DIR . '/themes',
-            WP_CONTENT_DIR . '/plugins',
-            WP_CONTENT_DIR . '/mu-plugins',
-        );
-
-        // WordPressシステムディレクトリチェック（サブディレクトリも含む）
-        foreach ( $wp_system_paths as $wp_system_path ) {
-            $real_wp_system_path = realpath( $wp_system_path );
-            if ( $real_wp_system_path !== false && ( $real_parent_path === $real_wp_system_path || strpos( $real_parent_path, $real_wp_system_path . DIRECTORY_SEPARATOR ) === 0 ) ) {
-                wp_send_json_error( __( 'WordPressシステムディレクトリまたはそのサブディレクトリ内にはディレクトリを作成できません。', 'bf-secret-file-downloader' ) );
-            }
-        }
-
-        $is_allowed = false;
-        foreach ( $allowed_base_paths as $base_path ) {
-            $real_base_path = realpath( $base_path );
-            if ( $real_base_path !== false && strpos( $real_parent_path, $real_base_path ) === 0 ) {
-                $is_allowed = true;
-                break;
-            }
-        }
-
-        if ( ! $is_allowed ) {
-            wp_send_json_error( 'このディレクトリには作成権限がありません。' );
+        // DirectorySecurityクラスを使用したセキュリティチェック
+        $security_check = \Breadfish\SecretFileDownloader\DirectorySecurity::check_ajax_create_directory_security( $parent_path, $directory_name );
+        
+        if ( ! $security_check['allowed'] ) {
+            wp_send_json_error( $security_check['error_message'] );
         }
 
         // 新しいディレクトリのパス
         $new_directory_path = $parent_path . DIRECTORY_SEPARATOR . $directory_name;
-
-        // 既存チェック
-        if ( file_exists( $new_directory_path ) ) {
-            wp_send_json_error( '同名のディレクトリまたはファイルが既に存在します。' );
-        }
 
         // ディレクトリ作成
         if ( wp_mkdir_p( $new_directory_path ) ) {
@@ -907,6 +602,59 @@ class SettingsPage {
             plugin_dir_url( dirname( dirname( __FILE__ ) ) ) . 'assets/css/admin-settings.css',
             array(),
             '1.0.0'
+        );
+    }
+
+    /**
+     * ディレクトリリストを取得します
+     *
+     * @param string $path ディレクトリパス
+     * @return array ディレクトリリスト
+     * @throws \Exception ディレクトリ読み取りエラー
+     */
+    private function get_directory_listing( $path ) {
+        $directories = array();
+        $files = array();
+
+        $items = scandir( $path );
+        if ( $items === false ) {
+            throw new \Exception( 'Cannot read directory: ' . $path );
+        }
+
+        foreach ( $items as $item ) {
+            if ( $item === '.' || $item === '..' ) {
+                continue;
+            }
+
+            $full_path = $path . DIRECTORY_SEPARATOR . $item;
+
+            if ( is_dir( $full_path ) ) {
+                $directories[] = array(
+                    'name' => $item,
+                    'path' => $full_path,
+                    'type' => 'directory'
+                );
+            } else {
+                $files[] = array(
+                    'name' => $item,
+                    'path' => $full_path,
+                    'type' => 'file'
+                );
+            }
+        }
+
+        // ディレクトリを先頭に、ファイルを後に並べる
+        usort( $directories, function( $a, $b ) {
+            return strcmp( $a['name'], $b['name'] );
+        });
+        usort( $files, function( $a, $b ) {
+            return strcmp( $a['name'], $b['name'] );
+        });
+
+        return array(
+            'current_path' => $path,
+            'parent_path' => dirname( $path ),
+            'items' => array_merge( $directories, $files )
         );
     }
 }

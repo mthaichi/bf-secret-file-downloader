@@ -467,7 +467,8 @@ class SettingsPageTest extends \BF_SFD_TestCase {
             'sanitize_roles',
             'sanitize_directory',
             'show_directory_change_alert',
-            'enqueue_admin_assets'
+            'enqueue_admin_assets',
+            'get_directory_listing'
         ];
 
         foreach ( $methods as $method ) {

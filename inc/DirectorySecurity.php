@@ -269,4 +269,175 @@ class DirectorySecurity {
 
         return $safety_check;
     }
+
+    /**
+     * AJAXディレクトリブラウジング用のセキュリティチェックを実行します
+     *
+     * @param string $path チェックするパス
+     * @return array チェック結果 ['allowed' => bool, 'error_message' => string]
+     */
+    public static function check_ajax_browse_directory_security( $path ) {
+        $result = array(
+            'allowed' => false,
+            'error_message' => ''
+        );
+
+        // ルートパスが指定されていない場合は、WordPressのindex.phpが配置されているディレクトリから開始
+        if ( empty( $path ) ) {
+            $path = ABSPATH;
+        }
+
+        // 許可されたベースパスの定義
+        $allowed_base_paths = array(
+            ABSPATH,              // WordPressルートディレクトリ
+            WP_CONTENT_DIR,       // wp-contentディレクトリ
+            ABSPATH . 'wp-content',
+            dirname( ABSPATH ),   // WordPressの親ディレクトリ（公開ディレクトリ外アクセス用）
+        );
+
+        $real_path = realpath( $path );
+
+        // 危険なシステムディレクトリを明示的に禁止
+        $forbidden_paths = array(
+            '/etc',
+            '/var/log',
+            '/var/cache',
+            '/usr/bin',
+            '/usr/sbin',
+            '/bin',
+            '/sbin',
+            '/root',
+            '/tmp',
+            '/proc',
+            '/sys',
+            '/dev',
+        );
+
+        // 禁止パスチェック（real_pathが取得できた場合のみ）
+        if ( $real_path !== false ) {
+            // システムディレクトリチェック
+            foreach ( $forbidden_paths as $forbidden_path ) {
+                if ( strpos( $real_path, $forbidden_path ) === 0 ) {
+                    $result['error_message'] = 'Access to system directories is forbidden: ' . $path;
+                    return $result;
+                }
+            }
+        }
+
+        // realpathがfalseを返す場合（ディレクトリが存在しない）
+        if ( $real_path === false || ! is_dir( $real_path ) ) {
+            $result['error_message'] = 'Directory does not exist: ' . $path;
+            return $result;
+        }
+
+        // 読み取り権限チェック
+        if ( ! is_readable( $real_path ) ) {
+            $result['error_message'] = 'Permission denied: Cannot read directory';
+            return $result;
+        }
+
+        // 許可されたベースパス内にあるかチェック
+        $is_allowed = false;
+        foreach ( $allowed_base_paths as $base_path ) {
+            $real_base_path = realpath( $base_path );
+            if ( $real_base_path !== false && strpos( $real_path, $real_base_path ) === 0 ) {
+                $is_allowed = true;
+                break;
+            }
+        }
+
+        if ( ! $is_allowed ) {
+            $result['error_message'] = 'Access denied to directory: ' . $path;
+            return $result;
+        }
+
+        $result['allowed'] = true;
+        return $result;
+    }
+
+    /**
+     * AJAXディレクトリ作成用のセキュリティチェックを実行します
+     *
+     * @param string $parent_path 親ディレクトリパス
+     * @param string $directory_name 作成するディレクトリ名
+     * @return array チェック結果 ['allowed' => bool, 'error_message' => string]
+     */
+    public static function check_ajax_create_directory_security( $parent_path, $directory_name ) {
+        $result = array(
+            'allowed' => false,
+            'error_message' => ''
+        );
+
+        // 入力値チェック
+        if ( empty( $parent_path ) || empty( $directory_name ) ) {
+            $result['error_message'] = __( 'パスまたはディレクトリ名が指定されていません。', 'bf-secret-file-downloader' );
+            return $result;
+        }
+
+        // ディレクトリ名のバリデーション
+        if ( ! preg_match( '/^[a-zA-Z0-9_\-\.]+$/', $directory_name ) ) {
+            $result['error_message'] = __( 'ディレクトリ名に使用できない文字が含まれています。', 'bf-secret-file-downloader' );
+            return $result;
+        }
+
+        // 親ディレクトリの存在チェック
+        $real_parent_path = realpath( $parent_path );
+        if ( $real_parent_path === false || ! is_dir( $real_parent_path ) ) {
+            $result['error_message'] = __( '親ディレクトリが存在しません。', 'bf-secret-file-downloader' );
+            return $result;
+        }
+
+        // セキュリティ：WordPress内のディレクトリのみ許可
+        $allowed_base_paths = array(
+            ABSPATH,
+            WP_CONTENT_DIR,
+            ABSPATH . 'wp-content',
+            dirname( ABSPATH ),
+        );
+
+        // WordPressシステムディレクトリでの作成を禁止
+        $wp_system_paths = array(
+            ABSPATH . 'wp-content',
+            ABSPATH . 'wp-includes',
+            ABSPATH . 'wp-admin',
+            WP_CONTENT_DIR . '/themes',
+            WP_CONTENT_DIR . '/plugins',
+            WP_CONTENT_DIR . '/mu-plugins',
+        );
+
+        // WordPressシステムディレクトリチェック（サブディレクトリも含む）
+        foreach ( $wp_system_paths as $wp_system_path ) {
+            $real_wp_system_path = realpath( $wp_system_path );
+            if ( $real_wp_system_path !== false && ( $real_parent_path === $real_wp_system_path || strpos( $real_parent_path, $real_wp_system_path . DIRECTORY_SEPARATOR ) === 0 ) ) {
+                $result['error_message'] = __( 'WordPressシステムディレクトリまたはそのサブディレクトリ内にはディレクトリを作成できません。', 'bf-secret-file-downloader' );
+                return $result;
+            }
+        }
+
+        $is_allowed = false;
+        foreach ( $allowed_base_paths as $base_path ) {
+            $real_base_path = realpath( $base_path );
+            if ( $real_base_path !== false && strpos( $real_parent_path, $real_base_path ) === 0 ) {
+                $is_allowed = true;
+                break;
+            }
+        }
+
+        if ( ! $is_allowed ) {
+            $result['error_message'] = 'このディレクトリには作成権限がありません。';
+            return $result;
+        }
+
+        // 新しいディレクトリのパス
+        $new_directory_path = $parent_path . DIRECTORY_SEPARATOR . $directory_name;
+
+        // 既存チェック
+        if ( file_exists( $new_directory_path ) ) {
+            $result['error_message'] = '同名のディレクトリまたはファイルが既に存在します。';
+            return $result;
+        }
+
+        $result['allowed'] = true;
+        return $result;
+    }
 }
