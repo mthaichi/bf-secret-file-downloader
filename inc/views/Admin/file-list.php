@@ -50,28 +50,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             </div>
         <?php endif; ?>
 
-        <?php if ( isset( $danger_flag_set ) && $danger_flag_set ) : ?>
-            <div class="notice notice-error">
-                <p>
-                    <strong><?php esc_html_e( 'セキュリティ警告:', 'bf-secret-file-downloader' ); ?></strong>
-                    <?php esc_html_e( '対象ディレクトリにWordPressファイルが検出されました。', 'bf-secret-file-downloader' ); ?>
-                </p>
-                <p>
-                    <?php esc_html_e( 'セキュリティ上の理由により、ファイル一覧の表示及びダウンロード機能は無効化されています。', 'bf-secret-file-downloader' ); ?>
-                </p>
-                <p>
-                    <strong><?php esc_html_e( '対処方法:', 'bf-secret-file-downloader' ); ?></strong>
-                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=bf-secret-file-downloader-settings' ) ); ?>" class="button button-primary">
-                        <?php esc_html_e( '設定ページで対象ディレクトリを変更する', 'bf-secret-file-downloader' ); ?>
-                    </a>
-                </p>
-                <p class="description">
-                    <?php esc_html_e( 'WordPressのコアファイルやテーマ、プラグインファイルが含まれないディレクトリを指定してください。', 'bf-secret-file-downloader' ); ?>
-                </p>
-            </div>
-        <?php endif; ?>
-
-        <?php if ( $target_directory_set && ! ( isset( $danger_flag_set ) && $danger_flag_set ) ) : ?>
+        <?php if ( $target_directory_set ) : ?>
             <div class="bf-secret-file-downloader-content">
                 <!-- 現在のパス表示 -->
                 <div class="bf-secret-file-downloader-path">
@@ -880,6 +859,61 @@ jQuery(document).ready(function($) {
         });
     }
 
+    // プログラムコードファイルかどうかを判定するJavaScript関数
+    function isProgramCodeFile(filename) {
+        // プログラムコードファイルの拡張子リスト
+        var codeExtensions = [
+            'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'phps',
+            'js', 'jsx', 'ts', 'tsx',
+            'css', 'scss', 'sass', 'less',
+            'html', 'htm', 'xhtml',
+            'xml', 'xsl', 'xslt',
+            'json', 'yaml', 'yml',
+            'py', 'pyc', 'pyo',
+            'rb', 'rbw',
+            'pl', 'pm',
+            'java', 'class', 'jar',
+            'c', 'cpp', 'cc', 'cxx', 'h', 'hpp',
+            'cs', 'vb', 'vbs',
+            'sh', 'bash', 'zsh', 'fish',
+            'sql', 'mysql', 'pgsql',
+            'asp', 'aspx', 'jsp',
+            'cgi', 'fcgi'
+        ];
+
+        // 設定ファイルや危険なファイル
+        var configFiles = [
+            '.htaccess', '.htpasswd', '.env', '.ini',
+            'web.config', 'composer.json', 'package.json',
+            'Dockerfile', 'docker-compose.yml',
+            'Makefile', 'CMakeLists.txt'
+        ];
+
+        // 拡張子による判定
+        var extension = filename.split('.').pop().toLowerCase();
+        if (codeExtensions.includes(extension)) {
+            return true;
+        }
+
+        // ファイル名による判定
+        if (configFiles.includes(filename)) {
+            return true;
+        }
+
+        // 拡張子なしでよく使われるスクリプトファイル名
+        var scriptNames = [
+            'index', 'config', 'settings', 'install', 'setup',
+            'admin', 'login', 'auth', 'database', 'db'
+        ];
+
+        var basename = filename.split('.')[0].toLowerCase();
+        if (scriptNames.includes(basename) && !filename.includes('.')) {
+            return true;
+        }
+
+        return false;
+    }
+
     function getCurrentSortBy() {
         return $('.sortable.sorted').length > 0 ?
             $('.sortable.sorted').find('.sort-link').data('sort') : 'name';
@@ -1404,11 +1438,9 @@ jQuery(document).ready(function($) {
                 return;
             }
 
-            // 危険なファイル拡張子チェック
-            var dangerousExtensions = ['php', 'phtml', 'php3', 'php4', 'php5', 'pl', 'py', 'jsp', 'asp', 'sh', 'cgi'];
-            var fileExtension = fileName.split('.').pop().toLowerCase();
-            if (dangerousExtensions.includes(fileExtension)) {
-                errors.push(fileName + ': <?php esc_html_e( 'セキュリティ上の理由でアップロードできません', 'bf-secret-file-downloader' ); ?>');
+            // プログラムコードファイルチェック
+            if (isProgramCodeFile(fileName)) {
+                errors.push(fileName + ': <?php esc_html_e( 'セキュリティ上の理由により、プログラムコードファイルはアップロードできません', 'bf-secret-file-downloader' ); ?>');
                 uploadNextFile(index + 1);
                 return;
             }

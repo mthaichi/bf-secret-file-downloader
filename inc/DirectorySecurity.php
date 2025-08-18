@@ -18,10 +18,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class DirectorySecurity {
 
-    /**
-     * 危険フラグのオプション名
-     */
-    const DANGER_FLAG_OPTION = 'bf_sfd_directory_danger_flag';
 
     /**
      * WordPressファイルの危険性をチェックします
@@ -72,223 +68,7 @@ class DirectorySecurity {
         return ( $found_core_files > 0 || $found_core_dirs >= 2 );
     }
 
-    /**
-     * パスがWordPressの機密ファイルやディレクトリを含んでいないかチェックします
-     *
-     * @param string $path チェックするパス
-     * @return bool 安全な場合はtrue、危険な場合はfalse
-     */
-    public static function is_path_safe_from_wordpress_secrets( $path ) {
-        // WordPressの機密ファイルやディレクトリのパターン
-        $wordpress_secret_patterns = array(
-            // WordPressルートディレクトリの機密ファイル
-            'wp-config.php',
-            'wp-config-sample.php',
-            '.htaccess',
-            'readme.html',
-            'license.txt',
-            'wp-config.php.bak',
-            'wp-config.php.old',
-            'wp-config.php.backup',
 
-            // WordPress管理ディレクトリ
-            'wp-admin',
-            'wp-admin/',
-            '/wp-admin',
-            '/wp-admin/',
-
-            // WordPressコアファイルディレクトリ
-            'wp-includes',
-            'wp-includes/',
-            '/wp-includes',
-            '/wp-includes/',
-
-            // WordPressコンテンツディレクトリ内の機密場所
-            'wp-content/plugins',
-            'wp-content/themes',
-            'wp-content/mu-plugins',
-            'wp-content/uploads/plugins',
-            'wp-content/uploads/themes',
-
-            // データベース関連ファイル
-            '.sql',
-            '.sql.gz',
-            '.sql.bak',
-            'database.sql',
-            'backup.sql',
-
-            // ログファイル
-            'error_log',
-            'debug.log',
-            'access.log',
-            '.log',
-
-            // 設定ファイル
-            'config.php',
-            'configuration.php',
-            'settings.php',
-            '.env',
-            '.env.local',
-            '.env.production',
-
-            // バックアップファイル
-            '.bak',
-            '.backup',
-            '.old',
-            '.orig',
-
-            // 一時ファイル
-            '.tmp',
-            '.temp',
-            'temp/',
-            'tmp/',
-
-            // Git関連
-            '.git',
-            '.gitignore',
-            '.gitattributes',
-
-            // その他の機密ファイル
-            'composer.json',
-            'composer.lock',
-            'package.json',
-            'package-lock.json',
-            'yarn.lock',
-            'npm-debug.log',
-
-            // セッションファイル
-            'sessions/',
-            'session/',
-            'cache/',
-            'caches/',
-        );
-
-        // パスを小文字に変換してチェック（大文字小文字を区別しない）
-        $path_lower = strtolower( $path );
-        $path_normalized = str_replace( '\\', '/', $path_lower );
-
-        // 各パターンをチェック
-        foreach ( $wordpress_secret_patterns as $pattern ) {
-            $pattern_lower = strtolower( $pattern );
-            $pattern_normalized = str_replace( '\\', '/', $pattern_lower );
-
-            // パターンがパスに含まれているかチェック
-            if ( strpos( $path_normalized, $pattern_normalized ) !== false ) {
-                // より厳密なチェック：ディレクトリ区切り文字で囲まれているかチェック
-                $pattern_regex = '/[\/\\\\]' . preg_quote( $pattern_normalized, '/' ) . '[\/\\\\]?/';
-                if ( preg_match( $pattern_regex, $path_normalized ) ) {
-                    return false;
-                }
-
-                // ファイル名の完全一致チェック
-                $basename = basename( $path_normalized );
-                if ( $basename === $pattern_normalized ) {
-                    return false;
-                }
-
-                // ファイル拡張子やパターンが含まれているかの追加チェック
-                if ( strpos( $pattern_normalized, '.' ) === 0 ) {
-                    if ( strpos( $basename, $pattern_normalized ) !== false ) {
-                        return false;
-                    }
-                }
-                
-                // SQLファイルの特別なケース
-                if ( strpos( $pattern_normalized, 'sql' ) !== false && strpos( $basename, 'sql' ) !== false ) {
-                    return false;
-                }
-            }
-        }
-
-        // WordPressの定数が定義されている場合の追加チェック
-        if ( defined( 'ABSPATH' ) ) {
-            $abspath_lower = strtolower( str_replace( '\\', '/', ABSPATH ) );
-
-            // WordPressルートディレクトリ内の機密ファイルへのアクセスをチェック
-            $wp_secret_files = array(
-                'wp-config.php',
-                'wp-config-sample.php',
-                '.htaccess',
-                'readme.html',
-                'license.txt',
-            );
-
-            foreach ( $wp_secret_files as $secret_file ) {
-                $secret_path = $abspath_lower . strtolower( $secret_file );
-                if ( $path_normalized === $secret_path ) {
-                    return false;
-                }
-            }
-
-            // wp-adminディレクトリへのアクセスをチェック
-            $wp_admin_path = $abspath_lower . 'wp-admin';
-            if ( strpos( $path_normalized, $wp_admin_path ) === 0 ) {
-                return false;
-            }
-
-            // wp-includesディレクトリへのアクセスをチェック
-            $wp_includes_path = $abspath_lower . 'wp-includes';
-            if ( strpos( $path_normalized, $wp_includes_path ) === 0 ) {
-                return false;
-            }
-        }
-
-        // wp-contentディレクトリの機密場所へのアクセスをチェック
-        if ( defined( 'WP_CONTENT_DIR' ) ) {
-            $wp_content_lower = strtolower( str_replace( '\\', '/', WP_CONTENT_DIR ) );
-
-            $wp_content_secrets = array(
-                '/plugins',
-                '/themes',
-                '/mu-plugins',
-                '/uploads/plugins',
-                '/uploads/themes',
-            );
-
-            foreach ( $wp_content_secrets as $secret_dir ) {
-                $secret_path = $wp_content_lower . strtolower( $secret_dir );
-                if ( strpos( $path_normalized, $secret_path ) === 0 ) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * 危険フラグを設定します
-     *
-     * @param bool $is_dangerous 危険かどうか
-     */
-    public static function set_danger_flag( $is_dangerous ) {
-        update_option( self::DANGER_FLAG_OPTION, $is_dangerous );
-    }
-
-    /**
-     * 危険フラグを取得します
-     *
-     * @return bool 危険フラグの状態
-     */
-    public static function get_danger_flag() {
-        return (bool) get_option( self::DANGER_FLAG_OPTION, false );
-    }
-
-    /**
-     * 危険フラグをクリアします
-     */
-    public static function clear_danger_flag() {
-        delete_option( self::DANGER_FLAG_OPTION );
-    }
-
-    /**
-     * 危険フラグが設定されているかチェックします（エイリアス）
-     *
-     * @return bool 危険フラグが設定されている場合はtrue
-     */
-    public static function is_danger_flag_set() {
-        return self::get_danger_flag();
-    }
 
     /**
      * WordPressルートディレクトリが直接指定されているかチェックします
@@ -345,47 +125,6 @@ class DirectorySecurity {
         return $dangerous_directories;
     }
 
-    /**
-     * ディレクトリが危険なディレクトリに該当するかチェックします
-     *
-     * @param string $directory_path チェックするディレクトリパス
-     * @return bool 危険なディレクトリの場合はtrue
-     */
-    public static function is_dangerous_directory( $directory_path ) {
-        if ( empty( $directory_path ) ) {
-            return false;
-        }
-
-        $dangerous_directories = self::get_dangerous_directories();
-        $check_paths = array( $directory_path );
-
-        // シンボリックリンクがある場合は解決されたパスもチェック
-        $real_value = realpath( $directory_path );
-        if ( $real_value !== false && $real_value !== $directory_path ) {
-            $check_paths[] = $real_value;
-        }
-
-        foreach ( $check_paths as $check_path ) {
-            foreach ( $dangerous_directories as $dangerous_dir ) {
-                $real_dangerous = realpath( $dangerous_dir );
-
-                // 元のパスと解決されたパスの両方をチェック
-                $paths_to_check = array( $dangerous_dir );
-                if ( $real_dangerous !== false && $real_dangerous !== $dangerous_dir ) {
-                    $paths_to_check[] = $real_dangerous;
-                }
-
-                foreach ( $paths_to_check as $dangerous_path ) {
-                    if ( $check_path === $dangerous_path ||
-                         strpos( $check_path, $dangerous_path . DIRECTORY_SEPARATOR ) === 0 ) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
 
     /**
      * 対象ディレクトリの安全性を包括的にチェックします
@@ -415,7 +154,37 @@ class DirectorySecurity {
         }
 
         // 危険なシステムディレクトリチェック
-        if ( self::is_dangerous_directory( $directory_path ) ) {
+        $dangerous_directories = self::get_dangerous_directories();
+        $check_paths = array( $directory_path );
+
+        // シンボリックリンクがある場合は解決されたパスもチェック
+        $real_value = realpath( $directory_path );
+        if ( $real_value !== false && $real_value !== $directory_path ) {
+            $check_paths[] = $real_value;
+        }
+
+        $is_dangerous = false;
+        foreach ( $check_paths as $check_path ) {
+            foreach ( $dangerous_directories as $dangerous_dir ) {
+                $real_dangerous = realpath( $dangerous_dir );
+
+                // 元のパスと解決されたパスの両方をチェック
+                $paths_to_check = array( $dangerous_dir );
+                if ( $real_dangerous !== false && $real_dangerous !== $dangerous_dir ) {
+                    $paths_to_check[] = $real_dangerous;
+                }
+
+                foreach ( $paths_to_check as $dangerous_path ) {
+                    if ( $check_path === $dangerous_path ||
+                         strpos( $check_path, rtrim( $dangerous_path, '/' ) . '/' ) === 0 ) {
+                        $is_dangerous = true;
+                        break 3; // 3重ループを抜ける
+                    }
+                }
+            }
+        }
+
+        if ( $is_dangerous ) {
             $result['is_safe'] = false;
             $result['is_dangerous_system_dir'] = true;
             $result['danger_reason'] = __( '危険なシステムディレクトリまたはWordPress重要ディレクトリです。', 'bf-secret-file-downloader' );
@@ -441,114 +210,14 @@ class DirectorySecurity {
      */
     public static function check_and_update_directory_safety( $directory_path ) {
         if ( empty( $directory_path ) ) {
-            // ディレクトリが設定されていない場合は危険フラグをクリア
-            self::clear_danger_flag();
             return array( 'is_safe' => true, 'danger_reason' => '' );
         }
 
         $safety_check = self::check_directory_safety( $directory_path );
         
-        // 危険フラグを更新
-        self::set_danger_flag( ! $safety_check['is_safe'] );
-
         return $safety_check;
     }
 
-    /**
-     * AJAXディレクトリブラウジング用のセキュリティチェックを実行します
-     *
-     * @param string $path チェックするパス
-     * @return array チェック結果 ['allowed' => bool, 'error_message' => string]
-     */
-    public static function check_ajax_browse_directory_security( $path ) {
-        $result = array(
-            'allowed' => false,
-            'error_message' => ''
-        );
-
-
-        // ルートパスが指定されていない場合は、WordPressのindex.phpが配置されているディレクトリから開始
-        if ( empty( $path ) ) {
-            $path = ABSPATH;
-        }
-
-        // 許可されたベースパスの定義
-        $allowed_base_paths = array(
-            ABSPATH,              // WordPressルートディレクトリ
-            WP_CONTENT_DIR,       // wp-contentディレクトリ
-            ABSPATH . 'wp-content',
-            dirname( ABSPATH ),   // WordPressの親ディレクトリ（公開ディレクトリ外アクセス用）
-        );
-
-        $real_path = realpath( $path );
-
-        // 危険なシステムディレクトリを明示的に禁止
-        $forbidden_paths = array(
-            '/etc',
-            '/var/log',
-            '/var/cache',
-            '/usr/bin',
-            '/usr/sbin',
-            '/bin',
-            '/sbin',
-            '/root',
-            '/tmp',
-            '/proc',
-            '/sys',
-            '/dev',
-        );
-
-        // 禁止パスチェック（real_pathが取得できた場合のみ）
-        if ( $real_path !== false ) {
-            // システムディレクトリチェック
-            foreach ( $forbidden_paths as $forbidden_path ) {
-                if ( strpos( $real_path, $forbidden_path ) === 0 ) {
-                    $result['error_message'] = __( 'システムディレクトリへのアクセスは禁止されています: ', 'bf-secret-file-downloader' ) . $path;
-                    return $result;
-                }
-            }
-        }
-
-        // realpathがfalseを返す場合（ディレクトリが存在しない）
-        if ( $real_path === false || ! is_dir( $real_path ) ) {
-            $result['error_message'] = __( 'ディレクトリが存在しません: ', 'bf-secret-file-downloader' ) . $path;
-            return $result;
-        }
-
-        // 読み取り権限チェック
-        if ( ! is_readable( $real_path ) ) {
-            $result['error_message'] = __( '権限拒否: ディレクトリを読み取れません', 'bf-secret-file-downloader' );
-            return $result;
-        }
-
-        // 許可されたベースパス内にあるかチェック
-        $is_allowed = false;
-        
-        foreach ( $allowed_base_paths as $base_path ) {
-            $real_base_path = realpath( $base_path );
-            
-            if ( $real_base_path !== false ) {
-                // パスの比較時に末尾スラッシュを統一
-                $normalized_real_path = rtrim( $real_path, '/' );
-                $normalized_base_path = rtrim( $real_base_path, '/' );
-                
-                // 完全一致、またはベースパス配下のサブディレクトリかチェック
-                if ( $normalized_real_path === $normalized_base_path || 
-                     strpos( $normalized_real_path, $normalized_base_path . '/' ) === 0 ) {
-                    $is_allowed = true;
-                    break;
-                }
-            }
-        }
-
-        if ( ! $is_allowed ) {
-            $result['error_message'] = __( 'ディレクトリへのアクセスが拒否されました: ', 'bf-secret-file-downloader' ) . $path;
-            return $result;
-        }
-
-        $result['allowed'] = true;
-        return $result;
-    }
 
     /**
      * パストラバーサル対策を含む安全なパス構築を行います
@@ -610,14 +279,11 @@ class DirectorySecurity {
             return false;
         }
 
-        // WordPress機密ファイル・ディレクトリチェック
-        if ( ! self::is_path_safe_from_wordpress_secrets( $real_path ) ) {
-            error_log( 'BF Secret File Downloader: パス内にWordPressの機密ファイルやディレクトリが検出されました: ' . $real_path );
-            return false;
-        }
+        // 固定セキュアディレクトリ環境では機密ファイルチェックは不要
+        // セキュアディレクトリ内にはWordPress機密ファイルが配置されることはない
 
         // 基本となる対象ディレクトリを取得
-        $target_directory = get_option( 'bf_sfd_target_directory', '' );
+        $target_directory = bf_secret_file_downloader_get_secure_directory();
         if ( empty( $target_directory ) ) {
             return false;
         }

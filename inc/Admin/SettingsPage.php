@@ -7,7 +7,6 @@
 
 namespace Breadfish\SecretFileDownloader\Admin;
 
-use Breadfish\SecretFileDownloader\DirectorySecurity;
 
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,8 +36,6 @@ class SettingsPage {
      */
     public function init() {
         add_action( 'admin_init', array( $this, 'register_settings' ) );
-        add_action( 'wp_ajax_bf_sfd_browse_directory', array( $this, 'ajax_browse_directory' ) );
-        add_action( 'wp_ajax_bf_sfd_create_directory', array( $this, 'ajax_create_directory' ) );
         add_action( 'wp_ajax_bf_sfd_reset_settings', array( $this, 'ajax_reset_settings' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
     }
@@ -47,12 +44,6 @@ class SettingsPage {
      * 設定を登録します
      */
     public function register_settings() {
-        register_setting( 'bf_sfd_settings', 'bf_sfd_target_directory', array(
-            'type' => 'string',
-            'default' => '',
-            'sanitize_callback' => array( $this, 'sanitize_directory' )
-        ) );
-
         register_setting( 'bf_sfd_settings', 'bf_sfd_max_file_size', array(
             'type' => 'integer',
             'default' => 10,
@@ -79,96 +70,6 @@ class SettingsPage {
         ) );
     }
 
-    /**
-     * ディレクトリブラウズのAJAXハンドラ
-     */
-    public function ajax_browse_directory() {
-        // セキュリティチェック
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( 'Unauthorized' );
-        }
-
-        check_ajax_referer( 'bf_sfd_browse_nonce', 'nonce' );
-
-        $path = sanitize_text_field( $_POST['path'] ?? '' );
-
-        // DirectorySecurityクラスを使用したセキュリティチェック
-        $security_check = DirectorySecurity::check_ajax_browse_directory_security( $path );
-
-        // セキュリティチェックが失敗した場合のフォールバック処理
-        if ( ! $security_check['allowed'] ) {
-            // フォールバック処理（現在のディレクトリを保持するため）
-            $fallback_to_current = isset( $_POST['fallback_current'] ) ? sanitize_text_field( $_POST['fallback_current'] ) : '';
-
-            if ( ! empty( $fallback_to_current ) ) {
-                $fallback_security_check = DirectorySecurity::check_ajax_browse_directory_security( $fallback_to_current );
-
-                if ( $fallback_security_check['allowed'] ) {
-                    // フォールバック先が安全な場合、そのディレクトリの内容を返す
-                    $path = $fallback_to_current;
-                    $real_path = realpath( $path );
-
-                    $response = $this->get_directory_listing( $path );
-                    $response['warning'] = __( 'アクセス権限がないため、現在のディレクトリを維持しました。', 'bf-secret-file-downloader' );
-                    wp_send_json_success( $response );
-                    return;
-                }
-            }
-            
-            // フォールバックも失敗した場合はエラーを返す
-            wp_send_json_error( $security_check['error_message'] );
-        }
-
-        // セキュリティチェックが通った場合のパス取得
-        if ( empty( $path ) ) {
-            $path = ABSPATH;
-        }
-        $real_path = realpath( $path );
-
-        // ディレクトリリストを取得して返す
-        try {
-            $response = $this->get_directory_listing( $path );
-            wp_send_json_success( $response );
-        } catch ( \Exception $e ) {
-            wp_send_json_error( __( 'ディレクトリの読み取りに失敗しました', 'bf-secret-file-downloader' ) );
-        }
-    }
-
-    /**
-     * ディレクトリ作成のAJAXハンドラ
-     */
-    public function ajax_create_directory() {
-        // セキュリティチェック
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( 'Unauthorized' );
-        }
-
-        check_ajax_referer( 'bf_sfd_browse_nonce', 'nonce' );
-
-        $parent_path = sanitize_text_field( $_POST['parent_path'] ?? '' );
-        $directory_name = sanitize_text_field( $_POST['directory_name'] ?? '' );
-
-        // DirectorySecurityクラスを使用したセキュリティチェック
-        $security_check = DirectorySecurity::check_ajax_create_directory_security( $parent_path, $directory_name );
-
-        if ( ! $security_check['allowed'] ) {
-            wp_send_json_error( $security_check['error_message'] );
-        }
-
-        // 新しいディレクトリのパス
-        $new_directory_path = $parent_path . DIRECTORY_SEPARATOR . $directory_name;
-
-        // ディレクトリ作成
-        if ( wp_mkdir_p( $new_directory_path ) ) {
-            wp_send_json_success( array(
-                'message' => 'ディレクトリを作成しました。',
-                'new_directory' => $new_directory_path,
-                'parent_path' => $parent_path
-            ));
-        } else {
-            wp_send_json_error( __( 'ディレクトリの作成に失敗しました。', 'bf-secret-file-downloader' ) );
-        }
-    }
 
     /**
      * 設定をリセットします
@@ -183,6 +84,7 @@ class SettingsPage {
 
         // 設定を削除
         delete_option( 'bf_sfd_target_directory' );
+        delete_option( 'bf_sfd_secure_directory_id' );
         delete_option( 'bf_sfd_max_file_size' );
         delete_option( 'bf_sfd_auth_methods' );
         delete_option( 'bf_sfd_allowed_roles' );
@@ -269,7 +171,7 @@ class SettingsPage {
      * @return string 対象ディレクトリ
      */
     private function get_target_directory() {
-        return get_option( 'bf_sfd_target_directory', '' );
+        return bf_secret_file_downloader_get_secure_directory();
     }
 
     /**
@@ -384,171 +286,7 @@ class SettingsPage {
         return array_intersect( $allowed_roles, $value );
     }
 
-    /**
-     * パスを正規化します
-     *
-     * @param string $path パス
-     * @return string 正規化されたパス
-     */
-    private function normalize_path( $path ) {
-        // 連続するスラッシュを単一スラッシュに変換し、末尾のスラッシュを削除
-        return rtrim( preg_replace( '#/+#', '/', $path ), '/' );
-    }
 
-    /**
-     * パスが絶対パスかどうかをチェックします
-     *
-     * @param string $path パス
-     * @return bool 絶対パスの場合true
-     */
-    private function is_absolute_path( $path ) {
-        // Unix/Linux系の場合は '/' で始まる
-        if ( strpos( $path, '/' ) === 0 ) {
-            return true;
-        }
-
-        // Windows系の場合は 'C:' のようなドライブレターで始まる
-        if ( preg_match( '/^[a-zA-Z]:[\/\\\\]/', $path ) ) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * 危険フラグを取得します（互換性のためのエイリアス）
-     *
-     * @return bool 危険フラグ
-     */
-    public function get_danger_flag() {
-        return DirectorySecurity::get_danger_flag();
-    }
-
-    /**
-     * サニタイズ: ディレクトリパス
-     *
-     * @param string $value ディレクトリパス
-     * @return string サニタイズされたディレクトリパス
-     */
-    public function sanitize_directory( $value ) {
-        $value = sanitize_text_field( $value );
-
-        // パスを正規化
-        $value = $this->normalize_path( $value );
-
-        // 現在の対象ディレクトリを取得
-        $current_directory = get_option( 'bf_sfd_target_directory', '' );
-
-        // 空の場合は危険フラグをクリアして返す
-        if ( empty( $value ) ) {
-            DirectorySecurity::clear_danger_flag();
-            return '';
-        }
-
-        // DirectorySecurityクラスを使用した包括的なセキュリティチェック
-
-        // DirectorySecurityクラスを使用した包括的なセキュリティチェック
-        $safety_check = DirectorySecurity::check_directory_safety( $value );
-
-        if ( ! $safety_check['is_safe'] ) {
-            // セキュリティエラーの場合、WordPress標準のエラーメッセージを表示
-            $error_type = 'error';
-            if ( $safety_check['is_wordpress_root'] ) {
-                $error_code = 'wordpress_root_directory';
-            } elseif ( $safety_check['is_dangerous_system_dir'] ) {
-                $error_code = 'dangerous_system_directory';
-            } elseif ( $safety_check['has_wordpress_files'] ) {
-                $error_code = 'wordpress_files_detected';
-            } else {
-                $error_code = 'directory_security_error';
-            }
-
-            add_settings_error(
-                'bf_sfd_target_directory',
-                $error_code,
-                $safety_check['danger_reason'],
-                $error_type
-            );
-            DirectorySecurity::clear_danger_flag();
-            return '';
-        }
-
-        // シンボリックリンク攻撃の検出
-        if ( is_link( $value ) ) {
-            add_settings_error(
-                'bf_sfd_target_directory',
-                'symbolic_link_detected',
-                sprintf(
-                    __( 'セキュリティ上の理由により、シンボリックリンク "%s" は設定できません。実際のディレクトリパスを指定してください。', 'bf-secret-file-downloader' ),
-                    $value
-                ),
-                'error'
-            );
-            DirectorySecurity::clear_danger_flag();
-            return '';
-        }
-
-
-        // 相対パスや不正なパスのチェック
-        if ( strpos( $value, '..' ) !== false || ! $this->is_absolute_path( $value ) ) {
-            add_settings_error(
-                'bf_sfd_target_directory',
-                'invalid_path_format',
-                __( '相対パスや不正なパスは設定できません。絶対パスを使用してください。', 'bf-secret-file-downloader' ),
-                'error'
-            );
-            return '';
-        }
-
-        // ディレクトリの存在と権限をチェック
-        if ( ! is_dir( $value ) ) {
-            // ディレクトリが存在しない場合
-            add_settings_error(
-                'bf_sfd_target_directory',
-                'directory_not_exists',
-                sprintf(
-                    __( 'ディレクトリ "%s" が存在しません。正しいディレクトリパスを指定してください。', 'bf-secret-file-downloader' ),
-                    $value
-                ),
-                'error'
-            );
-            DirectorySecurity::clear_danger_flag();
-            return '';
-        }
-
-        if ( ! is_readable( $value ) ) {
-            // ディレクトリが読み取り不可能な場合
-            add_settings_error(
-                'bf_sfd_target_directory',
-                'directory_not_readable',
-                sprintf(
-                    __( 'ディレクトリ "%s" に読み取り権限がありません。権限を確認してください。', 'bf-secret-file-downloader' ),
-                    $value
-                ),
-                'error'
-            );
-            DirectorySecurity::clear_danger_flag();
-            return '';
-        }
-
-        // ディレクトリが有効な場合の処理
-        // ディレクトリが変更された場合の処理
-        if ( ! empty( $current_directory ) && $current_directory !== $value ) {
-            // 既存のディレクトリパスワードをすべてクリア
-            $this->clear_all_directory_passwords();
-
-            // 危険フラグをクリア（新しいディレクトリでリセット）
-            DirectorySecurity::clear_danger_flag();
-
-            // JavaScript側でアラートを表示するためのフラグを設定
-            add_action( 'admin_footer', array( $this, 'show_directory_change_alert' ) );
-        }
-
-        // DirectorySecurityクラスを使用してWordPressファイルの危険性をチェックし、フラグを更新
-        DirectorySecurity::check_and_update_directory_safety( $value );
-
-        return $value;
-    }
 
     /**
      * すべてのディレクトリパスワードをクリアします
@@ -557,18 +295,6 @@ class SettingsPage {
         delete_option( 'bf_sfd_directory_passwords' );
     }
 
-    /**
-     * ディレクトリ変更アラートを表示するJavaScriptを出力します
-     */
-    public function show_directory_change_alert() {
-        ?>
-        <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            alert('<?php esc_html_e( '対象ディレクトリが変更されました。既存のディレクトリパスワードはすべてクリアされました。', 'bf-secret-file-downloader' ); ?>');
-        });
-        </script>
-        <?php
-    }
 
     /**
      * ページタイトルを取得します
@@ -608,56 +334,4 @@ class SettingsPage {
         );
     }
 
-    /**
-     * ディレクトリリストを取得します
-     *
-     * @param string $path ディレクトリパス
-     * @return array ディレクトリリスト
-     * @throws \Exception ディレクトリ読み取りエラー
-     */
-    private function get_directory_listing( $path ) {
-        $directories = array();
-        $files = array();
-
-        $items = scandir( $path );
-        if ( $items === false ) {
-            throw new \Exception( __( 'ディレクトリを読み取れません: ', 'bf-secret-file-downloader' ) . $path );
-        }
-
-        foreach ( $items as $item ) {
-            if ( $item === '.' || $item === '..' ) {
-                continue;
-            }
-
-            $full_path = $path . DIRECTORY_SEPARATOR . $item;
-
-            if ( is_dir( $full_path ) ) {
-                $directories[] = array(
-                    'name' => $item,
-                    'path' => $full_path,
-                    'type' => 'directory'
-                );
-            } else {
-                $files[] = array(
-                    'name' => $item,
-                    'path' => $full_path,
-                    'type' => 'file'
-                );
-            }
-        }
-
-        // ディレクトリを先頭に、ファイルを後に並べる
-        usort( $directories, function( $a, $b ) {
-            return strcmp( $a['name'], $b['name'] );
-        });
-        usort( $files, function( $a, $b ) {
-            return strcmp( $a['name'], $b['name'] );
-        });
-
-        return array(
-            'current_path' => $path,
-            'parent_path' => dirname( $path ),
-            'items' => array_merge( $directories, $files )
-        );
-    }
 }

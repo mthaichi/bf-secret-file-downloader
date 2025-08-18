@@ -7,7 +7,6 @@
 
 namespace Breadfish\SecretFileDownloader;
 
-use Breadfish\SecretFileDownloader\DirectorySecurity;
 
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
@@ -50,25 +49,20 @@ class FrontEnd {
             return; // ダウンロード要求でない場合は処理を終了
         }
 
-        // 危険フラグをチェック（ダウンロード要求がある場合のみ）
-        if ( DirectorySecurity::is_danger_flag_set() ) {
-            wp_die( __( 'セキュリティ上の理由により、現在ダウンロード機能は無効化されています。管理者に対象ディレクトリの設定変更をご依頼ください。', 'bf-secret-file-downloader' ), 403 );
-        }
-
         // ダウンロードフラグを取得（デフォルトはダウンロード）
         $download_flag = sanitize_text_field( $_GET['dflag'] ?? 'download' );
 
         // ベースディレクトリを取得
-        $base_directory = get_option( 'bf_sfd_target_directory', '' );
+        $base_directory = bf_secret_file_downloader_get_secure_directory();
         if ( empty( $base_directory ) ) {
             wp_die( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ), 500 );
         }
 
         // フルパスを構築
-        $full_path = DirectorySecurity::build_safe_path( $base_directory, $file_path );
+        $full_path = bf_secret_file_downloader_build_safe_path( $base_directory, $file_path );
 
         // セキュリティチェック：許可されたディレクトリのみ
-        if ( ! DirectorySecurity::is_allowed_directory( dirname( $full_path ) ) ) {
+        if ( ! bf_secret_file_downloader_is_allowed_directory( dirname( $full_path ) ) ) {
             wp_die( __( 'このファイルへのアクセスは許可されていません。', 'bf-secret-file-downloader' ), 403 );
         }
 
@@ -122,162 +116,6 @@ class FrontEnd {
 
         exit;
     }
-
-
-    /**
-     * ベースディレクトリからの相対パスでフルパスを構築します
-     *
-     * @param string $base_directory ベースディレクトリ
-     * @param string $relative_path 相対パス
-     * @return string フルパス
-     */
-    private function build_full_path( $base_directory, $relative_path = '' ) {
-        // 相対パスが空の場合はベースディレクトリをそのまま返す
-        if ( empty( $relative_path ) || $relative_path === '.' ) {
-            return rtrim( $base_directory, DIRECTORY_SEPARATOR );
-        }
-
-        // 危険な文字列をチェック
-        if ( strpos( $relative_path, '..' ) !== false || strpos( $relative_path, '//' ) !== false ) {
-            return $base_directory;
-        }
-
-        // パスを正規化
-        $relative_path = trim( $relative_path, DIRECTORY_SEPARATOR );
-
-        return $base_directory . DIRECTORY_SEPARATOR . $relative_path;
-    }
-
-    /**
-     * ディレクトリへのアクセスが許可されているかチェックします
-     *
-     * @param string $path ディレクトリパス
-     * @return bool アクセス許可フラグ
-     */
-    private function is_allowed_directory( $path ) {
-        // パスがnullまたは空の場合は拒否
-        if ( $path === null || $path === '' ) {
-            return false;
-        }
-
-        // シンボリックリンクの直接拒否
-        if ( is_link( $path ) ) {
-            error_log( 'BF Secret File Downloader: シンボリックリンクへのアクセス試行を検出: ' . $path );
-            return false;
-        }
-
-        // パス内にシンボリックリンクが含まれていないかチェック
-        $path_parts = explode( DIRECTORY_SEPARATOR, $path );
-        $current_path = '';
-        foreach ( $path_parts as $part ) {
-            if ( empty( $part ) && empty( $current_path ) ) {
-                $current_path = DIRECTORY_SEPARATOR; // ルートディレクトリ
-                continue;
-            } elseif ( empty( $part ) ) {
-                continue; // 空の部分はスキップ
-            }
-
-            $current_path .= ( $current_path === DIRECTORY_SEPARATOR ? '' : DIRECTORY_SEPARATOR ) . $part;
-
-            if ( is_link( $current_path ) ) {
-                error_log( 'BF Secret File Downloader: パス内にシンボリックリンクを検出: ' . $current_path . ' (フルパス: ' . $path . ')' );
-                return false;
-            }
-        }
-
-        $real_path = realpath( $path );
-        if ( $real_path === false ) {
-            return false;
-        }
-
-        // 基本となる対象ディレクトリを取得
-        $target_directory = get_option( 'bf_sfd_target_directory', '' );
-        if ( empty( $target_directory ) ) {
-            return false;
-        }
-
-        // セキュリティチェック: 危険なターゲットディレクトリの即座拒否
-        $dangerous_target_directories = [
-            '/',                    // ルートディレクトリ - 極めて危険
-            '/etc',                 // システム設定ディレクトリ
-            '/usr',                 // システムユーティリティ
-            '/usr/bin',             // システムバイナリ
-            '/usr/sbin',            // システム管理バイナリ
-            '/var/log',             // システムログ
-            '/root',                // root ユーザーホーム
-            '/tmp',                 // テンポラリディレクトリ
-            '/proc',                // プロセスファイルシステム
-            '/sys',                 // システムファイルシステム
-            '/dev',                 // デバイスファイル
-            '/bin',                 // 基本バイナリ
-            '/sbin',                // システムバイナリ
-            '/boot',                // ブートファイル
-
-            // WordPress関連の危険なディレクトリ
-            ABSPATH,                // WordPressルートディレクトリ - wp-config.php等が含まれる
-            dirname( ABSPATH ),     // WordPressの親ディレクトリ
-            ABSPATH . 'wp-admin',   // WordPress管理ディレクトリ
-            ABSPATH . 'wp-includes', // WordPressコアファイル
-        ];
-
-        // wp-contentディレクトリ内の危険な場所も追加
-        if ( defined( 'WP_CONTENT_DIR' ) ) {
-            $dangerous_target_directories[] = WP_CONTENT_DIR . '/plugins';     // プラグインディレクトリ
-            $dangerous_target_directories[] = WP_CONTENT_DIR . '/themes';      // テーマディレクトリ
-            $dangerous_target_directories[] = WP_CONTENT_DIR . '/mu-plugins'; // Must-useプラグイン
-        }
-
-        // シンボリックリンク攻撃の検出
-        if ( is_link( $target_directory ) ) {
-            error_log( 'BF Secret File Downloader: シンボリックリンク攻撃を検出: ' . $target_directory );
-            return false;
-        }
-
-        // ターゲットディレクトリが危険な場合は即座に拒否（シンボリックリンク解決前と後の両方）
-        $check_paths = [ $target_directory ]; // 元のパス
-        $real_target_check = realpath( $target_directory );
-        if ( $real_target_check !== false && $real_target_check !== $target_directory ) {
-            $check_paths[] = $real_target_check; // 解決されたパス
-        }
-
-        foreach ( $check_paths as $check_path ) {
-            foreach ( $dangerous_target_directories as $dangerous_dir ) {
-                $real_dangerous = realpath( $dangerous_dir );
-
-                // 元のパスと解決されたパスの両方をチェック
-                $paths_to_check = [ $dangerous_dir ];
-                if ( $real_dangerous !== false && $real_dangerous !== $dangerous_dir ) {
-                    $paths_to_check[] = $real_dangerous;
-                }
-
-                foreach ( $paths_to_check as $dangerous_path ) {
-                    if ( $check_path === $dangerous_path ||
-                         strpos( $check_path, $dangerous_path . DIRECTORY_SEPARATOR ) === 0 ) {
-
-                        // ログに記録（本番環境では削除推奨）
-                        error_log( 'BF Secret File Downloader: 危険なターゲットディレクトリが設定されています: ' . $target_directory . ' (解決先: ' . $check_path . ' -> ' . $dangerous_path . ')' );
-
-                        return false;
-                    }
-                }
-            }
-        }
-
-        $real_target_directory = realpath( $target_directory );
-        if ( $real_target_directory === false ) {
-            return false;
-        }
-
-        // 新しいセキュリティチェック: パス内にWordPressの機密ファイルやディレクトリが含まれていないかチェック
-        if ( ! DirectorySecurity::is_path_safe_from_wordpress_secrets( $real_path ) ) {
-            error_log( 'BF Secret File Downloader: パス内にWordPressの機密ファイルやディレクトリが検出されました: ' . $real_path );
-            return false;
-        }
-
-        // 対象ディレクトリまたはそのサブディレクトリのみ許可
-        return strpos( $real_path, $real_target_directory ) === 0;
-    }
-
 
     /**
      * ダウンロードログを記録します

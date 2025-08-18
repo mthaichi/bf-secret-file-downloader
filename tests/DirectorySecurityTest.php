@@ -179,42 +179,6 @@ class DirectorySecurityTest extends \BF_SFD_TestCase {
         $this->assertNotEmpty( $dangerous_dirs );
     }
 
-    /**
-     * Test is_dangerous_directory method
-     */
-    public function test_is_dangerous_directory() {
-        // Mock WordPress constants
-        if ( ! defined( 'ABSPATH' ) ) {
-            define( 'ABSPATH', '/var/www/html/' );
-        }
-        if ( ! defined( 'WP_CONTENT_DIR' ) ) {
-            define( 'WP_CONTENT_DIR', '/var/www/html/wp-content' );
-        }
-
-        // Test with empty path
-        $this->assertFalse( DirectorySecurity::is_dangerous_directory( '' ) );
-
-        // Test with system dangerous directories
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( '/' ) );
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( '/etc' ) );
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( '/usr' ) );
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( '/var' ) );
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( '/root' ) );
-
-        // Test with WordPress dangerous directories
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( ABSPATH . 'wp-admin' ) );
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( ABSPATH . 'wp-includes' ) );
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( WP_CONTENT_DIR . '/plugins' ) );
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( WP_CONTENT_DIR . '/themes' ) );
-
-        // Test with subdirectories of dangerous directories
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( '/etc/passwd' ) );
-        $this->assertTrue( DirectorySecurity::is_dangerous_directory( '/usr/bin/bash' ) );
-
-        // Test with safe directories
-        $this->assertFalse( DirectorySecurity::is_dangerous_directory( '/safe/directory' ) );
-        $this->assertFalse( DirectorySecurity::is_dangerous_directory( '/home/user/documents' ) );
-    }
 
     /**
      * Test check_directory_safety method
@@ -400,33 +364,6 @@ class DirectorySecurityTest extends \BF_SFD_TestCase {
         }
     }
 
-    /**
-     * Test check_ajax_browse_directory_security method
-     */
-    public function test_check_ajax_browse_directory_security() {
-        // Mock WordPress constants
-        if ( ! defined( 'ABSPATH' ) ) {
-            define( 'ABSPATH', '/var/www/html/' );
-        }
-        if ( ! defined( 'WP_CONTENT_DIR' ) ) {
-            define( 'WP_CONTENT_DIR', '/var/www/html/wp-content' );
-        }
-
-        // Test with empty path (should default to ABSPATH)
-        $result = DirectorySecurity::check_ajax_browse_directory_security( '' );
-        $this->assertArrayHasKey( 'allowed', $result );
-        $this->assertArrayHasKey( 'error_message', $result );
-
-        // Test with dangerous system directory
-        $result = DirectorySecurity::check_ajax_browse_directory_security( '/etc' );
-        $this->assertFalse( $result['allowed'] );
-        $this->assertStringContainsString( 'Access denied', $result['error_message'] );
-
-        // Test with non-existent directory
-        $result = DirectorySecurity::check_ajax_browse_directory_security( '/non/existent/path' );
-        $this->assertFalse( $result['allowed'] );
-        $this->assertStringContainsString( 'does not exist', $result['error_message'] );
-    }
 
     /**
      * Test check_ajax_create_directory_security method
@@ -474,19 +411,13 @@ class DirectorySecurityTest extends \BF_SFD_TestCase {
         // Test null and invalid inputs
         $this->assertFalse( DirectorySecurity::check_wordpress_danger( null ) );
         $this->assertFalse( DirectorySecurity::is_wordpress_root_directory( null ) );
-        $this->assertFalse( DirectorySecurity::is_dangerous_directory( null ) );
 
         // Test non-string inputs (should be handled gracefully)
         $this->assertFalse( DirectorySecurity::check_wordpress_danger( 123 ) );
         $this->assertFalse( DirectorySecurity::is_wordpress_root_directory( 123 ) );
-        $this->assertFalse( DirectorySecurity::is_dangerous_directory( 123 ) );
 
         // Test very long paths
         $long_path = str_repeat( '/very/long/path', 100 );
         $this->assertFalse( DirectorySecurity::check_wordpress_danger( $long_path ) );
-        
-        // Test paths with special characters
-        $special_path = '/path/with spaces/and-symbols_123';
-        $this->assertFalse( DirectorySecurity::is_dangerous_directory( $special_path ) );
     }
 }
