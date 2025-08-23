@@ -830,7 +830,7 @@ class FileListPage {
         $files = $this->get_files( $full_path, $relative_path, $page, $sort_by, $sort_order );
         $total_pages = $this->get_total_pages( $full_path );
 
-                // ファイルデータにフォーマット済みサイズとタイプクラスを追加
+        // ファイルデータにフォーマット済みサイズとタイプクラスを追加
         $formatted_files = array();
         foreach ( $files as $file ) {
             $formatted_file = $file;
