@@ -55,7 +55,6 @@ class FileListPageTest extends \BF_SFD_TestCase {
         WP_Mock::expectActionAdded( 'admin_enqueue_scripts', array( $this->file_list_page, 'enqueue_admin_scripts' ) );
 
         $this->file_list_page->init();
-
         $this->assertConditionsMet();
     }
 
@@ -123,9 +122,9 @@ class FileListPageTest extends \BF_SFD_TestCase {
         ];
 
         foreach ( $methods as $method ) {
-            $this->assertTrue( 
-                method_exists( $this->file_list_page, $method ), 
-                "Method {$method} should exist" 
+            $this->assertTrue(
+                method_exists( $this->file_list_page, $method ),
+                "Method {$method} should exist"
             );
         }
     }

@@ -7,6 +7,7 @@
 
 namespace Breadfish\SecretFileDownloader;
 
+use Breadfish\SecretFileDownloader\SecurityHelper;
 
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
@@ -53,16 +54,16 @@ class FrontEnd {
         $download_flag = sanitize_text_field( $_GET['dflag'] ?? 'download' );
 
         // ベースディレクトリを取得
-        $base_directory = bf_secret_file_downloader_get_secure_directory();
+        $base_directory = \Breadfish\SecretFileDownloader\DirectoryManager::get_secure_directory();
         if ( empty( $base_directory ) ) {
             wp_die( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ), 500 );
         }
 
         // フルパスを構築
-        $full_path = bf_secret_file_downloader_build_safe_path( $base_directory, $file_path );
+        $full_path = SecurityHelper::build_safe_path( $base_directory, $file_path );
 
         // セキュリティチェック：許可されたディレクトリのみ
-        if ( ! bf_secret_file_downloader_is_allowed_directory( dirname( $full_path ) ) ) {
+        if ( ! SecurityHelper::is_allowed_directory( dirname( $full_path ) ) ) {
             wp_die( __( 'このファイルへのアクセスは許可されていません。', 'bf-secret-file-downloader' ), 403 );
         }
 

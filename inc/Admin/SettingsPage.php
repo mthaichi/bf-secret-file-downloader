@@ -82,9 +82,23 @@ class SettingsPage {
 
         check_ajax_referer( 'bf_sfd_browse_nonce', 'nonce' );
 
-        // 設定を削除
-        delete_option( 'bf_sfd_target_directory' );
-        delete_option( 'bf_sfd_secure_directory_id' );
+        // ファイル削除オプションをチェック
+        $delete_files = isset( $_POST['delete_files'] ) && $_POST['delete_files'] === 'true';
+
+        // ディレクトリとファイルの処理
+        if ( $delete_files ) {
+            // ファイルも含めて完全削除
+            \Breadfish\SecretFileDownloader\DirectoryManager::remove_secure_directory( true );
+            $message = 'すべての設定とファイルがリセットされました。新しいセキュアディレクトリが作成されました。';
+        } else {
+            // 旧ディレクトリは残したまま新しいディレクトリを作成
+            $message = '設定がリセットされました。新しいセキュアディレクトリが作成され、旧ディレクトリのファイルは保持されています。';
+        }
+
+        // 新しいセキュアディレクトリを強制作成
+        \Breadfish\SecretFileDownloader\DirectoryManager::create_secure_directory( true );
+
+        // その他の設定を削除
         delete_option( 'bf_sfd_max_file_size' );
         delete_option( 'bf_sfd_auth_methods' );
         delete_option( 'bf_sfd_allowed_roles' );
@@ -93,7 +107,7 @@ class SettingsPage {
         // ディレクトリパスワードもクリア
         $this->clear_all_directory_passwords();
 
-        wp_send_json_success( array( 'message' => '設定がリセットされました。' ) );
+        wp_send_json_success( array( 'message' => $message ) );
     }
 
     /**
@@ -171,7 +185,7 @@ class SettingsPage {
      * @return string 対象ディレクトリ
      */
     private function get_target_directory() {
-        return bf_secret_file_downloader_get_secure_directory();
+        return \Breadfish\SecretFileDownloader\DirectoryManager::get_secure_directory();
     }
 
     /**

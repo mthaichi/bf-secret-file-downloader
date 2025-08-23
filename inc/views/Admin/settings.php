@@ -162,6 +162,18 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <p style="margin-bottom: 15px; color: #856404;">
                         <?php esc_html_e( 'このボタンをクリックすると、すべての設定が初期状態にリセットされます。この操作は取り消すことができません。', 'bf-secret-file-downloader' ); ?>
                     </p>
+                    
+                    <!-- ファイル削除オプション -->
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: inline-flex; align-items: center; color: #856404;">
+                            <input type="checkbox" id="bf-delete-files-on-reset" style="margin-right: 8px;">
+                            <?php esc_html_e( '対象ディレクトリ内のファイルも削除する', 'bf-secret-file-downloader' ); ?>
+                        </label>
+                        <p class="description" style="margin-top: 5px; margin-left: 24px; color: #6c757d; font-size: 13px;">
+                            <?php esc_html_e( 'チェックすると、セキュアディレクトリ内のすべてのファイルが削除されます。デフォルトでは設定のみリセットしてファイルは保持されます。', 'bf-secret-file-downloader' ); ?>
+                        </p>
+                    </div>
+                    
                     <button type="button" id="bf-reset-settings" class="button button-secondary" style="background-color: #dc3545; border-color: #dc3545; color: white;">
                         <?php esc_html_e( '設定をリセット', 'bf-secret-file-downloader' ); ?>
                     </button>
@@ -208,7 +220,12 @@ jQuery(document).ready(function($) {
 
     // 設定リセットボタンの制御
     $('#bf-reset-settings').on('click', function() {
-        if (confirm('<?php esc_html_e( "本当にすべての設定をリセットしますか？この操作は取り消すことができません。", "bf-secret-file-downloader" ); ?>')) {
+        var deleteFiles = $('#bf-delete-files-on-reset').is(':checked');
+        var confirmMessage = deleteFiles 
+            ? '<?php esc_html_e( "本当にすべての設定をリセットし、ファイルを削除しますか？この操作は取り消すことができません。", "bf-secret-file-downloader" ); ?>'
+            : '<?php esc_html_e( "本当にすべての設定をリセットしますか？この操作は取り消すことができません。", "bf-secret-file-downloader" ); ?>';
+            
+        if (confirm(confirmMessage)) {
             // ボタンを無効化してローディング状態に
             var $button = $(this);
             var originalText = $button.text();
@@ -219,7 +236,8 @@ jQuery(document).ready(function($) {
                 type: 'POST',
                 data: {
                     action: 'bf_sfd_reset_settings',
-                    nonce: '<?php echo esc_js( $nonce ); ?>'
+                    nonce: '<?php echo esc_js( $nonce ); ?>',
+                    delete_files: deleteFiles
                 },
                 success: function(response) {
                     if (response.success) {
