@@ -8,18 +8,20 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Manage and provide download functionality for files protected by Basic Authentication or located in private areas.
+Manage and provide download functionality for files in secure, auto-generated directories.
 
 == Description ==
 
-BF Secret File Downloader is a WordPress plugin that allows you to manage files located in directories protected by Basic Authentication or private areas. It provides comprehensive file management, directory management, and download functionality.
+BF Secret File Downloader is a WordPress plugin that automatically creates secure directories and allows you to manage files within them. The plugin creates protected storage areas automatically and provides comprehensive file management, directory management, and download functionality with advanced access control.
 
 = Features =
 
-* **File Management**: Browse and manage files in protected directories
+* **Automatic Secure Directory Creation**: System automatically creates protected directories with unique names
+* **File Management**: Browse, upload, and manage files in secure directories  
 * **Download Control**: Secure download functionality with access control
 * **Access Control**: Multiple authentication methods including WordPress login and simple password
-* **Directory Management**: Organize files in multiple protected directories
+* **Directory Management**: Organize files in automatically created protected directories
+* **Directory Recreation**: Ability to recreate secure directories when needed
 * **i18n Ready**: Translation ready with Japanese and English support
 
 = Authentication Methods =
@@ -34,27 +36,29 @@ BF Secret File Downloader is a WordPress plugin that allows you to manage files 
 * Member-only file downloads
 * Protected resource sharing
 * Secure file access for clients
+* Automatic secure storage creation
 
 == Installation ==
 
 1. Upload the plugin files to the `/wp-content/plugins/bf-secret-file-downloader` directory, or install the plugin through the WordPress plugins screen directly.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Use the Settings->BF Secret File Downloader screen to configure the plugin.
-4. Set up your protected directories and authentication methods.
+3. The plugin automatically creates a secure directory on activation.
+4. Use the Settings->BF Secret File Downloader screen to configure authentication methods.
+5. Access the File List page to start uploading and managing files in the secure directory.
 
 == Frequently Asked Questions ==
 
 = What file types are supported? =
 
-The plugin supports all common file types.
+The plugin supports most common file types including documents, images, archives, and media files. For security reasons, program code files are blocked, including PHP, JavaScript, Python, shell scripts, and other executable file types.
 
 = How secure is the download functionality? =
 
 The plugin implements multiple security layers including nonce verification, user authentication, and sanitized file paths to prevent unauthorized access.
 
-= Can I use this with Basic Authentication? =
+= How does the automatic directory creation work? =
 
-Yes, the plugin is specifically designed to work with directories protected by Basic Authentication or other server-level protections.
+The plugin automatically creates secure directories with unique names when activated. These directories are protected with index.php files to prevent direct access and have unique names for additional security.
 
 = Is it compatible with multisite? =
 
@@ -70,9 +74,11 @@ Currently, the plugin is designed for single-site installations. Multisite suppo
 
 = 1.0.0 =
 * Initial release
-* File management functionality
-* Download control with authentication
-* Multiple authentication methods
+* Automatic secure directory creation
+* File management functionality in protected directories
+* Upload and download control with authentication
+* Multiple authentication methods (WordPress login, simple password)
+* Directory recreation functionality
 * i18n support for Japanese and English
 
 == Upgrade Notice ==
@@ -84,11 +90,16 @@ Initial release of BF Secret File Downloader.
 
 This plugin implements several security measures:
 
+* Automatic secure directory creation with unique names
+* Protected directories with .htaccess and index.php files to prevent direct access
 * Nonce verification for all admin actions
 * Input sanitization and validation
 * Path traversal protection
 * Access control verification
 * Direct file access prevention
+* Program code file upload blocking (PHP, JS, Python, etc.)
+* Hidden file and dangerous file pattern filtering
+* Secure file upload and download handling
 
 == Support ==
 

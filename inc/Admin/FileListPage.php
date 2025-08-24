@@ -52,6 +52,7 @@ class FileListPage {
         add_action( 'wp_ajax_bf_sfd_set_directory_auth', array( $this, 'ajax_set_directory_auth' ) );
         add_action( 'wp_ajax_bf_sfd_get_directory_auth', array( $this, 'ajax_get_directory_auth' ) );
         add_action( 'wp_ajax_bf_sfd_get_global_auth', array( $this, 'ajax_get_global_auth' ) );
+        add_action( 'wp_ajax_bf_sfd_recreate_secure_directory', array( $this, 'ajax_recreate_secure_directory' ) );
 
         add_action( 'admin_post_nopriv_bf_sfd_file_download', array( $this, 'handle_file_download' ) );
         add_action( 'admin_post_bf_sfd_file_download', array( $this, 'handle_file_download' ) );
@@ -113,6 +114,7 @@ class FileListPage {
                 'file' => __( 'ファイル', 'bf-secret-file-downloader' ),
                 'accessDenied' => __( 'アクセス不可', 'bf-secret-file-downloader' ),
                 'noFilesFound' => __( 'ファイルまたはディレクトリが見つかりませんでした。', 'bf-secret-file-downloader' ),
+                /* translators: %d: number of items found */
                 'itemsFound' => __( '%d個のアイテムが見つかりました。', 'bf-secret-file-downloader' ),
                 'noItemsFound' => __( 'アイテムが見つかりませんでした。', 'bf-secret-file-downloader' ),
             ),
@@ -217,6 +219,7 @@ class FileListPage {
         $max_size = get_option( 'bf_sfd_max_file_size', 10 ) * 1024 * 1024; // MB to bytes
         if ( $uploaded_file['size'] > $max_size ) {
             wp_send_json_error( sprintf(
+                /* translators: %s: maximum file size in MB */
                 __( 'ファイルサイズが制限を超えています。（最大: %sMB）', 'bf-secret-file-downloader' ),
                 get_option( 'bf_sfd_max_file_size', 10 )
             ));
@@ -245,6 +248,7 @@ class FileListPage {
         if ( move_uploaded_file( $uploaded_file['tmp_name'], $target_file_path ) ) {
             // アップロード成功
             wp_send_json_success( array(
+                /* translators: %s: uploaded filename */
                 'message' => sprintf( __( '%s をアップロードしました。', 'bf-secret-file-downloader' ), $filename ),
                 'filename' => $filename,
                 'relative_path' => $relative_path
@@ -304,6 +308,7 @@ class FileListPage {
         // ディレクトリ作成
         if ( wp_mkdir_p( $new_directory_path ) ) {
             wp_send_json_success( array(
+                /* translators: %s: directory name */
                 'message' => sprintf( __( 'ディレクトリ「%s」を作成しました。', 'bf-secret-file-downloader' ), $directory_name ),
                 'new_directory' => $new_directory_path,
                 'parent_path' => $parent_path
@@ -370,6 +375,7 @@ class FileListPage {
                 }
 
                 wp_send_json_success( array(
+                    /* translators: %s: directory name */
                     'message' => sprintf( __( 'ディレクトリ「%s」を削除しました。', 'bf-secret-file-downloader' ), $filename ),
                     'deleted_path' => $relative_path,
                     'parent_path' => $parent_relative_path,
@@ -388,6 +394,7 @@ class FileListPage {
                 }
 
                 wp_send_json_success( array(
+                    /* translators: %s: filename */
                     'message' => sprintf( __( 'ファイル「%s」を削除しました。', 'bf-secret-file-downloader' ), $filename ),
                     'deleted_path' => $relative_path,
                     'parent_path' => $parent_relative_path,
@@ -519,6 +526,7 @@ class FileListPage {
         if ( count( $deleted_files ) > 0 && count( $failed_files ) === 0 ) {
             // 全て成功
             $message = sprintf(
+                /* translators: %d: number of deleted items */
                 _n(
                     '%d個のアイテムを削除しました。',
                     '%d個のアイテムを削除しました。',
@@ -532,7 +540,8 @@ class FileListPage {
         } elseif ( count( $deleted_files ) > 0 && count( $failed_files ) > 0 ) {
             // 一部成功
             $message = sprintf(
-                __( '%d個のアイテムを削除しました。%d個のアイテムで失敗しました。', 'bf-secret-file-downloader' ),
+                /* translators: 1: number of deleted items, 2: number of failed items */
+                __( '%1$d個のアイテムを削除しました。%2$d個のアイテムで失敗しました。', 'bf-secret-file-downloader' ),
                 count( $deleted_files ),
                 count( $failed_files )
             );
@@ -616,12 +625,14 @@ class FileListPage {
         $download_token = sanitize_text_field( $_GET['bf_download'] ?? '' );
 
         if ( empty( $download_token ) ) {
+            /* translators: Error message for invalid download token */
             wp_die( __( '無効なダウンロードトークンです。', 'bf-secret-file-downloader' ), 400 );
         }
 
         // トークンを検証
         $token_data = get_transient( 'bf_sfd_download_' . $download_token );
         if ( $token_data === false ) {
+            /* translators: Error message for invalid or expired download token */
             wp_die( __( 'ダウンロードトークンが無効または期限切れです。', 'bf-secret-file-downloader' ), 400 );
         }
 
@@ -630,17 +641,20 @@ class FileListPage {
 
         // トークンの有効期限をチェック
         if ( time() > $token_data['expires'] ) {
+            /* translators: Error message for expired download token */
             wp_die( __( 'ダウンロードトークンの有効期限が切れています。', 'bf-secret-file-downloader' ), 400 );
         }
 
         // ユーザー権限チェック
         if ( ! current_user_can( 'read' ) ) {
+            /* translators: Error message for insufficient download permissions */
             wp_die( __( 'ファイルをダウンロードする権限がありません。', 'bf-secret-file-downloader' ), 403 );
         }
 
         // ベースディレクトリを取得
         $base_directory = DirectoryManager::get_secure_directory();
         if ( empty( $base_directory ) ) {
+            /* translators: Error message for missing target directory */
             wp_die( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ), 500 );
         }
 
@@ -650,6 +664,7 @@ class FileListPage {
 
         // セキュリティチェック
         if ( ! SecurityHelper::is_allowed_directory( dirname( $full_path ) ) ) {
+            /* translators: Error message for unauthorized file download */
             wp_die( __( 'このファイルのダウンロードは許可されていません。', 'bf-secret-file-downloader' ), 403 );
         }
 
@@ -807,7 +822,7 @@ class FileListPage {
 
         // ベースディレクトリを取得
         $base_directory = DirectoryManager::get_secure_directory();
-        if ( empty( $base_directory ) ) {
+        if ( empty( $base_directory ) || ! is_dir( $base_directory ) ) {
             return array(
                 'files' => array(),
                 'total_files' => 0,
@@ -820,6 +835,8 @@ class FileListPage {
                 'files_per_page' => self::FILES_PER_PAGE,
                 'nonce' => wp_create_nonce( 'bf_sfd_file_list_nonce' ),
                 'target_directory_set' => false,
+                'secure_directory_exists' => false,
+                'secure_directory_path' => $base_directory,
                 'pagination_html' => '',
                 'current_path_writable' => false,
                 'max_file_size_mb' => get_option( 'bf_sfd_max_file_size', 10 ),
@@ -863,6 +880,7 @@ class FileListPage {
             'files_per_page' => self::FILES_PER_PAGE,
             'nonce' => wp_create_nonce( 'bf_sfd_file_list_nonce' ),
             'target_directory_set' => true,
+            'secure_directory_exists' => true,
             'pagination_html' => $this->render_pagination( $page, $total_pages, $relative_path, $sort_by, $sort_order ),
             'current_path_writable' => ! empty( $full_path ) && is_writable( $full_path ),
             'max_file_size_mb' => get_option( 'bf_sfd_max_file_size', 10 ),
@@ -1618,5 +1636,29 @@ class FileListPage {
         wp_send_json_success( $global_auth );
     }
 
+    /**
+     * セキュアディレクトリ再作成のAJAXハンドラ
+     */
+    public function ajax_recreate_secure_directory() {
+        // セキュリティチェック
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( 'Unauthorized' );
+        }
+
+        check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
+
+        // 新しいセキュアディレクトリを強制作成
+        $result = DirectoryManager::create_secure_directory( true );
+
+        if ( $result ) {
+            $new_directory = DirectoryManager::get_secure_directory();
+            wp_send_json_success( array(
+                'message' => __( '新しいセキュアディレクトリが作成されました。', 'bf-secret-file-downloader' ),
+                'directory' => $new_directory
+            ));
+        } else {
+            wp_send_json_error( __( 'セキュアディレクトリの作成に失敗しました。', 'bf-secret-file-downloader' ) );
+        }
+    }
 
 }

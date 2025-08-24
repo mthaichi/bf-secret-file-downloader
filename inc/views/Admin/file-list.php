@@ -38,19 +38,38 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <p><?php esc_html_e( '非公開ディレクトリにあるファイルを管理します。', 'bf-secret-file-downloader' ); ?></p>
         </div>
 
-        <?php if ( ! $target_directory_set ) : ?>
-            <div class="notice notice-warning">
+        <?php if ( ! $target_directory_set || ! $secure_directory_exists ) : ?>
+            <div class="notice notice-error">
                 <p>
-                    <?php esc_html_e( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ); ?>
-                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=bf-secret-file-downloader-settings' ) ); ?>">
-                                                  <?php esc_html_e( '設定ページ', 'bf-secret-file-downloader' ); ?>
-                    </a>
-                                          <?php esc_html_e( 'でディレクトリを指定してください。', 'bf-secret-file-downloader' ); ?>
+                    <strong><?php esc_html_e( 'セキュアディレクトリが存在しません', 'bf-secret-file-downloader' ); ?></strong>
+                </p>
+
+                <?php if ( ! empty( $secure_directory_path ) ) : ?>
+                <p>
+                    <strong><?php esc_html_e( 'パス:', 'bf-secret-file-downloader' ); ?></strong>
+                    <code style="background-color: #fff; padding: 3px 5px; margin-left: 5px; word-break: break-all;">
+                        <?php echo esc_html( $secure_directory_path ); ?>
+                    </code>
+                </p>
+                <?php endif; ?>
+
+                <p>
+                    <button type="button" id="bf-recreate-secure-directory" class="button button-primary">
+                        <?php esc_html_e( 'ディレクトリを作成', 'bf-secret-file-downloader' ); ?>
+                    </button>
+
+                    <?php if ( ! empty( $secure_directory_path ) ) : ?>
+                    <button type="button" onclick="location.reload();" class="button button-secondary" style="margin-left: 10px;">
+                        <?php esc_html_e( 'リロード', 'bf-secret-file-downloader' ); ?>
+                    </button>
+                    <?php endif; ?>
+
+                    <span id="bf-recreate-status" style="margin-left: 10px;"></span>
                 </p>
             </div>
         <?php endif; ?>
 
-        <?php if ( $target_directory_set ) : ?>
+        <?php if ( $target_directory_set && $secure_directory_exists ) : ?>
             <div class="bf-secret-file-downloader-content">
                 <!-- 現在のパス表示 -->
                 <div class="bf-secret-file-downloader-path">
@@ -136,7 +155,10 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <div class="drop-zone-content">
                                 <span class="dashicons dashicons-upload"></span>
                                 <p><strong><?php esc_html_e( 'ファイルをここにドラッグ＆ドロップ', 'bf-secret-file-downloader' ); ?></strong></p>
-                                <p><?php echo sprintf( __( '（最大: %sMB）', 'bf-secret-file-downloader' ), esc_html( $max_file_size_mb ) ); ?></p>
+                                <p><?php
+                                    /* translators: %s: maximum file size in MB */
+                                    echo sprintf( __( '（最大: %sMB）', 'bf-secret-file-downloader' ), esc_html( $max_file_size_mb ) );
+                                ?></p>
                                 <input type="file" id="file-input" multiple style="display: none;">
                             </div>
                             <div class="drop-zone-overlay" style="display: none;">
@@ -159,10 +181,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <p>
                         <?php
                         if ( $total_files > 0 ) {
-                            echo sprintf(
-                                __( '%d個のアイテムが見つかりました。', 'bf-secret-file-downloader' ),
-                                (int) $total_files
-                            );
+                            /* translators: %d: number of files found */
+                            echo sprintf( __( '%d個のアイテムが見つかりました。', 'bf-secret-file-downloader' ), (int) $total_files );
                         } else {
                             esc_html_e( 'アイテムが見つかりませんでした。', 'bf-secret-file-downloader' );
                         }
@@ -1206,7 +1226,10 @@ jQuery(document).ready(function($) {
         var strings = (typeof bfFileListData !== 'undefined' && bfFileListData.strings) ? bfFileListData.strings : {};
         $('.bf-secret-file-downloader-stats p').text(
             data.total_items > 0
-                ? (strings.itemsFound || '<?php echo esc_js( __( '%d個のアイテムが見つかりました。', 'bf-secret-file-downloader' ) ); ?>').replace('%d', data.total_items)
+                ? (strings.itemsFound || '<?php
+                    /* translators: %d: number of files found */
+                    echo esc_js( __( '%d個のアイテムが見つかりました。', 'bf-secret-file-downloader' ) );
+                ?>').replace('%d', data.total_items)
                 : (strings.noItemsFound || '<?php echo esc_js( __( 'アイテムが見つかりませんでした。', 'bf-secret-file-downloader' ) ); ?>')
         );
 
@@ -1597,8 +1620,12 @@ jQuery(document).ready(function($) {
 
     function deleteFile(filePath, fileName, fileType) {
         var confirmMessage = fileType === 'directory'
-            ? '<?php echo esc_js( __( 'ディレクトリ「%s」とその中身すべてを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>'
-            : '<?php echo esc_js( __( 'ファイル「%s」を削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>';
+            ? '<?php
+                /* translators: %s: directory name */
+                echo esc_js( __( 'ディレクトリ「%s」とその中身すべてを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>'
+            : '<?php
+                /* translators: %s: filename */
+                echo esc_js( __( 'ファイル「%s」を削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>';
 
         if (!confirm(confirmMessage.replace('%s', fileName))) {
             return;
@@ -1662,9 +1689,13 @@ jQuery(document).ready(function($) {
         // 確認メッセージ
         var confirmMessage;
         if (hasDirectories) {
-            confirmMessage = '<?php echo esc_js( __( '選択された%d個のアイテム（ディレクトリを含む）とその中身すべてを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>';
+            confirmMessage = '<?php
+                /* translators: %d: number of selected items */
+                echo esc_js( __( '選択された%d個のアイテム（ディレクトリを含む）とその中身すべてを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>';
         } else {
-            confirmMessage = '<?php echo esc_js( __( '選択された%d個のアイテムを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>';
+            confirmMessage = '<?php
+                /* translators: %d: number of selected items */
+                echo esc_js( __( '選択された%d個のアイテムを削除しますか？この操作は取り消せません。', 'bf-secret-file-downloader' ) ); ?>';
         }
 
         if (!confirm(confirmMessage.replace('%d', filePaths.length))) {
@@ -2375,6 +2406,42 @@ jQuery(document).ready(function($) {
     // 設定解除ボタンのイベントリスナー
     $(document).on('click', '#remove-auth-btn', function() {
         removeDirectoryAuth();
+    });
+
+    // セキュアディレクトリ再作成ボタンの処理
+    $('#bf-recreate-secure-directory').on('click', function() {
+        var $button = $(this);
+        var $status = $('#bf-recreate-status');
+
+        // ボタンを無効化
+        $button.prop('disabled', true).text('<?php esc_html_e( '作成中...', 'bf-secret-file-downloader' ); ?>');
+        $status.html('<span style="color: #0073aa;"><?php esc_html_e( '処理中...', 'bf-secret-file-downloader' ); ?></span>');
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'bf_sfd_recreate_secure_directory',
+                nonce: '<?php echo esc_js( $nonce ); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    $status.html('<span style="color: #46b450;">' + response.data.message + '</span>');
+
+                    // 3秒後にページをリロード
+                    setTimeout(function() {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    $status.html('<span style="color: #dc3232;">' + response.data + '</span>');
+                    $button.prop('disabled', false).text('<?php esc_html_e( 'ディレクトリを作成', 'bf-secret-file-downloader' ); ?>');
+                }
+            },
+            error: function(xhr, status, error) {
+                $status.html('<span style="color: #dc3232;"><?php esc_html_e( 'エラーが発生しました', 'bf-secret-file-downloader' ); ?>: ' + error + '</span>');
+                $button.prop('disabled', false).text('<?php esc_html_e( 'セキュアディレクトリを自動作成', 'bf-secret-file-downloader' ); ?>');
+            }
+        });
     });
 
     // 初期データの表示（wp_localize_scriptで渡されたデータを使用）
