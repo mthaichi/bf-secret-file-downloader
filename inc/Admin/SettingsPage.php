@@ -237,7 +237,7 @@ class SettingsPage {
         $sanitized_value = sanitize_text_field( $value );
 
         // 簡易認証が有効かチェック
-        $auth_methods = $_POST['bf_sfd_auth_methods'] ?? array();
+        $auth_methods = array_map( 'sanitize_text_field', wp_unslash( $_POST['bf_sfd_auth_methods'] ?? array() ) );
         if ( is_array( $auth_methods ) && in_array( 'simple_auth', $auth_methods ) ) {
             // 簡易認証が有効でパスワードが空の場合
             if ( empty( $sanitized_value ) ) {
@@ -280,7 +280,10 @@ class SettingsPage {
             return array();
         }
 
-        return array_intersect( $allowed_methods, $value );
+        // サニタイズ
+        $sanitized_value = array_map( 'sanitize_text_field', $value );
+
+        return array_intersect( $allowed_methods, $sanitized_value );
     }
 
     /**
@@ -297,7 +300,10 @@ class SettingsPage {
             return array();
         }
 
-        return array_intersect( $allowed_roles, $value );
+        // サニタイズ
+        $sanitized_value = array_map( 'sanitize_text_field', $value );
+
+        return array_intersect( $allowed_roles, $sanitized_value );
     }
 
 

@@ -40,7 +40,6 @@ class DirectoryManager {
 
         // ディレクトリを作成
         if ( ! wp_mkdir_p( $secure_dir ) ) {
-            error_log( 'BF Secret File Downloader: Failed to create secure directory: ' . $secure_dir );
             return false;
         }
 
@@ -56,7 +55,6 @@ class DirectoryManager {
         update_option( 'bf_sfd_secure_directory_id', $random_id );
         update_option( 'bf_sfd_target_directory', $secure_dir );
 
-        error_log( 'BF Secret File Downloader: Secure directory created: ' . $secure_dir );
         return true;
     }
 

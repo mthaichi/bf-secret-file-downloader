@@ -64,8 +64,7 @@ class SecurityHelper {
 
         // シンボリックリンクの場合は拒否
         if ( is_link( $path ) ) {
-            error_log( 'BF Secret File Downloader: シンボリックリンクへのアクセス試行を検出: ' . $path );
-            return false;
+             return false;
         }
 
         // 基本となる対象ディレクトリを取得
@@ -94,7 +93,7 @@ class SecurityHelper {
         // ディレクトリが許可されているかチェック
         // target_pathがディレクトリの場合はそのまま、ファイルの場合はdirname()を使用
         $check_dir = is_dir( $target_path ) ? $target_path : dirname( $target_path );
-        
+
         if ( ! self::is_allowed_directory( $check_dir ) ) {
             return array( 'allowed' => false, 'error_message' => 'アップロード先ディレクトリへのアクセスが許可されていません。' );
         }

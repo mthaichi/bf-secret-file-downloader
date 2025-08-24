@@ -1,7 +1,7 @@
 === BF Secret File Downloader ===
 Contributors: breadfish
-Tags: download, basic auth, private files, file manager, security
-Requires at least: 5.0
+Tags: download, private files, file manager, security
+Requires at least: 6.8
 Tested up to: 6.8
 Stable tag: 1.0.0
 Requires PHP: 7.4
@@ -28,23 +28,19 @@ BF Secret File Downloader is a WordPress plugin that automatically creates secur
 
 * WordPress user login (with role-based access)
 * Simple password protection
-* Combined authentication options
 
 = Use Cases =
 
 * Private document distribution
 * Member-only file downloads
 * Protected resource sharing
-* Secure file access for clients
-* Automatic secure storage creation
 
 == Installation ==
 
-1. Upload the plugin files to the `/wp-content/plugins/bf-secret-file-downloader` directory, or install the plugin through the WordPress plugins screen directly.
-2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. The plugin automatically creates a secure directory on activation.
-4. Use the Settings->BF Secret File Downloader screen to configure authentication methods.
-5. Access the File List page to start uploading and managing files in the secure directory.
+1. Activate the plugin through the 'Plugins' screen in WordPress.
+2. The plugin automatically creates a secure directory on activation.
+3. Use the Settings->BF Secret File Downloader screen to configure authentication methods.
+4. Access the File List page to start uploading and managing files in the secure directory.
 
 == Frequently Asked Questions ==
 
@@ -58,7 +54,7 @@ The plugin implements multiple security layers including nonce verification, use
 
 = How does the automatic directory creation work? =
 
-The plugin automatically creates secure directories with unique names when activated. These directories are protected with index.php files to prevent direct access and have unique names for additional security.
+The plugin automatically creates secure directories with unique names when activated. These directories are protected with .htaccess and index.php files to prevent direct access and have unique names for additional security.
 
 = Is it compatible with multisite? =
 
