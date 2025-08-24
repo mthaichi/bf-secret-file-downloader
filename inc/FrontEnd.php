@@ -45,18 +45,18 @@ class FrontEnd {
      */
     public function handle_file_download() {
         // pathパラメータが存在するかチェック（ダウンロード要求の確認）
-        $file_path = sanitize_text_field( $_GET['path'] ?? '' );
+        $file_path = sanitize_text_field( wp_unslash( $_GET['path'] ?? '' ) );
         if ( empty( $file_path ) ) {
             return; // ダウンロード要求でない場合は処理を終了
         }
 
         // ダウンロードフラグを取得（デフォルトはダウンロード）
-        $download_flag = sanitize_text_field( $_GET['dflag'] ?? 'download' );
+        $download_flag = sanitize_text_field( wp_unslash( $_GET['dflag'] ?? 'download' ) );
 
         // ベースディレクトリを取得
         $base_directory = \Breadfish\SecretFileDownloader\DirectoryManager::get_secure_directory();
         if ( empty( $base_directory ) ) {
-            wp_die( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ), 500 );
+            wp_die( esc_html( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ) ), 500 );
         }
 
         // フルパスを構築
@@ -64,17 +64,17 @@ class FrontEnd {
 
         // セキュリティチェック：許可されたディレクトリのみ
         if ( ! SecurityHelper::is_allowed_directory( dirname( $full_path ) ) ) {
-            wp_die( __( 'このファイルへのアクセスは許可されていません。', 'bf-secret-file-downloader' ), 403 );
+            wp_die( esc_html( __( 'このファイルへのアクセスは許可されていません。', 'bf-secret-file-downloader' ) ), 403 );
         }
 
         // ファイル存在チェック
         if ( ! file_exists( $full_path ) || ! is_file( $full_path ) ) {
-            wp_die( __( '指定されたファイルが見つかりません。', 'bf-secret-file-downloader' ), 404 );
+            wp_die( esc_html( __( '指定されたファイルが見つかりません。', 'bf-secret-file-downloader' ) ), 404 );
         }
 
         // 読み込み権限チェック
         if ( ! is_readable( $full_path ) ) {
-            wp_die( __( 'このファイルを読み取る権限がありません。', 'bf-secret-file-downloader' ), 403 );
+            wp_die( esc_html( __( 'このファイルを読み取る権限がありません。', 'bf-secret-file-downloader' ) ), 403 );
         }
 
         // 認証チェック
@@ -112,7 +112,12 @@ class FrontEnd {
             }
 
             // ファイルを出力
-            readfile( $full_path );
+            global $wp_filesystem;
+            if ( empty( $wp_filesystem ) ) {
+                require_once ABSPATH . '/wp-admin/includes/file.php';
+                WP_Filesystem();
+            }
+            $wp_filesystem->get_contents( $full_path );
         }
 
         exit;
@@ -131,7 +136,7 @@ class FrontEnd {
             'filename' => $filename,
             'user_id' => get_current_user_id(),
             'ip_address' => $this->get_client_ip(),
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
+            'user_agent' => sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ?? '' ) )
         );
 
         // ログをデータベースに保存（簡易版）
@@ -156,7 +161,7 @@ class FrontEnd {
 
         foreach ( $ip_keys as $key ) {
             if ( array_key_exists( $key, $_SERVER ) === true ) {
-                foreach ( explode( ',', $_SERVER[ $key ] ) as $ip ) {
+                foreach ( explode( ',', sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) ) ) as $ip ) {
                     $ip = trim( $ip );
                     if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) !== false ) {
                         return $ip;
@@ -165,7 +170,7 @@ class FrontEnd {
             }
         }
 
-        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        return sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0' ) );
     }
 
         /**
@@ -174,8 +179,13 @@ class FrontEnd {
      * @return bool 認証成功フラグ
      */
     private function check_authentication() {
+        // Nonce検証（POSTリクエストの場合）
+        if ( isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST' && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'bf_sfd_auth' ) ) {
+            return false;
+        }
+
         // 現在のファイルパスからディレクトリパスを取得
-        $file_path = sanitize_text_field( $_GET['path'] ?? '' );
+        $file_path = sanitize_text_field( wp_unslash( $_GET['path'] ?? '' ) );
         $directory_path = dirname( $file_path );
         if ( $directory_path === '.' ) {
             $directory_path = '';
@@ -312,7 +322,7 @@ class FrontEnd {
 
         // POSTで簡易認証パスワードが送信された場合
         if ( isset( $_POST['simple_auth_password'] ) ) {
-            $submitted_password = sanitize_text_field( $_POST['simple_auth_password'] );
+            $submitted_password = sanitize_text_field( wp_unslash( $_POST['simple_auth_password'] ) );
 
             if ( ! empty( $directory_password ) && $submitted_password === $directory_password ) {
                 // セッションに認証情報を保存
@@ -368,7 +378,7 @@ class FrontEnd {
 
         // POSTで簡易認証パスワードが送信された場合
         if ( isset( $_POST['simple_auth_password'] ) ) {
-            $submitted_password = sanitize_text_field( $_POST['simple_auth_password'] );
+            $submitted_password = sanitize_text_field( wp_unslash( $_POST['simple_auth_password'] ) );
             $stored_password = get_option( 'bf_sfd_simple_auth_password', '' );
 
             if ( ! empty( $stored_password ) && $submitted_password === $stored_password ) {
@@ -437,73 +447,17 @@ class FrontEnd {
         return ! empty( $directory_passwords[ $relative_path ] );
     }
 
-    /**
-     * ディレクトリへのアクセス権限を検証します
-     *
-     * @param string $relative_path 相対パス
-     * @return bool アクセス許可フラグ
-     */
-    private function verify_directory_access( $relative_path ) {
-        // セッションから認証済みかチェック
-        if ( isset( $_SESSION['bf_sfd_auth'][ $relative_path ] ) ) {
-            return true;
-        }
 
-        // POSTでパスワードが送信された場合
-        if ( isset( $_POST['password'] ) && isset( $_POST['directory_path'] ) ) {
-            $submitted_password = sanitize_text_field( $_POST['password'] );
-            $submitted_path = sanitize_text_field( $_POST['directory_path'] );
 
-            if ( $submitted_path === $relative_path && $this->verify_directory_password( $relative_path, $submitted_password ) ) {
-                // セッションに認証情報を保存
-                if ( ! isset( $_SESSION['bf_sfd_auth'] ) ) {
-                    $_SESSION['bf_sfd_auth'] = array();
-                }
-                $_SESSION['bf_sfd_auth'][ $relative_path ] = true;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * ディレクトリのパスワードを検証します
-     *
-     * @param string $relative_path 相対パス
-     * @param string $password 入力されたパスワード
-     * @return bool パスワード一致フラグ
-     */
-    private function verify_directory_password( $relative_path, $password ) {
-        $directory_passwords = get_option( 'bf_sfd_directory_passwords', array() );
-
-        if ( ! isset( $directory_passwords[ $relative_path ] ) ) {
-            return false;
-        }
-
-        $password_data = $directory_passwords[ $relative_path ];
-
-        // 新しい配列形式
-        if ( is_array( $password_data ) && isset( $password_data['hash'] ) ) {
-            return wp_check_password( $password, $password_data['hash'] );
-        }
-
-        // 古い文字列形式（後方互換性）
-        if ( is_string( $password_data ) ) {
-            return wp_check_password( $password, $password_data );
-        }
-
-        return false;
-    }
 
     /**
      * 認証フォームを表示します
      */
     private function show_authentication_form() {
-        $current_url = ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http' ) . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        $current_url = ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http' ) . '://' . ( isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' );
 
         // 現在のファイルパスからディレクトリパスを取得
-        $file_path = sanitize_text_field( $_GET['path'] ?? '' );
+        $file_path = sanitize_text_field( wp_unslash( $_GET['path'] ?? '' ) );
         $directory_path = dirname( $file_path );
         if ( $directory_path === '.' ) {
             $directory_path = '';
@@ -549,6 +503,7 @@ class FrontEnd {
 
                 <?php if ( in_array( 'simple_auth', $auth_methods ) ): ?>
                 <form method="post" action="<?php echo esc_url( $current_url ); ?>">
+                    <?php wp_nonce_field( 'bf_sfd_auth', '_wpnonce' ); ?>
                     <div class="form-group">
                         <label for="simple_auth_password"><?php echo esc_html( __( '簡易認証パスワード', 'bf-secret-file-downloader' ) ); ?></label>
                         <input type="password" id="simple_auth_password" name="simple_auth_password" required>
@@ -578,7 +533,7 @@ class FrontEnd {
      * @param string $relative_path 相対パス
      */
     private function show_password_form( $relative_path ) {
-        $current_url = ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http' ) . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        $current_url = ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http' ) . '://' . ( isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' );
 
         ?>
         <!DOCTYPE html>
@@ -603,6 +558,7 @@ class FrontEnd {
             <div class="auth-container">
                 <h2 class="auth-title"><?php echo esc_html( __( '認証が必要です', 'bf-secret-file-downloader' ) ); ?></h2>
                 <form method="post" action="<?php echo esc_url( $current_url ); ?>">
+                    <?php wp_nonce_field( 'bf_sfd_auth', '_wpnonce' ); ?>
                     <input type="hidden" name="directory_path" value="<?php echo esc_attr( $relative_path ); ?>">
                     <div class="form-group">
                         <label for="password"><?php echo esc_html( __( 'パスワードを入力してください', 'bf-secret-file-downloader' ) ); ?></label>

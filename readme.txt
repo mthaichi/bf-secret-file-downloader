@@ -2,7 +2,7 @@
 Contributors: breadfish
 Tags: download, basic auth, private files, file manager, security
 Requires at least: 5.0
-Tested up to: 6.4
+Tested up to: 6.8
 Stable tag: 1.0.0
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -17,7 +17,7 @@ BF Secret File Downloader is a WordPress plugin that automatically creates secur
 = Features =
 
 * **Automatic Secure Directory Creation**: System automatically creates protected directories with unique names
-* **File Management**: Browse, upload, and manage files in secure directories  
+* **File Management**: Browse, upload, and manage files in secure directories
 * **Download Control**: Secure download functionality with access control
 * **Access Control**: Multiple authentication methods including WordPress login and simple password
 * **Directory Management**: Organize files in automatically created protected directories

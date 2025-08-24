@@ -1,4 +1,4 @@
-# BF Secret File Downloader - テスト環境
+# BF Secret File Downloader
 
 このプラグインは、`@wordpress/env`を使用したDockerベースのPHPUnitテスト環境が設定されています。
 

@@ -7,11 +7,11 @@ const { execSync } = require('child_process');
 const includeFiles = [
   'bf-secret-file-downloader.php',
   'composer.json',
-  'README.md',
   'inc/',
   'languages/',
   'assets/',
-  'vendor/'
+  'vendor/',
+  'readme.txt'
 ];
 
 function createRelease() {

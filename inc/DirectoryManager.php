@@ -160,7 +160,7 @@ class DirectoryManager {
      */
     public static function remove_secure_directory( $delete_files = true ) {
         $secure_dir = self::get_secure_directory();
-        
+
         if ( $delete_files && ! empty( $secure_dir ) && is_dir( $secure_dir ) ) {
             // ディレクトリ内のファイルを削除
             $files = scandir( $secure_dir );
@@ -168,13 +168,18 @@ class DirectoryManager {
                 if ( $file !== '.' && $file !== '..' ) {
                     $file_path = $secure_dir . '/' . $file;
                     if ( is_file( $file_path ) ) {
-                        unlink( $file_path );
+                        wp_delete_file( $file_path );
                     }
                 }
             }
-            
+
             // ディレクトリを削除
-            rmdir( $secure_dir );
+            global $wp_filesystem;
+            if ( empty( $wp_filesystem ) ) {
+                require_once ABSPATH . '/wp-admin/includes/file.php';
+                WP_Filesystem();
+            }
+            $wp_filesystem->rmdir( $secure_dir );
         }
 
         // オプションを削除
@@ -191,7 +196,7 @@ class DirectoryManager {
      */
     public static function clear_user_files() {
         $secure_dir = self::get_secure_directory();
-        
+
         if ( empty( $secure_dir ) || ! is_dir( $secure_dir ) ) {
             return false;
         }
@@ -203,7 +208,7 @@ class DirectoryManager {
             if ( ! in_array( $file, $protected_files ) ) {
                 $file_path = $secure_dir . '/' . $file;
                 if ( is_file( $file_path ) ) {
-                    unlink( $file_path );
+                    wp_delete_file( $file_path );
                 }
             }
         }

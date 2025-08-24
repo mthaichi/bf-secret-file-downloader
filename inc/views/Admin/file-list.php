@@ -157,7 +157,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 <p><strong><?php esc_html_e( 'ファイルをここにドラッグ＆ドロップ', 'bf-secret-file-downloader' ); ?></strong></p>
                                 <p><?php
                                     /* translators: %s: maximum file size in MB */
-                                    echo sprintf( __( '（最大: %sMB）', 'bf-secret-file-downloader' ), esc_html( $max_file_size_mb ) );
+                                    echo esc_html( sprintf( __( '（最大: %sMB）', 'bf-secret-file-downloader' ), $max_file_size_mb ) );
                                 ?></p>
                                 <input type="file" id="file-input" multiple style="display: none;">
                             </div>
@@ -182,7 +182,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <?php
                         if ( $total_files > 0 ) {
                             /* translators: %d: number of files found */
-                            echo sprintf( __( '%d個のアイテムが見つかりました。', 'bf-secret-file-downloader' ), (int) $total_files );
+                            echo esc_html( sprintf( __( '%d個のアイテムが見つかりました。', 'bf-secret-file-downloader' ), (int) $total_files ) );
                         } else {
                             esc_html_e( 'アイテムが見つかりませんでした。', 'bf-secret-file-downloader' );
                         }
@@ -204,7 +204,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     </div>
                     <?php if ( $total_pages > 1 ) : ?>
                         <div class="tablenav-pages">
-                            <?php echo $pagination_html; ?>
+                            <?php echo wp_kses_post( $pagination_html ); ?>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -251,7 +251,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <?php if ( $total_pages > 1 ) : ?>
                     <div class="tablenav bottom">
                         <div class="tablenav-pages">
-                            <?php echo $pagination_html; ?>
+                            <?php echo wp_kses_post( $pagination_html ); ?>
                         </div>
                     </div>
                 <?php endif; ?>
