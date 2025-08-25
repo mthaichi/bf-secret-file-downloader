@@ -56,11 +56,14 @@ class Admin {
      * 管理画面メニューを追加します
      */
     public function add_admin_menu() {
+        // 設定からメニュータイトルを取得
+        $menu_title = get_option( 'bf_sfd_menu_title', __( 'BF Secret File Downloader', 'bf-secret-file-downloader' ) );
+        
         // メインメニューページを追加
         add_menu_page(
-                    __( 'BF Secret File Downloader', 'bf-secret-file-downloader' ), // ページタイトル
-        __( 'BF Secret File Downloader', 'bf-secret-file-downloader' ), // メニュータイトル
-            'manage_options', // 権限
+            $menu_title, // ページタイトル
+            $menu_title, // メニュータイトル
+            'edit_posts', // 権限（編集者以上に許可）
             $this->file_list_page::PAGE_SLUG, // メニュースラッグ
             array( $this->file_list_page, 'render' ), // コールバック関数
             'dashicons-lock', // アイコン
@@ -72,7 +75,7 @@ class Admin {
             $this->file_list_page::PAGE_SLUG, // 親メニューのスラッグ
             $this->file_list_page->get_page_title(), // ページタイトル
             $this->file_list_page->get_menu_title(), // メニュータイトル
-            'manage_options', // 権限
+            'edit_posts', // 権限（編集者以上に許可）
             $this->file_list_page::PAGE_SLUG, // メニュースラッグ（メインページと同じ）
             array( $this->file_list_page, 'render' ) // コールバック関数
         );

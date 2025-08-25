@@ -9,6 +9,9 @@
  * @var int      $total_files             ファイル総数
  * @var string   $upload_limit            アップロード制限
  * @var bool     $current_user_can_upload アップロード権限
+ * @var bool     $current_user_can_delete 削除権限
+ * @var bool     $current_user_can_create_dir ディレクトリ作成権限
+ * @var bool     $current_user_can_manage_auth 認証管理権限
  * @var string   $current_path            現在のパス
  * @var int      $page                    現在のページ
  * @var int      $total_pages             総ページ数
@@ -27,6 +30,17 @@
 // セキュリティチェック：直接アクセスを防ぐ
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
+}
+
+// 変数が存在しない場合のフォールバック設定
+if ( ! isset( $current_user_can_delete ) ) {
+    $current_user_can_delete = current_user_can( 'manage_options' );
+}
+if ( ! isset( $current_user_can_create_dir ) ) {
+    $current_user_can_create_dir = current_user_can( 'manage_options' );
+}
+if ( ! isset( $current_user_can_manage_auth ) ) {
+    $current_user_can_manage_auth = current_user_can( 'manage_options' );
 }
 ?>
 
@@ -196,7 +210,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( '一括操作を選択', 'bf-secret-file-downloader' ); ?></label>
                         <select name="action" id="bulk-action-selector-top">
                             <option value="-1"><?php esc_html_e( '一括操作', 'bf-secret-file-downloader' ); ?></option>
-                            <?php if ( current_user_can( 'delete_posts' ) ) : ?>
+                            <?php if ( $current_user_can_delete ) : ?>
                                 <option value="delete"><?php esc_html_e( '削除', 'bf-secret-file-downloader' ); ?></option>
                             <?php endif; ?>
                         </select>
@@ -1082,7 +1096,12 @@ jQuery(document).ready(function($) {
 
         if (file.type === 'directory') {
             if (file.readable) {
-                rowActions += '<span class="open"><a href="#" class="open-directory" data-path="' + $('<div>').text(file.path).html() + '">' + (strings.open || '<?php esc_html_e( '開く', 'bf-secret-file-downloader' ); ?>') + '</a> | </span>';
+                rowActions += '<span class="open"><a href="#" class="open-directory" data-path="' + $('<div>').text(file.path).html() + '">' + (strings.open || '<?php esc_html_e( '開く', 'bf-secret-file-downloader' ); ?>') + '</a>';
+                
+                if (file.can_delete) {
+                    rowActions += ' | ';
+                }
+                rowActions += '</span>';
             }
         } else {
             rowActions += '<span class="download"><a href="#" class="download-file-link" ' +
@@ -1090,16 +1109,20 @@ jQuery(document).ready(function($) {
                 'data-file-name="' + $('<div>').text(file.name).html() + '">' + (strings.download || '<?php esc_html_e( 'ダウンロード', 'bf-secret-file-downloader' ); ?>') + '</a> | </span>';
             rowActions += '<span class="copy-url"><a href="#" class="copy-url-link" ' +
                 'data-file-path="' + $('<div>').text(file.path).html() + '" ' +
-                'data-file-name="' + $('<div>').text(file.name).html() + '">' + (strings.copyUrl || '<?php esc_html_e( 'URLをコピー', 'bf-secret-file-downloader' ); ?>') + '</a>' +
-                '<?php if ( current_user_can( 'delete_posts' ) ) : ?> | <?php endif; ?></span>';
+                'data-file-name="' + $('<div>').text(file.name).html() + '">' + (strings.copyUrl || '<?php esc_html_e( 'URLをコピー', 'bf-secret-file-downloader' ); ?>') + '</a>';
+
+            if (file.can_delete) {
+                rowActions += ' | ';
+            }
+            rowActions += '</span>';
         }
 
-        <?php if ( current_user_can( 'delete_posts' ) ) : ?>
-        rowActions += '<span class="delete"><a href="#" class="delete-file-link" ' +
-            'data-file-path="' + $('<div>').text(file.path).html() + '" ' +
-            'data-file-name="' + $('<div>').text(file.name).html() + '" ' +
-            'data-file-type="' + $('<div>').text(file.type).html() + '">' + (strings.delete || '<?php esc_html_e( '削除', 'bf-secret-file-downloader' ); ?>') + '</a></span>';
-        <?php endif; ?>
+        if (file.can_delete) {
+            rowActions += '<span class="delete"><a href="#" class="delete-file-link" ' +
+                'data-file-path="' + $('<div>').text(file.path).html() + '" ' +
+                'data-file-name="' + $('<div>').text(file.name).html() + '" ' +
+                'data-file-type="' + $('<div>').text(file.type).html() + '">' + (strings.delete || '<?php esc_html_e( '削除', 'bf-secret-file-downloader' ); ?>') + '</a></span>';
+        }
 
         rowActions += '</div>';
         return rowActions;
@@ -1273,11 +1296,13 @@ jQuery(document).ready(function($) {
             '<div class="alignleft actions bulkactions">' +
             '<label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( '一括操作を選択', 'bf-secret-file-downloader' ); ?></label>' +
             '<select name="action" id="bulk-action-selector-top">' +
-            '<option value="-1"><?php esc_html_e( '一括操作', 'bf-secret-file-downloader' ); ?></option>' +
-            '<?php if ( current_user_can( 'delete_posts' ) ) : ?>' +
-            '<option value="delete"><?php esc_html_e( '削除', 'bf-secret-file-downloader' ); ?></option>' +
-            '<?php endif; ?>' +
-            '</select>' +
+            '<option value="-1"><?php esc_html_e( '一括操作', 'bf-secret-file-downloader' ); ?></option>';
+        
+        if (data.current_user_can_delete) {
+            topTablenav += '<option value="delete"><?php esc_html_e( '削除', 'bf-secret-file-downloader' ); ?></option>';
+        }
+        
+        topTablenav += '</select>' +
             '<input type="submit" id="doaction" class="button action" value="<?php esc_attr_e( '適用', 'bf-secret-file-downloader' ); ?>">' +
             '</div>';
 
@@ -1631,6 +1656,11 @@ jQuery(document).ready(function($) {
             return;
         }
 
+        // 削除処理中の表示を更新
+        var deleteLink = $('a[data-file-path="' + filePath + '"].delete-file-link');
+        var originalText = deleteLink.text();
+        deleteLink.text('<?php esc_html_e( '削除中...', 'bf-secret-file-downloader' ); ?>').prop('disabled', true).css('color', '#999');
+
         $.ajax({
             url: ajaxurl,
             type: 'POST',
@@ -1663,11 +1693,20 @@ jQuery(document).ready(function($) {
                     // ファイルリストを更新
                     navigateToDirectory(targetPath, 1);
                 } else {
-                    alert(response.data || '<?php esc_html_e( '削除に失敗しました。', 'bf-secret-file-downloader' ); ?>');
+                    var errorMsg = response.data || '<?php esc_html_e( 'ファイルの削除に失敗しました。', 'bf-secret-file-downloader' ); ?>';
+                    console.log('削除処理がサーバー側で失敗:', errorMsg);
+                    alert(errorMsg);
+                    
+                    // 失敗時に削除ボタンを元に戻す
+                    deleteLink.text(originalText).prop('disabled', false).css('color', '');
                 }
             },
-            error: function() {
-                alert('<?php esc_html_e( '通信エラーが発生しました。', 'bf-secret-file-downloader' ); ?>');
+            error: function(xhr, status, error) {
+                console.log('削除処理で通信エラーが発生:', {xhr: xhr, status: status, error: error});
+                alert('<?php esc_html_e( '削除処理で通信エラーが発生しました。再度お試しください。', 'bf-secret-file-downloader' ); ?>');
+                
+                // エラー時に削除ボタンを元に戻す
+                deleteLink.text(originalText).prop('disabled', false).css('color', '');
             }
         });
     }
@@ -1733,11 +1772,14 @@ jQuery(document).ready(function($) {
                     // ファイルリストを更新
                     navigateToDirectory(targetPath, 1);
                 } else {
-                    alert(response.data || '<?php esc_html_e( '一括削除に失敗しました。', 'bf-secret-file-downloader' ); ?>');
+                    var errorMsg = response.data || '<?php esc_html_e( '一括削除処理に失敗しました。', 'bf-secret-file-downloader' ); ?>';
+                    console.log('一括削除処理がサーバー側で失敗:', errorMsg);
+                    alert(errorMsg);
                 }
             },
-            error: function() {
-                alert('<?php esc_html_e( '通信エラーが発生しました。', 'bf-secret-file-downloader' ); ?>');
+            error: function(xhr, status, error) {
+                console.log('一括削除処理で通信エラーが発生:', {xhr: xhr, status: status, error: error});
+                alert('<?php esc_html_e( '一括削除処理で通信エラーが発生しました。再度お試しください。', 'bf-secret-file-downloader' ); ?>');
             },
             complete: function() {
                 // ボタンを有効化

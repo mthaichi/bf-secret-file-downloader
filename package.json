@@ -24,7 +24,7 @@
     "i18n": "npm run makepot && npm run update-po && npm run compile-mo"
   },
   "devDependencies": {
-    "@wordpress/scripts": "^26.0.0"
-  },
-  "dependencies": {}
+    "@wordpress/scripts": "^26.0.0",
+    "archiver": "^7.0.1"
+  }
 }

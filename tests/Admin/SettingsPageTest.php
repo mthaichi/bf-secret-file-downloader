@@ -71,6 +71,10 @@ class SettingsPageTest extends \BF_SFD_TestCase {
             ->with( 'bf_sfd_settings', 'bf_sfd_simple_auth_password', \WP_Mock\Functions::type( 'array' ) )
             ->once();
 
+        WP_Mock::userFunction( 'register_setting' )
+            ->with( 'bf_sfd_settings', 'bf_sfd_menu_title', \WP_Mock\Functions::type( 'array' ) )
+            ->once();
+
         $this->settings_page->register_settings();
 
         $this->assertTrue( true ); // Assert to avoid risky test
@@ -130,6 +134,12 @@ class SettingsPageTest extends \BF_SFD_TestCase {
         WP_Mock::userFunction( '__' )
             ->andReturnUsing( function( $text ) {
                 return $text;
+            });
+
+        // Mock wp_unslash function
+        WP_Mock::userFunction( 'wp_unslash' )
+            ->andReturnUsing( function( $value ) {
+                return $value;
             });
 
         // Mock add_settings_error
@@ -198,6 +208,11 @@ class SettingsPageTest extends \BF_SFD_TestCase {
      * Test sanitize_auth_methods
      */
     public function test_sanitize_auth_methods() {
+        // Mock sanitize_text_field function
+        WP_Mock::userFunction( 'sanitize_text_field' )
+            ->andReturnUsing( function( $value ) {
+                return $value;
+            });
         // Test valid methods
         $valid_methods = array( 'logged_in', 'simple_auth' );
         $result = $this->settings_page->sanitize_auth_methods( $valid_methods );
@@ -220,6 +235,11 @@ class SettingsPageTest extends \BF_SFD_TestCase {
      * Test sanitize_roles
      */
     public function test_sanitize_roles() {
+        // Mock sanitize_text_field function
+        WP_Mock::userFunction( 'sanitize_text_field' )
+            ->andReturnUsing( function( $value ) {
+                return $value;
+            });
         // Test valid roles
         $valid_roles = array( 'administrator', 'editor' );
         $result = $this->settings_page->sanitize_roles( $valid_roles );

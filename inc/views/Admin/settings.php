@@ -13,7 +13,8 @@
  * @var array  $auth_methods       認証方法の配列
  * @var array  $allowed_roles      許可するユーザーロールの配列
  * @var string $simple_auth_password 簡易認証パスワード
-
+ * @var string $menu_title         メニュータイトル
+ *
  * @var string $nonce              AJAXノンス
  *
  * 利用可能な関数:
@@ -142,6 +143,15 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <!-- その他の設定 -->
                     <h3><?php esc_html_e( 'その他の設定', 'bf-secret-file-downloader' ); ?></h3>
                     <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php esc_html_e( 'メニュータイトル', 'bf-secret-file-downloader' ); ?></th>
+                            <td>
+                                <input type="text" name="bf_sfd_menu_title" id="bf_sfd_menu_title"
+                                       value="<?php echo isset( $menu_title ) ? esc_attr( $menu_title ) : esc_attr__( 'BF Secret File Downloader', 'bf-secret-file-downloader' ); ?>"
+                                       class="regular-text" maxlength="50" />
+                                <p class="description"><?php esc_html_e( '管理画面のメニューに表示されるタイトルです。空の場合はデフォルト名が使用されます。', 'bf-secret-file-downloader' ); ?></p>
+                            </td>
+                        </tr>
                         <tr>
                             <th scope="row"><?php esc_html_e( 'アップロード制限', 'bf-secret-file-downloader' ); ?></th>
                             <td>

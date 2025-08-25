@@ -125,8 +125,8 @@ class FileListPage {
      * ファイルブラウズのAJAXハンドラ
      */
     public function ajax_browse_files() {
-        // セキュリティチェック
-        if ( ! current_user_can( 'manage_options' ) ) {
+        // セキュリティチェック（編集者以上に許可）
+        if ( ! current_user_can( 'edit_posts' ) ) {
             wp_die( 'Unauthorized' );
         }
 
@@ -169,8 +169,8 @@ class FileListPage {
      * ファイルアップロードのAJAXハンドラ
      */
     public function ajax_upload_file() {
-        // セキュリティチェック
-        if ( ! current_user_can( 'upload_files' ) ) {
+        // セキュリティチェック（管理者のみ）
+        if ( ! current_user_can( 'manage_options' ) ) {
             wp_die( 'Unauthorized' );
         }
 
@@ -335,8 +335,8 @@ class FileListPage {
      * ファイル削除のAJAXハンドラ
      */
     public function ajax_delete_file() {
-        // セキュリティチェック
-        if ( ! current_user_can( 'delete_posts' ) ) {
+        // セキュリティチェック（管理者のみ）
+        if ( ! current_user_can( 'manage_options' ) ) {
             wp_die( 'Unauthorized' );
         }
 
@@ -366,6 +366,13 @@ class FileListPage {
         // ファイル存在チェック
         if ( ! file_exists( $full_path ) ) {
             wp_send_json_error( __( '指定されたファイルが見つかりません。', 'bf-secret-file-downloader' ) );
+        }
+
+        // WordPress Filesystem APIを初期化
+        global $wp_filesystem;
+        if ( empty( $wp_filesystem ) ) {
+            require_once ABSPATH . '/wp-admin/includes/file.php';
+            WP_Filesystem();
         }
 
         // 削除権限チェック
@@ -423,8 +430,8 @@ class FileListPage {
      * 一括削除のAJAXハンドラ
      */
     public function ajax_bulk_delete() {
-        // セキュリティチェック
-        if ( ! current_user_can( 'delete_posts' ) ) {
+        // セキュリティチェック（管理者のみ）
+        if ( ! current_user_can( 'manage_options' ) ) {
             wp_die( 'Unauthorized' );
         }
 
@@ -441,6 +448,13 @@ class FileListPage {
         $base_directory = DirectoryManager::get_secure_directory();
         if ( empty( $base_directory ) ) {
             wp_send_json_error( __( '対象ディレクトリが設定されていません。', 'bf-secret-file-downloader' ) );
+        }
+
+        // WordPress Filesystem APIを初期化
+        global $wp_filesystem;
+        if ( empty( $wp_filesystem ) ) {
+            require_once ABSPATH . '/wp-admin/includes/file.php';
+            WP_Filesystem();
         }
 
         $deleted_files = array();
@@ -846,7 +860,10 @@ class FileListPage {
                 'files' => array(),
                 'total_files' => 0,
                 'upload_limit' => $this->get_upload_limit(),
-                'current_user_can_upload' => current_user_can( 'upload_files' ),
+                'current_user_can_upload' => current_user_can( 'manage_options' ),
+                'current_user_can_delete' => current_user_can( 'manage_options' ),
+                'current_user_can_create_dir' => current_user_can( 'manage_options' ),
+                'current_user_can_manage_auth' => current_user_can( 'manage_options' ),
                 'current_path' => '',
                 'current_path_display' => '',
                 'page' => $page,
@@ -890,6 +907,8 @@ class FileListPage {
                 $formatted_file['type_class'] = '';
             }
 
+            // 削除権限情報を追加
+            $formatted_file['can_delete'] = current_user_can( 'manage_options' );
 
             $formatted_files[] = $formatted_file;
         }
@@ -898,7 +917,10 @@ class FileListPage {
             'files' => $formatted_files,
             'total_files' => $this->get_total_files( $full_path ),
             'upload_limit' => $this->get_upload_limit(),
-            'current_user_can_upload' => current_user_can( 'upload_files' ),
+            'current_user_can_upload' => current_user_can( 'manage_options' ),
+            'current_user_can_delete' => current_user_can( 'manage_options' ),
+            'current_user_can_create_dir' => current_user_can( 'manage_options' ),
+            'current_user_can_manage_auth' => current_user_can( 'manage_options' ),
             'current_path' => $relative_path,
             'current_path_display' => empty( $relative_path ) ? __( 'ルートディレクトリ', 'bf-secret-file-downloader' ) : $relative_path,
             'page' => $page,
@@ -995,6 +1017,7 @@ class FileListPage {
                     'size' => '-',
                     'modified' => filemtime( $full_item_path ),
                     'readable' => is_readable( $full_item_path ),
+                    'can_delete' => current_user_can( 'manage_options' ),
                 );
             } else {
                 $files[] = array(
@@ -1005,6 +1028,7 @@ class FileListPage {
                     'modified' => filemtime( $full_item_path ),
                     'readable' => is_readable( $full_item_path ),
                     'type_class' => $this->get_file_type_class( $item ),
+                    'can_delete' => current_user_can( 'manage_options' ),
                 );
             }
         }

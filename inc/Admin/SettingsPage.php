@@ -68,6 +68,13 @@ class SettingsPage {
             'default' => '',
             'sanitize_callback' => array( $this, 'sanitize_password' )
         ) );
+
+        // メニュータイトル設定を追加
+        register_setting( 'bf_sfd_settings', 'bf_sfd_menu_title', array(
+            'type' => 'string',
+            'default' => __( 'BF Secret File Downloader', 'bf-secret-file-downloader' ),
+            'sanitize_callback' => array( $this, 'sanitize_menu_title' )
+        ) );
     }
 
 
@@ -138,6 +145,7 @@ class SettingsPage {
             'auth_methods' => $this->get_auth_methods(),
             'allowed_roles' => $this->get_allowed_roles(),
             'simple_auth_password' => $this->get_simple_auth_password(),
+            'menu_title' => $this->get_plugin_menu_title(),
 
             'nonce' => wp_create_nonce( 'bf_sfd_browse_nonce' ),
         );
@@ -215,6 +223,16 @@ class SettingsPage {
         return get_option( 'bf_sfd_simple_auth_password', '' );
     }
 
+    /**
+     * プラグインのメニュータイトル設定を取得します
+     *
+     * @return string プラグインのメニュータイトル
+     */
+    private function get_plugin_menu_title() {
+        return get_option( 'bf_sfd_menu_title', __( 'BF Secret File Downloader', 'bf-secret-file-downloader' ) );
+    }
+
+
 
 
     /**
@@ -225,6 +243,24 @@ class SettingsPage {
      */
     public function sanitize_boolean( $value ) {
         return (bool) $value;
+    }
+
+    /**
+     * サニタイズ: メニュータイトル
+     *
+     * @param string $value メニュータイトル
+     * @return string サニタイズされたメニュータイトル
+     */
+    public function sanitize_menu_title( $value ) {
+        $sanitized = sanitize_text_field( trim( $value ) );
+        
+        // 空の場合はデフォルト値を返す
+        if ( empty( $sanitized ) ) {
+            return __( 'BF Secret File Downloader', 'bf-secret-file-downloader' );
+        }
+        
+        // 最大文字数制限（50文字まで）
+        return mb_substr( $sanitized, 0, 50 );
     }
 
     /**
@@ -283,7 +319,15 @@ class SettingsPage {
         // サニタイズ
         $sanitized_value = array_map( 'sanitize_text_field', $value );
 
-        return array_intersect( $allowed_methods, $sanitized_value );
+        // 入力順序を保持しつつ、許可されたメソッドのみを返す
+        $result = array();
+        foreach ( $sanitized_value as $method ) {
+            if ( in_array( $method, $allowed_methods ) ) {
+                $result[] = $method;
+            }
+        }
+
+        return array_values( array_unique( $result ) );
     }
 
     /**
@@ -303,7 +347,15 @@ class SettingsPage {
         // サニタイズ
         $sanitized_value = array_map( 'sanitize_text_field', $value );
 
-        return array_intersect( $allowed_roles, $sanitized_value );
+        // 入力順序を保持しつつ、許可されたロールのみを返す
+        $result = array();
+        foreach ( $sanitized_value as $role ) {
+            if ( in_array( $role, $allowed_roles ) ) {
+                $result[] = $role;
+            }
+        }
+
+        return array_values( array_unique( $result ) );
     }
 
 
