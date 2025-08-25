@@ -275,6 +275,13 @@ class FileListPage {
 
         check_ajax_referer( 'bf_sfd_file_list_nonce', 'nonce' );
 
+        // WordPress Filesystem APIを初期化
+        global $wp_filesystem;
+        if ( ! function_exists( 'WP_Filesystem' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
+        WP_Filesystem();
+
         $relative_path = sanitize_text_field( wp_unslash( $_POST['parent_path'] ?? '' ) );
         $directory_name = sanitize_text_field( wp_unslash( $_POST['directory_name'] ?? '' ) );
 

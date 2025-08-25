@@ -114,10 +114,15 @@ class FrontEnd {
             // ファイルを出力
             global $wp_filesystem;
             if ( empty( $wp_filesystem ) ) {
-                require_once ABSPATH . '/wp-admin/includes/file.php';
+                require_once ABSPATH . 'wp-admin/includes/file.php';
                 WP_Filesystem();
             }
-            $wp_filesystem->get_contents( $full_path );
+            
+            // ファイル内容を取得して出力
+            $file_content = $wp_filesystem->get_contents( $full_path );
+            if ( $file_content !== false ) {
+                echo $file_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            }
         }
 
         exit;
